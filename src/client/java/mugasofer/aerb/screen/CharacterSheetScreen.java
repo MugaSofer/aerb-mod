@@ -16,6 +16,12 @@ public class CharacterSheetScreen extends Screen {
 
     private final PlayerEntity player;
 
+    // TextWidgets for dynamic stat display
+    private TextWidget phyWidget;
+    private TextWidget powWidget;
+    private TextWidget spdWidget;
+    private TextWidget endWidget;
+
     public CharacterSheetScreen(PlayerEntity player) {
         super(Text.literal("Character Sheet"));
         this.player = player;
@@ -39,21 +45,25 @@ public class CharacterSheetScreen extends Screen {
             Text.literal("PHYSICAL").withColor(0xFFAA00), this.textRenderer));
         y += lineHeight;
 
-        int phy = Math.min(Math.min(BASE_POW, BASE_SPD), BASE_END) + 1;
-        this.addDrawableChild(new TextWidget(panelX + 20, y, 170, lineHeight,
-            Text.literal("PHY: " + phy), this.textRenderer));
+        // Dynamic stat widgets (updated each frame in render())
+        this.phyWidget = new TextWidget(panelX + 20, y, 170, lineHeight,
+            Text.literal("PHY: ?"), this.textRenderer);
+        this.addDrawableChild(this.phyWidget);
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 30, y, 160, lineHeight,
-            Text.literal("POW: " + BASE_POW).withColor(0xAAAAAA), this.textRenderer));
+        this.powWidget = new TextWidget(panelX + 30, y, 160, lineHeight,
+            Text.literal("POW: ?").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.powWidget);
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 30, y, 160, lineHeight,
-            Text.literal("SPD: " + BASE_SPD).withColor(0xAAAAAA), this.textRenderer));
+        this.spdWidget = new TextWidget(panelX + 30, y, 160, lineHeight,
+            Text.literal("SPD: ?").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.spdWidget);
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 30, y, 160, lineHeight,
-            Text.literal("END: " + BASE_END).withColor(0xAAAAAA), this.textRenderer));
+        this.endWidget = new TextWidget(panelX + 30, y, 160, lineHeight,
+            Text.literal("END: ?").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.endWidget);
 
         // SKILLS section
         y += lineHeight + 8;
@@ -85,20 +95,29 @@ public class CharacterSheetScreen extends Screen {
         context.fill(panelX - 2, panelY - 2, panelX + 202, panelY + 182, 0xFF333333);
         context.fill(panelX, panelY, panelX + 200, panelY + 180, 0xFF000000);
 
+        // Update dynamic stat widgets
+        int pow = calculatePOW();
+        int spd = calculateSPD();
+        int end = calculateEND();
+        int phy = Math.min(Math.min(pow, spd), end) + 1;
+        int basePhy = Math.min(Math.min(BASE_POW, BASE_SPD), BASE_END) + 1;
+
+        this.phyWidget.setMessage(formatStat("PHY", basePhy, phy));
+        this.powWidget.setMessage(formatStat("POW", BASE_POW, pow));
+        this.spdWidget.setMessage(formatStat("SPD", BASE_SPD, spd));
+        this.endWidget.setMessage(formatStat("END", BASE_END, end));
+
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);
     }
 
-    private void drawStat(DrawContext context, int x, int y, String name, int base, int current) {
+    private Text formatStat(String name, int base, int current) {
         if (current > base) {
-            // Base value in gray, bonus in green
-            String baseText = name + ": " + base;
-            String bonusText = " (+" + (current - base) + ")";
-            context.drawTextWithShadow(this.textRenderer, Text.literal(baseText), x, y, 0xAAAAAA);
-            context.drawTextWithShadow(this.textRenderer, Text.literal(bonusText),
-                x + this.textRenderer.getWidth(baseText), y, 0x55FF55);
+            // Show base value with green bonus
+            return Text.literal(name + ": " + base).withColor(0xAAAAAA)
+                .append(Text.literal(" (+" + (current - base) + ")").withColor(0x55FF55));
         } else {
-            context.drawTextWithShadow(this.textRenderer, Text.literal(name + ": " + current), x, y, 0xAAAAAA);
+            return Text.literal(name + ": " + current).withColor(0xAAAAAA);
         }
     }
 

@@ -1,0 +1,94 @@
+#Potential Ingredients
+
+Explosive:
+Blaze Powder 
+Blaze Rod
+Dragon's Breath
+Fire Charge
+Firework Rocket
+Firework Star
+Gunpowder
+TNT
+Torchflower
+Torchflower Seeds
+
+Mechanism:
+Clock
+Flint and Steel
+Redstone Dust
+Redstone Comparator
+Redstone Repeater
+Redstone Torch 
+Redstone Wire
+String
+Tripwire
+
+Trigger:
+Crossbow
+Lever
+Stone Button
+Tripwire Hook
+Wood Button
+
+Barrel:
+Bamboo
+Hopper
+Iron Bars
+Iron Ingot
+
+Bullet:
+Iron Nugget
+Raw Copper
+Raw Gold
+Raw Iron
+
+Stock/Handle:
+Planks
+Stick
+Wood
+Iron Ingot
+
+Sight:
+Glass Pane
+Hardened Glass Pane
+Spyglass
+
+#Recipes
+
+Bullet:
+		|Iron Nugget	|	
+Copper Nugget	|Iron Nugget	|Copper Nugget
+Copper Nugget	|Explosive	|Copper Nugget
+
+Pistol:
+Mechanism	|Barrel		|
+Stock/Handle	|Trigger	|
+Stock/Handle	|		|
+
+Shotgun (fires 2 shots at once):
+Mechanism	|Barrel		|Barrel
+Stock/Handle	|Barrel		|Barrel
+Stock/Handle	|Trigger	|	
+
+Rifle:
+Mechanism	|Barrel		|Barrel
+Stock/Handle	|Trigger	|
+Stock/Handle	|		|
+
+Sniper Rifle:
+Sight		|
+Rifle		|
+
+Gatling Gun (slow while equipped but very fast rate of fire):
+Rifle		|Rifle		|Rifle
+Rifle		|Mechanism	|Rifle
+Rifle		|Rifle		|Rifle
+
+Cannon (fires Iron Blocks and Gunpowder, slow while equipped):
+		|Barrel		|Barrel
+Barrel		|Mechanism	|	
+		|Barrel		|Barrel
+
+
+Replace the Mechanism with a void crystal for a void version.
+
