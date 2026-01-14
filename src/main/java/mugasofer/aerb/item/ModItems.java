@@ -62,6 +62,26 @@ public class ModItems {
             .maxCount(1)
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "aardes_touch")))));
 
+    public static final Item CRIMSON_FIST = register("crimson_fist",
+        new BloodMagicItem(
+            new Item.Settings()
+                .maxCount(1)
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "crimson_fist"))),
+            List.of(
+                new BloodMagicItem.SpellEffect(StatusEffects.STRENGTH, EFFECT_DURATION, 3)  // Strength IV
+            )
+        ));
+
+    public static final Item SANGUINE_SURGE = register("sanguine_surge",
+        new BloodMagicItem(
+            new Item.Settings()
+                .maxCount(1)
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "sanguine_surge"))),
+            List.of(
+                new BloodMagicItem.SpellEffect(StatusEffects.JUMP_BOOST, EFFECT_DURATION, 3)  // Jump Boost IV
+            )
+        ));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -76,6 +96,8 @@ public class ModItems {
             entries.add(SPEED_TAPPING);
             entries.add(ENDURANCE_TAPPING);
             entries.add(AARDES_TOUCH);
+            entries.add(CRIMSON_FIST);
+            entries.add(SANGUINE_SURGE);
         });
     }
 }

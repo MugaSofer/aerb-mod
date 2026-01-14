@@ -27,6 +27,7 @@ import java.util.UUID;
 
 public class AardesTouchItem extends Item {
     private static final int LIGHT_LEVEL = 14; // Slightly less than max (15) for torch-like feel
+    private static final int FREEZE_INTERVAL = 30; // Add 1 frozen tick every 30 game ticks (slower than powder snow)
     private static final HashMap<UUID, BlockPos> playerLightPositions = new HashMap<>();
     private static boolean eventRegistered = false;
 
@@ -50,6 +51,7 @@ public class AardesTouchItem extends Item {
                 if (world == null) continue;
 
                 if (holdingTouch) {
+                    // === Dynamic Light ===
                     BlockPos oldPos = playerLightPositions.get(playerId);
 
                     // Only update if position changed or no light placed yet
@@ -67,6 +69,17 @@ public class AardesTouchItem extends Item {
                         } else {
                             playerLightPositions.remove(playerId);
                         }
+                    }
+
+                    // === Cold/Freeze Effect ===
+                    // Set "in powder snow" for the visual frost overlay
+                    player.setInPowderSnow(true);
+
+                    // Slowly freeze the player (if they can freeze - leather armor protects)
+                    if (player.canFreeze() && server.getTicks() % FREEZE_INTERVAL == 0) {
+                        int currentFrozen = player.getFrozenTicks();
+                        int maxFrozen = player.getMinFreezeDamageTicks();
+                        player.setFrozenTicks(Math.min(maxFrozen, currentFrozen + 1));
                     }
                 } else {
                     // Not holding - remove any existing light
@@ -119,7 +132,7 @@ public class AardesTouchItem extends Item {
     }
 
     private void playFireSound(World world, BlockPos pos) {
-        world.playSound(null, pos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 1.0f, world.getRandom().nextFloat() * 0.4f + 0.8f);
+        world.playSound(null, pos, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.BLOCKS, 1.0f, world.getRandom().nextFloat() * 0.4f + 0.8f);
     }
 
     @Override

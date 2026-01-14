@@ -44,7 +44,7 @@ public class PhysicalTappingItem extends Item {
             entity.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, EFFECT_DURATION, 1));
             entity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, EFFECT_DURATION, 1));
 
-            entity.playSound(SoundEvents.ENTITY_SKELETON_HURT, 1.0f, 1.0f);
+            entity.playSound(SoundEvents.BLOCK_FIRE_EXTINGUISH, 1.0f, 1.0f);
         }
 
         user.getItemCooldownManager().set(stack, 20);
@@ -77,7 +77,7 @@ public class PhysicalTappingItem extends Item {
 
             // Play a bone-crunching sound
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ENTITY_SKELETON_HURT, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.PLAYERS, 1.0f, 1.0f);
         }
 
         // Add cooldown to prevent spam (optional, 1 second)

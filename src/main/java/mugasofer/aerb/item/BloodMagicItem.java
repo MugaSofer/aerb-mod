@@ -1,14 +1,17 @@
 package mugasofer.aerb.item;
 
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageTypes;
+import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
@@ -17,13 +20,16 @@ import net.minecraft.world.World;
 
 import java.util.List;
 
-public class BoneMagicItem extends Item {
+public class BloodMagicItem extends Item {
+
+    private static final float BLOOD_COST_CHANCE = 0.05f; // 5% chance to take damage
+    private static final float BLOOD_DAMAGE = 1.0f; // Half a heart
 
     public record SpellEffect(RegistryEntry<StatusEffect> effect, int durationTicks, int amplifier) {}
 
     private final List<SpellEffect> effects;
 
-    public BoneMagicItem(Settings settings, List<SpellEffect> effects) {
+    public BloodMagicItem(Settings settings, List<SpellEffect> effects) {
         super(settings);
         this.effects = effects;
     }
@@ -35,17 +41,10 @@ public class BoneMagicItem extends Item {
             return ActionResult.PASS;
         }
 
-        ItemStack boneStack = findBone(user);
-
-        if (boneStack.isEmpty()) {
-            // No bones - play fail sound (server side only, checked via player)
-            entity.playSound(SoundEvents.BLOCK_BONE_BLOCK_BREAK, 0.5f, 0.5f);
-            return ActionResult.FAIL;
-        }
-
-        // Only do effects on server side
-        if (!user.isRemoved() && boneStack.getCount() > 0) {
-            boneStack.decrement(1);
+        World world = user.getEntityWorld();
+        if (!world.isClient()) {
+            // Apply blood cost (5% chance of armor-bypassing damage)
+            applyBloodCost(user, (ServerWorld) world);
 
             // Apply effects to the target entity
             for (SpellEffect spellEffect : effects) {
@@ -56,7 +55,8 @@ public class BoneMagicItem extends Item {
                 ));
             }
 
-            entity.playSound(SoundEvents.BLOCK_FIRE_EXTINGUISH, 1.0f, 1.0f);
+            // Play blood magic sound
+            entity.playSound(SoundEvents.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, 0.5f, 1.2f);
         }
 
         user.getItemCooldownManager().set(stack, 20);
@@ -65,21 +65,9 @@ public class BoneMagicItem extends Item {
 
     @Override
     public ActionResult use(World world, PlayerEntity user, Hand hand) {
-        // Find and consume a bone from the player's inventory
-        ItemStack boneStack = findBone(user);
-
-        if (boneStack.isEmpty()) {
-            // No bones available - play a fail sound
-            if (!world.isClient()) {
-                world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                    SoundEvents.BLOCK_BONE_BLOCK_BREAK, SoundCategory.PLAYERS, 0.5f, 0.5f);
-            }
-            return ActionResult.FAIL;
-        }
-
         if (!world.isClient()) {
-            // Consume the bone
-            boneStack.decrement(1);
+            // Apply blood cost (5% chance of armor-bypassing damage)
+            applyBloodCost(user, (ServerWorld) world);
 
             // Apply all effects to self
             for (SpellEffect spellEffect : effects) {
@@ -90,9 +78,9 @@ public class BoneMagicItem extends Item {
                 ));
             }
 
-            // Play a bone-crunching sound
+            // Play blood magic sound
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                SoundEvents.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, SoundCategory.PLAYERS, 0.5f, 1.2f);
         }
 
         // Add cooldown to prevent spam (1 second)
@@ -101,25 +89,20 @@ public class BoneMagicItem extends Item {
         return ActionResult.SUCCESS;
     }
 
+    private void applyBloodCost(PlayerEntity player, ServerWorld world) {
+        if (world.getRandom().nextFloat() < BLOOD_COST_CHANCE) {
+            // Use magic damage (bypasses armor)
+            DamageSource magicDamage = world.getDamageSources().magic();
+            player.damage(world, magicDamage, BLOOD_DAMAGE);
+
+            // Extra feedback when blood cost is paid
+            world.playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ENTITY_PLAYER_HURT, SoundCategory.PLAYERS, 0.3f, 1.5f);
+        }
+    }
+
     @Override
     public boolean hasGlint(ItemStack stack) {
         return true;
-    }
-
-    protected ItemStack findBone(PlayerEntity player) {
-        // Check offhand first (standard ammo behavior)
-        ItemStack offhand = player.getOffHandStack();
-        if (offhand.isOf(Items.BONE)) {
-            return offhand;
-        }
-
-        // Then check main inventory
-        for (int i = 0; i < player.getInventory().size(); i++) {
-            ItemStack stack = player.getInventory().getStack(i);
-            if (stack.isOf(Items.BONE)) {
-                return stack;
-            }
-        }
-        return ItemStack.EMPTY;
     }
 }
