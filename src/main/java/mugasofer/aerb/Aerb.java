@@ -1,6 +1,7 @@
 package mugasofer.aerb;
 
 import mugasofer.aerb.item.ModItems;
+import mugasofer.aerb.spell.SpellSlots;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -22,5 +23,6 @@ public class Aerb implements ModInitializer {
 
 		LOGGER.info("Hello Fabric world!");
 		ModItems.initialize();
+		SpellSlots.init();
 	}
 }

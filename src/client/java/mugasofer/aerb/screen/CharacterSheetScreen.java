@@ -1,5 +1,6 @@
 package mugasofer.aerb.screen;
 
+import mugasofer.aerb.spell.SpellSlots;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -7,6 +8,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextWidget;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 
 public class CharacterSheetScreen extends Screen {
@@ -21,6 +23,10 @@ public class CharacterSheetScreen extends Screen {
     private TextWidget powWidget;
     private TextWidget spdWidget;
     private TextWidget endWidget;
+
+    // Spell slot positions for click detection
+    private int spellSlotsX;
+    private int spellSlotsY;
 
     public CharacterSheetScreen(PlayerEntity player) {
         super(Text.literal("Character Sheet"));
@@ -78,6 +84,16 @@ public class CharacterSheetScreen extends Screen {
         this.addDrawableChild(new TextWidget(panelX + 20, y, 170, lineHeight,
             Text.literal("Bone Magic: 0").withColor(0xAAAAAA), this.textRenderer));
 
+        // SPELL SLOTS section
+        y += lineHeight + 8;
+        this.addDrawableChild(new TextWidget(panelX + 10, y, 180, lineHeight,
+            Text.literal("SPELL SLOTS").withColor(0xFFAA00), this.textRenderer));
+        y += lineHeight;
+
+        // Store position for rendering slots
+        this.spellSlotsX = panelX + 20;
+        this.spellSlotsY = y;
+
         // Back to inventory button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Inventory"), button -> {
             this.client.setScreen(new InventoryScreen(player));
@@ -89,11 +105,11 @@ public class CharacterSheetScreen extends Screen {
         // Semi-transparent dark overlay (like vanilla screens)
         context.fill(0, 0, this.width, this.height, 0xC0101010);
 
-        // Dark panel behind stats
+        // Dark panel behind stats (taller to fit spell slots)
         int panelX = this.width / 2 - 100;
         int panelY = 20;
-        context.fill(panelX - 2, panelY - 2, panelX + 202, panelY + 182, 0xFF333333);
-        context.fill(panelX, panelY, panelX + 200, panelY + 180, 0xFF000000);
+        context.fill(panelX - 2, panelY - 2, panelX + 202, panelY + 222, 0xFF333333);
+        context.fill(panelX, panelY, panelX + 200, panelY + 220, 0xFF000000);
 
         // Update dynamic stat widgets
         int pow = calculatePOW();
@@ -106,6 +122,25 @@ public class CharacterSheetScreen extends Screen {
         this.powWidget.setMessage(formatStat("POW", BASE_POW, pow));
         this.spdWidget.setMessage(formatStat("SPD", BASE_SPD, spd));
         this.endWidget.setMessage(formatStat("END", BASE_END, end));
+
+        // Render spell slots (always show, even if empty)
+        SpellSlots spellSlots = player.getAttached(SpellSlots.ATTACHMENT);
+        for (int i = 0; i < SpellSlots.MAX_SLOTS; i++) {
+            int slotX = spellSlotsX + (i * 20);
+            int slotY = spellSlotsY;
+
+            // Draw slot background
+            context.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF222222);
+            context.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF3C3C3C);
+
+            // Draw equipped item if any
+            if (spellSlots != null) {
+                ItemStack stack = spellSlots.getSlot(i);
+                if (!stack.isEmpty()) {
+                    context.drawItem(stack, slotX + 1, slotY + 1);
+                }
+            }
+        }
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);
