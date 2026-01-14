@@ -86,6 +86,11 @@ public class PhysicalTappingItem extends Item {
         return ActionResult.SUCCESS;
     }
 
+    @Override
+    public boolean hasGlint(ItemStack stack) {
+        return true;
+    }
+
     private ItemStack findBone(PlayerEntity player) {
         // Check offhand first (standard ammo behavior)
         ItemStack offhand = player.getOffHandStack();
