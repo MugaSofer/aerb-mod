@@ -8,13 +8,13 @@
 - Base stats: POW 2, SPD 2, END 2
 - Skills section: Blood Magic, Bone Magic (hardcoded 0)
 
-### Phase 2 - Dynamic Stats
-- Use calculatePOW/SPD/END methods (already exist in code)
+### Phase 2 - Dynamic Stats (DONE)
+- Uses calculatePOW/SPD/END methods with TextWidget.setMessage() for updates
 - Status effect mappings:
   - POW: Strength, Jump Boost
   - SPD: Speed, Haste
   - END: Regeneration, Resistance
-- Show bonuses in green when active
+- Bonuses shown in green (e.g. "POW: 2 (+2)")
 
 ### Phase 3 - Persistent Skill Data
 - Store skill levels per player
@@ -25,8 +25,9 @@
 - Skill progression
 
 ### UI Improvements Needed
-- Scrollable skills list using EntryListWidget (for when there are many skills)
-- Currently uses TextWidget which doesn't scroll
+- Scrollable skills list (for when there are many skills)
+- NOTE: EntryListWidget doesn't work because its entries use drawTextWithShadow which doesn't render in this screen
+- Need alternative approach: either custom scroll logic with TextWidgets, or figure out why direct drawing fails
 
 ## Stat Formulas
 - PHY = min(POW, SPD, END) + 1
