@@ -1,9 +1,14 @@
 package mugasofer.aerb;
 
+import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
+import mugasofer.aerb.screen.ModScreenHandlers;
+import mugasofer.aerb.screen.SpellSlotsScreen;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
@@ -11,14 +16,39 @@ import net.minecraft.text.Text;
 public class AerbClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		// Add character sheet button to inventory screen
+		// Register spell slots screen
+		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
+
+		// Add navigation tabs to inventory screen (left side to match other screens)
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			if (screen instanceof InventoryScreen inventoryScreen) {
-				ButtonWidget charSheetButton = ButtonWidget.builder(Text.literal("Stats"), button -> {
-					client.setScreen(new CharacterSheetScreen(client.player));
-				}).dimensions(screen.width / 2 + 100, screen.height / 2 - 80, 40, 20).build();
+				// Tab dimensions - consistent across all screens
+				int tabWidth = 40;
+				int tabHeight = 20;
+				int tabSpacing = 24;
 
-				Screens.getButtons(inventoryScreen).add(charSheetButton);
+				// Position tabs on the left side of inventory (inventory is 176 wide)
+				int tabX = screen.width / 2 - 88 - tabWidth - 4; // Left of inventory panel
+				int tabY = screen.height / 2 - 83;               // Top of inventory
+
+				// Inventory tab (current - disabled)
+				ButtonWidget invTab = ButtonWidget.builder(Text.literal("Inv"), button -> {
+					// Already on this screen
+				}).dimensions(tabX, tabY, tabWidth, tabHeight).build();
+				invTab.active = false;
+				Screens.getButtons(inventoryScreen).add(invTab);
+
+				// Stats tab
+				ButtonWidget statsTab = ButtonWidget.builder(Text.literal("Stats"), button -> {
+					client.setScreen(new CharacterSheetScreen(client.player));
+				}).dimensions(tabX, tabY + tabSpacing, tabWidth, tabHeight).build();
+				Screens.getButtons(inventoryScreen).add(statsTab);
+
+				// Spells tab - sends packet to server to open the screen
+				ButtonWidget spellsTab = ButtonWidget.builder(Text.literal("Spells"), button -> {
+					ClientPlayNetworking.send(new ModNetworking.OpenSpellInventoryPayload());
+				}).dimensions(tabX, tabY + tabSpacing * 2, tabWidth, tabHeight).build();
+				Screens.getButtons(inventoryScreen).add(spellsTab);
 			}
 		});
 	}

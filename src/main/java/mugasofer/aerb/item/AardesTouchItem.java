@@ -25,7 +25,7 @@ import net.minecraft.world.event.GameEvent;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class AardesTouchItem extends Item {
+public class AardesTouchItem extends Item implements SpellItem {
     private static final int LIGHT_LEVEL = 14; // Slightly less than max (15) for torch-like feel
     private static final int FREEZE_INTERVAL = 30; // Add 1 frozen tick every 30 game ticks (slower than powder snow)
     private static final HashMap<UUID, BlockPos> playerLightPositions = new HashMap<>();

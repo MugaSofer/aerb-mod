@@ -1,11 +1,22 @@
 package mugasofer.aerb;
 
 import mugasofer.aerb.item.ModItems;
-import mugasofer.aerb.spell.SpellSlots;
+import mugasofer.aerb.item.SpellItem;
+import mugasofer.aerb.network.ModNetworking;
+import mugasofer.aerb.screen.ModScreenHandlers;
+import mugasofer.aerb.spell.SpellInventory;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.Box;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class Aerb implements ModInitializer {
 	public static final String MOD_ID = "aerb";
@@ -23,6 +34,48 @@ public class Aerb implements ModInitializer {
 
 		LOGGER.info("Hello Fabric world!");
 		ModItems.initialize();
-		SpellSlots.init();
+		SpellInventory.init();
+		ModScreenHandlers.init();
+		ModNetworking.init();
+
+		// Prevent spell items from being dropped - return them to nearest player
+		ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {
+			if (entity instanceof ItemEntity itemEntity) {
+				ItemStack stack = itemEntity.getStack();
+				if (SpellItem.isSpell(stack)) {
+					// Find the nearest player within 10 blocks
+					Box searchBox = entity.getBoundingBox().expand(10.0);
+					List<PlayerEntity> nearbyPlayers = world.getEntitiesByClass(
+						PlayerEntity.class, searchBox, p -> true);
+
+					if (!nearbyPlayers.isEmpty()) {
+						PlayerEntity closest = nearbyPlayers.get(0);
+						double closestDist = closest.squaredDistanceTo(entity);
+						for (PlayerEntity p : nearbyPlayers) {
+							double dist = p.squaredDistanceTo(entity);
+							if (dist < closestDist) {
+								closest = p;
+								closestDist = dist;
+							}
+						}
+
+						// Give the item back to the player
+						if (!closest.giveItemStack(stack.copy())) {
+							// If inventory is full, put in spell inventory
+							SpellInventory spellInv = closest.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+							for (int i = 0; i < spellInv.size(); i++) {
+								if (spellInv.getStack(i).isEmpty()) {
+									spellInv.setStack(i, stack.copy());
+									break;
+								}
+							}
+						}
+					}
+
+					// Remove the dropped item entity
+					itemEntity.discard();
+				}
+			}
+		});
 	}
 }

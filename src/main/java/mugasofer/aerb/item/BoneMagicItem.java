@@ -17,7 +17,7 @@ import net.minecraft.world.World;
 
 import java.util.List;
 
-public class BoneMagicItem extends Item {
+public class BoneMagicItem extends Item implements SpellItem {
 
     public record SpellEffect(RegistryEntry<StatusEffect> effect, int durationTicks, int amplifier) {}
 

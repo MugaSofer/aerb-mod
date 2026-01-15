@@ -24,6 +24,17 @@
 - XP system for skills
 - Skill progression
 
+## Spell Slots System (WIP)
+
+### Done
+- SpellSlots data attachment class (src/main/java/mugasofer/aerb/spell/SpellSlots.java)
+- Visual 3-slot display in character sheet
+- Tab system to separate Stats page from Spells page
+
+### TODO
+- Click-to-equip functionality
+- Client/server data sync for persistence
+
 ### UI Improvements Needed
 - Scrollable skills list (for when there are many skills)
 - NOTE: EntryListWidget doesn't work because its entries use drawTextWithShadow which doesn't render in this screen

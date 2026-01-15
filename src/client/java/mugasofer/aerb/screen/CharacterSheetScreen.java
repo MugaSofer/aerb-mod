@@ -1,6 +1,7 @@
 package mugasofer.aerb.screen;
 
-import mugasofer.aerb.spell.SpellSlots;
+import mugasofer.aerb.network.ModNetworking;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -8,13 +9,21 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextWidget;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 
 public class CharacterSheetScreen extends Screen {
     private static final int BASE_POW = 2;
     private static final int BASE_SPD = 2;
     private static final int BASE_END = 2;
+
+    // Panel size to match vanilla inventory
+    private static final int PANEL_WIDTH = 176;
+    private static final int PANEL_HEIGHT = 166;
+
+    // Tab dimensions - consistent across all screens
+    private static final int TAB_WIDTH = 40;
+    private static final int TAB_HEIGHT = 20;
+    private static final int TAB_SPACING = 24;
 
     private final PlayerEntity player;
 
@@ -23,10 +32,6 @@ public class CharacterSheetScreen extends Screen {
     private TextWidget powWidget;
     private TextWidget spdWidget;
     private TextWidget endWidget;
-
-    // Spell slot positions for click detection
-    private int spellSlotsX;
-    private int spellSlotsY;
 
     public CharacterSheetScreen(PlayerEntity player) {
         super(Text.literal("Character Sheet"));
@@ -37,67 +42,71 @@ public class CharacterSheetScreen extends Screen {
     protected void init() {
         super.init();
 
-        int panelX = this.width / 2 - 100;
-        int panelY = 20;
+        // Center panel like vanilla inventory
+        int panelX = (this.width - PANEL_WIDTH) / 2;
+        int panelY = (this.height - PANEL_HEIGHT) / 2;
         int lineHeight = 14;
 
-        // Title - centered in panel
-        this.addDrawableChild(new TextWidget(panelX, panelY + 8, 200, lineHeight,
-            Text.literal("CHARACTER SHEET"), this.textRenderer));
+        int y = panelY + 10;
 
         // PHYSICAL section
-        int y = panelY + 32;
-        this.addDrawableChild(new TextWidget(panelX + 10, y, 180, lineHeight,
+        this.addDrawableChild(new TextWidget(panelX + 10, y, 160, lineHeight,
             Text.literal("PHYSICAL").withColor(0xFFAA00), this.textRenderer));
         y += lineHeight;
 
         // Dynamic stat widgets (updated each frame in render())
-        this.phyWidget = new TextWidget(panelX + 20, y, 170, lineHeight,
+        this.phyWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
             Text.literal("PHY: ?"), this.textRenderer);
         this.addDrawableChild(this.phyWidget);
         y += lineHeight;
 
-        this.powWidget = new TextWidget(panelX + 30, y, 160, lineHeight,
+        this.powWidget = new TextWidget(panelX + 30, y, 140, lineHeight,
             Text.literal("POW: ?").withColor(0xAAAAAA), this.textRenderer);
         this.addDrawableChild(this.powWidget);
         y += lineHeight;
 
-        this.spdWidget = new TextWidget(panelX + 30, y, 160, lineHeight,
+        this.spdWidget = new TextWidget(panelX + 30, y, 140, lineHeight,
             Text.literal("SPD: ?").withColor(0xAAAAAA), this.textRenderer);
         this.addDrawableChild(this.spdWidget);
         y += lineHeight;
 
-        this.endWidget = new TextWidget(panelX + 30, y, 160, lineHeight,
+        this.endWidget = new TextWidget(panelX + 30, y, 140, lineHeight,
             Text.literal("END: ?").withColor(0xAAAAAA), this.textRenderer);
         this.addDrawableChild(this.endWidget);
 
         // SKILLS section
         y += lineHeight + 8;
-        this.addDrawableChild(new TextWidget(panelX + 10, y, 180, lineHeight,
+        this.addDrawableChild(new TextWidget(panelX + 10, y, 160, lineHeight,
             Text.literal("SKILLS").withColor(0xFFAA00), this.textRenderer));
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 20, y, 170, lineHeight,
+        this.addDrawableChild(new TextWidget(panelX + 20, y, 150, lineHeight,
             Text.literal("Blood Magic: 0").withColor(0xAAAAAA), this.textRenderer));
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 20, y, 170, lineHeight,
+        this.addDrawableChild(new TextWidget(panelX + 20, y, 150, lineHeight,
             Text.literal("Bone Magic: 0").withColor(0xAAAAAA), this.textRenderer));
 
-        // SPELL SLOTS section
-        y += lineHeight + 8;
-        this.addDrawableChild(new TextWidget(panelX + 10, y, 180, lineHeight,
-            Text.literal("SPELL SLOTS").withColor(0xFFAA00), this.textRenderer));
-        y += lineHeight;
+        // Navigation tabs on the left side (consistent position across screens)
+        int tabX = panelX - TAB_WIDTH - 4;
+        int tabY = panelY;
 
-        // Store position for rendering slots
-        this.spellSlotsX = panelX + 20;
-        this.spellSlotsY = y;
-
-        // Back to inventory button
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Inventory"), button -> {
+        // Inventory tab
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Inv"), button -> {
             this.client.setScreen(new InventoryScreen(player));
-        }).dimensions(this.width / 2 - 50, this.height - 30, 100, 20).build());
+        }).dimensions(tabX, tabY, TAB_WIDTH, TAB_HEIGHT).build());
+
+        // Stats tab (current - disabled)
+        ButtonWidget statsTab = ButtonWidget.builder(Text.literal("Stats"), button -> {
+            // Already on this screen
+        }).dimensions(tabX, tabY + TAB_SPACING, TAB_WIDTH, TAB_HEIGHT).build();
+        statsTab.active = false;
+        this.addDrawableChild(statsTab);
+
+        // Spells tab
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Spells"), button -> {
+            ClientPlayNetworking.send(new ModNetworking.OpenSpellInventoryPayload());
+        }).dimensions(tabX, tabY + TAB_SPACING * 2, TAB_WIDTH, TAB_HEIGHT).build());
     }
 
     @Override
@@ -105,11 +114,11 @@ public class CharacterSheetScreen extends Screen {
         // Semi-transparent dark overlay (like vanilla screens)
         context.fill(0, 0, this.width, this.height, 0xC0101010);
 
-        // Dark panel behind stats (taller to fit spell slots)
-        int panelX = this.width / 2 - 100;
-        int panelY = 20;
-        context.fill(panelX - 2, panelY - 2, panelX + 202, panelY + 222, 0xFF333333);
-        context.fill(panelX, panelY, panelX + 200, panelY + 220, 0xFF000000);
+        // Dark panel behind stats (centered like inventory)
+        int panelX = (this.width - PANEL_WIDTH) / 2;
+        int panelY = (this.height - PANEL_HEIGHT) / 2;
+        context.fill(panelX - 2, panelY - 2, panelX + PANEL_WIDTH + 2, panelY + PANEL_HEIGHT + 2, 0xFF333333);
+        context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, 0xFF000000);
 
         // Update dynamic stat widgets
         int pow = calculatePOW();
@@ -122,25 +131,6 @@ public class CharacterSheetScreen extends Screen {
         this.powWidget.setMessage(formatStat("POW", BASE_POW, pow));
         this.spdWidget.setMessage(formatStat("SPD", BASE_SPD, spd));
         this.endWidget.setMessage(formatStat("END", BASE_END, end));
-
-        // Render spell slots (always show, even if empty)
-        SpellSlots spellSlots = player.getAttached(SpellSlots.ATTACHMENT);
-        for (int i = 0; i < SpellSlots.MAX_SLOTS; i++) {
-            int slotX = spellSlotsX + (i * 20);
-            int slotY = spellSlotsY;
-
-            // Draw slot background
-            context.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF222222);
-            context.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF3C3C3C);
-
-            // Draw equipped item if any
-            if (spellSlots != null) {
-                ItemStack stack = spellSlots.getSlot(i);
-                if (!stack.isEmpty()) {
-                    context.drawItem(stack, slotX + 1, slotY + 1);
-                }
-            }
-        }
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);

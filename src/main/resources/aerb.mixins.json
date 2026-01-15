@@ -3,7 +3,8 @@
 	"package": "mugasofer.aerb.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"SlotSpellRestrictionMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

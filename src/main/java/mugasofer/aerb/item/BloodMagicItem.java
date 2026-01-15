@@ -20,7 +20,7 @@ import net.minecraft.world.World;
 
 import java.util.List;
 
-public class BloodMagicItem extends Item {
+public class BloodMagicItem extends Item implements SpellItem {
 
     private static final float BLOOD_COST_CHANCE = 0.05f; // 5% chance to take damage
     private static final float BLOOD_DAMAGE = 1.0f; // Half a heart

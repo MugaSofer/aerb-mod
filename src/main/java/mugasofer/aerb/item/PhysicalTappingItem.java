@@ -14,7 +14,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
-public class PhysicalTappingItem extends Item {
+public class PhysicalTappingItem extends Item implements SpellItem {
     private static final int EFFECT_DURATION = 120; // 6 seconds = 120 ticks
 
     public PhysicalTappingItem(Settings settings) {
