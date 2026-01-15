@@ -21,6 +21,8 @@
 - Mixin for Entity.dropStack shows remap warning (doesn't affect functionality)
 - Drop prevention uses ENTITY_LOAD event instead (works but brief visual flash)
 - Offhand slot in Spell Inventory is currently non-functional
+- "Spells Known" title not showing on spell screen (check titleX/titleY positioning)
+- Offhand slot needs a label (currently "Off" label may be mispositioned)
 
 ## Next Steps / Ideas
 - Phase 4: XP system for skill progression
