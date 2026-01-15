@@ -4,6 +4,7 @@ import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.screen.SpellSlotsScreen;
+import mugasofer.aerb.skill.ClientSkillCache;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -18,6 +19,11 @@ public class AerbClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		// Register spell slots screen
 		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
+
+		// Register client-side handler for skill sync
+		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SyncSkillsPayload.ID, (payload, context) -> {
+			ClientSkillCache.update(payload.bloodMagic(), payload.boneMagic());
+		});
 
 		// Add navigation tabs to inventory screen (left side to match other screens)
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {

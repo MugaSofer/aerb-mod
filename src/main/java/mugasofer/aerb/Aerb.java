@@ -1,14 +1,18 @@
 package mugasofer.aerb;
 
+import mugasofer.aerb.command.ModCommands;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.SpellItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.ModScreenHandlers;
+import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Box;
@@ -35,8 +39,16 @@ public class Aerb implements ModInitializer {
 		LOGGER.info("Hello Fabric world!");
 		ModItems.initialize();
 		SpellInventory.init();
+		PlayerSkills.init();
 		ModScreenHandlers.init();
 		ModNetworking.init();
+		ModCommands.init();
+
+		// Sync skills to client when player joins
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			ServerPlayerEntity player = handler.getPlayer();
+			ModNetworking.syncSkillsToClient(player);
+		});
 
 		// Prevent spell items from being dropped - return them to nearest player
 		ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {

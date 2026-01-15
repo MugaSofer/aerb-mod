@@ -1,6 +1,7 @@
 package mugasofer.aerb.screen;
 
 import mugasofer.aerb.network.ModNetworking;
+import mugasofer.aerb.skill.ClientSkillCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -32,6 +33,10 @@ public class CharacterSheetScreen extends Screen {
     private TextWidget powWidget;
     private TextWidget spdWidget;
     private TextWidget endWidget;
+
+    // TextWidgets for dynamic skill display
+    private TextWidget bloodMagicWidget;
+    private TextWidget boneMagicWidget;
 
     public CharacterSheetScreen(PlayerEntity player) {
         super(Text.literal("Character Sheet"));
@@ -80,12 +85,14 @@ public class CharacterSheetScreen extends Screen {
             Text.literal("SKILLS").withColor(0xFFAA00), this.textRenderer));
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("Blood Magic: 0").withColor(0xAAAAAA), this.textRenderer));
+        this.bloodMagicWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
+            Text.literal("Blood Magic: 0").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.bloodMagicWidget);
         y += lineHeight;
 
-        this.addDrawableChild(new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("Bone Magic: 0").withColor(0xAAAAAA), this.textRenderer));
+        this.boneMagicWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
+            Text.literal("Bone Magic: 0").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.boneMagicWidget);
 
         // Navigation tabs on the left side (consistent position across screens)
         int tabX = panelX - TAB_WIDTH - 4;
@@ -131,6 +138,10 @@ public class CharacterSheetScreen extends Screen {
         this.powWidget.setMessage(formatStat("POW", BASE_POW, pow));
         this.spdWidget.setMessage(formatStat("SPD", BASE_SPD, spd));
         this.endWidget.setMessage(formatStat("END", BASE_END, end));
+
+        // Update skill widgets (from client cache, synced from server)
+        this.bloodMagicWidget.setMessage(Text.literal("Blood Magic: " + ClientSkillCache.getBloodMagic()).withColor(0xAAAAAA));
+        this.boneMagicWidget.setMessage(Text.literal("Bone Magic: " + ClientSkillCache.getBoneMagic()).withColor(0xAAAAAA));
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);
