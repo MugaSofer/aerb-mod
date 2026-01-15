@@ -1,45 +1,34 @@
 # AERB Mod Development Notes
 
-## Character Sheet Plan
+## Current Status (as of last session)
 
-### Phase 1 - Basic Display (DONE)
-- CharacterSheetScreen with Stats button in inventory
-- PHY = min(POW, SPD, END) + 1
-- Base stats: POW 2, SPD 2, END 2
-- Skills section: Blood Magic, Bone Magic (hardcoded 0)
+### Completed Systems
+- **Spell Inventory**: 27 slots + offhand, persisted via data attachments
+- **Spell Restrictions**: Spells only in spell inv/hotbar/offhand/crafting; auto-return on drop
+- **Skill System**: PlayerSkills attachment with server-client sync
+- **UI**: Tabs (Inv/Stats/Spells) on all screens, consistent sizing/centering
+- **Commands**: /setskill, /getskill with player targeting for multiplayer
 
-### Phase 2 - Dynamic Stats (DONE)
-- Uses calculatePOW/SPD/END methods with TextWidget.setMessage() for updates
-- Status effect mappings:
-  - POW: Strength, Jump Boost
-  - SPD: Speed, Haste
-  - END: Regeneration, Resistance
-- Bonuses shown in green (e.g. "POW: 2 (+2)")
+### Key Files
+- `spell/SpellInventory.java` - spell storage attachment
+- `skill/PlayerSkills.java` - skill storage attachment
+- `skill/ClientSkillCache.java` - client-side skill cache (synced from server)
+- `network/ModNetworking.java` - packets for spell screen + skill sync
+- `command/ModCommands.java` - /setskill, /getskill commands
+- `screen/SpellSlot.java` - slot that only accepts SpellItems
 
-### Phase 3 - Persistent Skill Data
-- Store skill levels per player
-- Save/load with player data
+### Known Issues
+- Mixin for Entity.dropStack shows remap warning (doesn't affect functionality)
+- Drop prevention uses ENTITY_LOAD event instead (works but brief visual flash)
 
-### Phase 4 - Level Up Mechanism
-- XP system for skills
-- Skill progression
-
-## Spell Slots System (WIP)
-
-### Done
-- SpellSlots data attachment class (src/main/java/mugasofer/aerb/spell/SpellSlots.java)
-- Visual 3-slot display in character sheet
-- Tab system to separate Stats page from Spells page
-
-### TODO
-- Click-to-equip functionality
-- Client/server data sync for persistence
-
-### UI Improvements Needed
-- Scrollable skills list (for when there are many skills)
-- NOTE: EntryListWidget doesn't work because its entries use drawTextWithShadow which doesn't render in this screen
-- Need alternative approach: either custom scroll logic with TextWidgets, or figure out why direct drawing fails
+## Next Steps / Ideas
+- Phase 4: XP system for skill progression
+- Link spell availability to skill levels
+- More spells
+- Scrollable skills list if many skills added
 
 ## Stat Formulas
 - PHY = min(POW, SPD, END) + 1
-- Each status effect adds (amplifier + 1) to its stat
+- POW: Strength, Jump Boost effects
+- SPD: Speed, Haste effects
+- END: Regeneration, Resistance effects
