@@ -19,9 +19,9 @@ public class SpellSlotsScreen extends HandledScreen<SpellSlotsScreenHandler> {
     public SpellSlotsScreen(SpellSlotsScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, Text.literal("Spells Known"));
         this.playerInventory = inventory;
-        // Spell slots (3 rows) + hotbar + offhand
-        this.backgroundHeight = 108;
-        this.backgroundWidth = 190;
+        // Spell slots (3 rows) + offhand + hotbar
+        this.backgroundHeight = 122;
+        this.backgroundWidth = 176;
     }
 
     @Override
@@ -69,16 +69,16 @@ public class SpellSlotsScreen extends HandledScreen<SpellSlotsScreenHandler> {
             }
         }
 
-        // Draw offhand slot background (to the right)
-        int offhandX = x + 7 + 9 * 18 + 4;
-        int offhandY = y + 17 + 18;
+        // Draw offhand slot background (centered between spell grid and hotbar)
+        int offhandX = x + 79;
+        int offhandY = y + 75;
         context.fill(offhandX, offhandY, offhandX + 18, offhandY + 18, 0xFF373737);
         context.fill(offhandX + 1, offhandY + 1, offhandX + 17, offhandY + 17, 0xFF8B8B8B);
 
         // Draw hotbar slot backgrounds
         for (int col = 0; col < 9; col++) {
             int slotX = x + 7 + col * 18;
-            int slotY = y + 83;
+            int slotY = y + 97;
             context.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF373737);
             context.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF8B8B8B);
         }
@@ -93,7 +93,7 @@ public class SpellSlotsScreen extends HandledScreen<SpellSlotsScreenHandler> {
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 0x404040, false);
-        // Offhand label
-        context.drawText(this.textRenderer, Text.literal("Off"), 8 + 9 * 18 + 4, 17 + 4, 0x404040, false);
+        // Offhand label (centered above the slot)
+        context.drawText(this.textRenderer, Text.literal("Off"), 82, 66, 0x404040, false);
     }
 }
