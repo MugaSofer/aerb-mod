@@ -42,7 +42,7 @@ public class PhysicalTappingItem extends Item implements SpellItem {
             entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, EFFECT_DURATION, 1));
             entity.addStatusEffect(new StatusEffectInstance(StatusEffects.HASTE, EFFECT_DURATION, 1));
             entity.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, EFFECT_DURATION, 1));
-            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, EFFECT_DURATION, 1));
+            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, EFFECT_DURATION, 0));
 
             entity.playSound(SoundEvents.BLOCK_FIRE_EXTINGUISH, 1.0f, 1.0f);
         }
@@ -69,11 +69,11 @@ public class PhysicalTappingItem extends Item implements SpellItem {
             // Consume the bone
             boneStack.decrement(1);
 
-            // Apply the effects: Speed, Haste, Strength, Regeneration - all level II (amplifier 1)
+            // Apply the effects: Speed II, Haste II, Strength II, Regeneration I
             user.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, EFFECT_DURATION, 1));
             user.addStatusEffect(new StatusEffectInstance(StatusEffects.HASTE, EFFECT_DURATION, 1));
             user.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, EFFECT_DURATION, 1));
-            user.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, EFFECT_DURATION, 1));
+            user.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, EFFECT_DURATION, 0));
 
             // Play a bone-crunching sound
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
