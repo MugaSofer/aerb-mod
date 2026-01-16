@@ -29,8 +29,8 @@ public class SpellSlotsScreenHandler extends ScreenHandler {
             }
         }
 
-        // Offhand spell slot (slot 27) - centered between spell grid and hotbar
-        this.addSlot(new SpellSlot(spellInventory, SpellInventory.OFFHAND_SLOT, 80, 76));
+        // Player offhand slot (slot 27) - uses actual player offhand, only accepts spells
+        this.addSlot(new SpellSlot(playerInventory, 40, 80, 76));
 
         // Player hotbar only (slots 0-8) - no main inventory
         for (int col = 0; col < 9; col++) {

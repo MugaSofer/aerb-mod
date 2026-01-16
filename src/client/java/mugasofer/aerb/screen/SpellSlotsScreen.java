@@ -4,6 +4,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
 
@@ -28,17 +29,37 @@ public class SpellSlotsScreen extends HandledScreen<SpellSlotsScreenHandler> {
     protected void init() {
         super.init();
 
+        // Calculate panel position (using our actual background dimensions)
+        int panelX = (this.width - this.backgroundWidth) / 2;
+        int panelY = (this.height - this.backgroundHeight) / 2;
+
+        // Add title as TextWidget (absolute screen coordinates)
+        int titleWidth = this.textRenderer.getWidth(this.title);
+        this.addDrawableChild(new TextWidget(
+            panelX + (this.backgroundWidth - titleWidth) / 2, panelY + 6,
+            titleWidth, 10, this.title, this.textRenderer));
+
+        // Add offhand label as TextWidget (to the left of the slot)
+        Text offhandLabel = Text.literal("Offhand:");
+        int offhandLabelWidth = this.textRenderer.getWidth(offhandLabel);
+        // Slot is at x=80, y=76 - put label to left, vertically centered with slot
+        this.addDrawableChild(new TextWidget(
+            panelX + 80 - offhandLabelWidth - 4, panelY + 76 + 5,
+            offhandLabelWidth, 10, offhandLabel, this.textRenderer));
+
         // Position tabs to match inventory screen (left of 176-wide panel)
         int tabX = (this.width - 176) / 2 - TAB_WIDTH - 4;
         int tabY = (this.height - 166) / 2;
 
-        // Inventory tab
+        // Inventory tab - must close current handler before switching
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Inv"), button -> {
+            this.close();
             this.client.setScreen(new InventoryScreen(this.playerInventory.player));
         }).dimensions(tabX, tabY, TAB_WIDTH, TAB_HEIGHT).build());
 
-        // Stats tab
+        // Stats tab - must close current handler before switching
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Stats"), button -> {
+            this.close();
             this.client.setScreen(new CharacterSheetScreen(this.playerInventory.player));
         }).dimensions(tabX, tabY + TAB_SPACING, TAB_WIDTH, TAB_HEIGHT).build());
 
@@ -92,8 +113,6 @@ public class SpellSlotsScreen extends HandledScreen<SpellSlotsScreenHandler> {
 
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 0x404040, false);
-        // Offhand label (centered above the slot)
-        context.drawText(this.textRenderer, Text.literal("Off"), 82, 66, 0x404040, false);
+        // Title and labels are handled by TextWidgets added in init()
     }
 }

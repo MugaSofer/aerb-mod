@@ -49,8 +49,7 @@ public class ModItems {
                 .maxCount(1)
                 .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "endurance_tapping"))),
             List.of(
-                new BoneMagicItem.SpellEffect(StatusEffects.REGENERATION, EFFECT_DURATION, 3), // Regeneration IV
-                new BoneMagicItem.SpellEffect(StatusEffects.INSTANT_HEALTH, 1, 1),             // Instant Health II (instant)
+                new BoneMagicItem.SpellEffect(StatusEffects.REGENERATION, EFFECT_DURATION, 1), // Regeneration II (~3 hearts over 6s)
                 new BoneMagicItem.SpellEffect(StatusEffects.RESISTANCE, EFFECT_DURATION, 3),  // Resistance IV
                 new BoneMagicItem.SpellEffect(StatusEffects.SATURATION, 1, 1)                 // Saturation II (instant)
             )
