@@ -11,9 +11,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Stores player skill levels. Skills start at 0 and can be leveled up.
+ * Stores player skill levels. Skills start at -1 (locked) and can be unlocked/leveled up.
+ * A skill at -1 is locked (greyed out in UI). At 0+ the skill is unlocked.
  */
 public class PlayerSkills {
+    public static final int LOCKED = -1;
+
     // Known skill names
     public static final String BLOOD_MAGIC = "blood_magic";
     public static final String BONE_MAGIC = "bone_magic";
@@ -41,17 +44,24 @@ public class PlayerSkills {
     }
 
     /**
-     * Get the level of a skill. Returns 0 if not set.
+     * Get the level of a skill. Returns LOCKED (-1) if not set.
      */
     public int getSkillLevel(String skillName) {
-        return skills.getOrDefault(skillName, 0);
+        return skills.getOrDefault(skillName, LOCKED);
     }
 
     /**
-     * Set the level of a skill.
+     * Check if a skill is unlocked (level >= 0).
+     */
+    public boolean isUnlocked(String skillName) {
+        return getSkillLevel(skillName) >= 0;
+    }
+
+    /**
+     * Set the level of a skill. Minimum is LOCKED (-1).
      */
     public void setSkillLevel(String skillName, int level) {
-        skills.put(skillName, Math.max(0, level));
+        skills.put(skillName, Math.max(LOCKED, level));
     }
 
     /**

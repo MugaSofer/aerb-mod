@@ -140,8 +140,11 @@ public class CharacterSheetScreen extends Screen {
         this.endWidget.setMessage(formatStat("END", BASE_END, end));
 
         // Update skill widgets (from client cache, synced from server)
-        this.bloodMagicWidget.setMessage(Text.literal("Blood Magic: " + ClientSkillCache.getBloodMagic()).withColor(0xAAAAAA));
-        this.boneMagicWidget.setMessage(Text.literal("Bone Magic: " + ClientSkillCache.getBoneMagic()).withColor(0xAAAAAA));
+        // Locked skills (-1) show greyed out, unlocked skills (0+) show level
+        int bloodLevel = ClientSkillCache.getBloodMagic();
+        int boneLevel = ClientSkillCache.getBoneMagic();
+        this.bloodMagicWidget.setMessage(formatSkill("Blood Magic", bloodLevel));
+        this.boneMagicWidget.setMessage(formatSkill("Bone Magic", boneLevel));
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);
@@ -154,6 +157,16 @@ public class CharacterSheetScreen extends Screen {
                 .append(Text.literal(" (+" + (current - base) + ")").withColor(0x55FF55));
         } else {
             return Text.literal(name + ": " + current).withColor(0xAAAAAA);
+        }
+    }
+
+    private Text formatSkill(String name, int level) {
+        if (level < 0) {
+            // Locked - show greyed out
+            return Text.literal(name + ": Locked").withColor(0x555555);
+        } else {
+            // Unlocked - show level
+            return Text.literal(name + ": " + level).withColor(0xAAAAAA);
         }
     }
 
