@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"ExampleMixin",
-		"SlotSpellRestrictionMixin"
+		"SlotSpellRestrictionMixin",
+		"SpellDiscoveryMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

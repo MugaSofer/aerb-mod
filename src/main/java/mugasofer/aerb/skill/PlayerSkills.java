@@ -8,10 +8,15 @@ import mugasofer.aerb.Aerb;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
- * Stores player skill levels. Skills start at -1 (locked) and can be unlocked/leveled up.
+ * Stores player skill levels and discovered spells.
+ * Skills start at -1 (locked) and can be unlocked/leveled up.
  * A skill at -1 is locked (greyed out in UI). At 0+ the skill is unlocked.
  */
 public class PlayerSkills {
@@ -23,7 +28,8 @@ public class PlayerSkills {
 
     public static final Codec<PlayerSkills> CODEC = RecordCodecBuilder.create(instance ->
         instance.group(
-            Codec.unboundedMap(Codec.STRING, Codec.INT).fieldOf("skills").forGetter(ps -> ps.skills)
+            Codec.unboundedMap(Codec.STRING, Codec.INT).fieldOf("skills").forGetter(ps -> ps.skills),
+            Codec.STRING.listOf().fieldOf("discovered_spells").orElse(new ArrayList<>()).forGetter(ps -> new ArrayList<>(ps.discoveredSpells))
         ).apply(instance, PlayerSkills::new)
     );
 
@@ -33,14 +39,17 @@ public class PlayerSkills {
         .buildAndRegister(Identifier.of(Aerb.MOD_ID, "player_skills"));
 
     private final Map<String, Integer> skills;
+    private final Set<String> discoveredSpells;
 
     public PlayerSkills() {
         this.skills = new HashMap<>();
+        this.discoveredSpells = new HashSet<>();
     }
 
     // Constructor for deserialization
-    private PlayerSkills(Map<String, Integer> skills) {
+    private PlayerSkills(Map<String, Integer> skills, List<String> discoveredSpells) {
         this.skills = new HashMap<>(skills);
+        this.discoveredSpells = new HashSet<>(discoveredSpells);
     }
 
     /**
@@ -77,6 +86,20 @@ public class PlayerSkills {
      */
     public Map<String, Integer> getAllSkills() {
         return new HashMap<>(skills);
+    }
+
+    /**
+     * Check if a spell has been discovered before.
+     */
+    public boolean hasDiscoveredSpell(String spellId) {
+        return discoveredSpells.contains(spellId);
+    }
+
+    /**
+     * Mark a spell as discovered. Returns true if this is a new discovery.
+     */
+    public boolean discoverSpell(String spellId) {
+        return discoveredSpells.add(spellId);
     }
 
     public static void init() {

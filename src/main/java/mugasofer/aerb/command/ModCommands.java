@@ -99,14 +99,21 @@ public class ModCommands {
      * Grant spells when skills reach certain thresholds.
      */
     private static void checkSpellUnlocks(ServerPlayerEntity player, String skill, int level) {
-        // Blood Magic 0 → Aarde's Touch
-        if (skill.equals(PlayerSkills.BLOOD_MAGIC) && level >= 0) {
-            grantSpellIfMissing(player, ModItems.AARDES_TOUCH, "Aarde's Touch");
+        // Blood Magic unlocks
+        if (skill.equals(PlayerSkills.BLOOD_MAGIC)) {
+            if (level >= 0) grantSpellIfMissing(player, ModItems.AARDES_TOUCH, "Aarde's Touch");
+            if (level >= 2) grantSpellIfMissing(player, ModItems.CRIMSON_FIST, "Crimson Fist");
+            if (level >= 5) grantSpellIfMissing(player, ModItems.SANGUINE_SURGE, "Sanguine Surge");
         }
 
-        // Bone Magic 0 → Physical Tapping
-        if (skill.equals(PlayerSkills.BONE_MAGIC) && level >= 0) {
-            grantSpellIfMissing(player, ModItems.PHYSICAL_TAPPING, "Physical Tapping");
+        // Bone Magic unlocks
+        if (skill.equals(PlayerSkills.BONE_MAGIC)) {
+            if (level >= 0) grantSpellIfMissing(player, ModItems.PHYSICAL_TAPPING, "Physical Tapping");
+            if (level >= 10) {
+                grantSpellIfMissing(player, ModItems.POWER_TAPPING, "Power Tapping");
+                grantSpellIfMissing(player, ModItems.SPEED_TAPPING, "Speed Tapping");
+                grantSpellIfMissing(player, ModItems.ENDURANCE_TAPPING, "Endurance Tapping");
+            }
         }
     }
 
@@ -115,6 +122,7 @@ public class ModCommands {
      */
     private static void grantSpellIfMissing(ServerPlayerEntity player, Item spell, String spellName) {
         SpellInventory spellInv = player.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+        String spellId = net.minecraft.registry.Registries.ITEM.getId(spell).toString();
 
         // Check if player already has this spell
         for (int i = 0; i < spellInv.size(); i++) {
@@ -137,7 +145,7 @@ public class ModCommands {
         for (int i = 0; i < SpellInventory.MAIN_SLOTS; i++) {
             if (spellInv.getStack(i).isEmpty()) {
                 spellInv.setStack(i, new ItemStack(spell));
-                player.sendMessage(Text.literal("Learned: " + spellName), false);
+                sendDiscoveryMessage(player, spellId, spellName);
                 return;
             }
         }
@@ -146,7 +154,17 @@ public class ModCommands {
         if (!player.giveItemStack(new ItemStack(spell))) {
             player.sendMessage(Text.literal("No room for " + spellName + "!"), false);
         } else {
-            player.sendMessage(Text.literal("Learned: " + spellName), false);
+            sendDiscoveryMessage(player, spellId, spellName);
+        }
+    }
+
+    /**
+     * Send discovery message if this is a new spell discovery.
+     */
+    public static void sendDiscoveryMessage(ServerPlayerEntity player, String spellId, String spellName) {
+        PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+        if (skills.discoverSpell(spellId)) {
+            player.sendMessage(Text.literal("Spell discovered: " + spellName + "!"), false);
         }
     }
 }
