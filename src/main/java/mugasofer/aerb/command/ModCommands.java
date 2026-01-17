@@ -15,7 +15,22 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ModCommands {
+    // Map of spell names to items for commands
+    private static final Map<String, Item> SPELLS = new HashMap<>();
+
+    static {
+        SPELLS.put("aardes_touch", ModItems.AARDES_TOUCH);
+        SPELLS.put("crimson_fist", ModItems.CRIMSON_FIST);
+        SPELLS.put("sanguine_surge", ModItems.SANGUINE_SURGE);
+        SPELLS.put("physical_tapping", ModItems.PHYSICAL_TAPPING);
+        SPELLS.put("power_tapping", ModItems.POWER_TAPPING);
+        SPELLS.put("speed_tapping", ModItems.SPEED_TAPPING);
+        SPELLS.put("endurance_tapping", ModItems.ENDURANCE_TAPPING);
+    }
     public static void init() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             // /setskill <skill> <level> - set your own skill
@@ -78,6 +93,68 @@ public class ModCommands {
                         source.sendFeedback(() -> Text.literal(skill + " is at level " + level), false);
                         return level;
                     })
+                )
+            );
+
+            // /givespell <spell> - give yourself a spell
+            // /givespell <player> <spell> - give a player a spell
+            dispatcher.register(CommandManager.literal("givespell")
+                .then(CommandManager.argument("spell", StringArgumentType.word())
+                    .suggests((context, builder) -> {
+                        SPELLS.keySet().forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        ServerPlayerEntity player = source.getPlayerOrThrow();
+                        String spellName = StringArgumentType.getString(context, "spell");
+                        return giveSpell(source, player, spellName);
+                    })
+                )
+                .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(CommandManager.argument("spell2", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            SPELLS.keySet().forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                            String spellName = StringArgumentType.getString(context, "spell2");
+                            return giveSpell(source, target, spellName);
+                        })
+                    )
+                )
+            );
+
+            // /takespell <spell> - remove a spell from yourself
+            // /takespell <player> <spell> - remove a spell from a player
+            dispatcher.register(CommandManager.literal("takespell")
+                .then(CommandManager.argument("spell", StringArgumentType.word())
+                    .suggests((context, builder) -> {
+                        SPELLS.keySet().forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        ServerPlayerEntity player = source.getPlayerOrThrow();
+                        String spellName = StringArgumentType.getString(context, "spell");
+                        return takeSpell(source, player, spellName);
+                    })
+                )
+                .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(CommandManager.argument("spell2", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            SPELLS.keySet().forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                            String spellName = StringArgumentType.getString(context, "spell2");
+                            return takeSpell(source, target, spellName);
+                        })
+                    )
                 )
             );
         });
@@ -166,5 +243,80 @@ public class ModCommands {
         if (skills.discoverSpell(spellId)) {
             player.sendMessage(Text.literal("Spell discovered: " + spellName + "!"), false);
         }
+    }
+
+    /**
+     * Give a spell to a player via command.
+     */
+    private static int giveSpell(ServerCommandSource source, ServerPlayerEntity target, String spellName) {
+        Item spell = SPELLS.get(spellName);
+        if (spell == null) {
+            source.sendError(Text.literal("Unknown spell: " + spellName));
+            return 0;
+        }
+
+        SpellInventory spellInv = target.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+        String spellId = net.minecraft.registry.Registries.ITEM.getId(spell).toString();
+
+        // Find empty slot in spell inventory
+        for (int i = 0; i < SpellInventory.MAIN_SLOTS; i++) {
+            if (spellInv.getStack(i).isEmpty()) {
+                spellInv.setStack(i, new ItemStack(spell));
+                sendDiscoveryMessage(target, spellId, spellName);
+                source.sendFeedback(() -> Text.literal("Gave " + spellName + " to " + target.getName().getString()), true);
+                return 1;
+            }
+        }
+
+        // Try hotbar if spell inventory is full
+        if (target.giveItemStack(new ItemStack(spell))) {
+            sendDiscoveryMessage(target, spellId, spellName);
+            source.sendFeedback(() -> Text.literal("Gave " + spellName + " to " + target.getName().getString()), true);
+            return 1;
+        }
+
+        source.sendError(Text.literal(target.getName().getString() + " has no room for " + spellName));
+        return 0;
+    }
+
+    /**
+     * Remove a spell from a player via command.
+     */
+    private static int takeSpell(ServerCommandSource source, ServerPlayerEntity target, String spellName) {
+        Item spell = SPELLS.get(spellName);
+        if (spell == null) {
+            source.sendError(Text.literal("Unknown spell: " + spellName));
+            return 0;
+        }
+
+        SpellInventory spellInv = target.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+
+        // Check spell inventory
+        for (int i = 0; i < spellInv.size(); i++) {
+            if (spellInv.getStack(i).isOf(spell)) {
+                spellInv.setStack(i, ItemStack.EMPTY);
+                source.sendFeedback(() -> Text.literal("Took " + spellName + " from " + target.getName().getString()), true);
+                return 1;
+            }
+        }
+
+        // Check hotbar
+        for (int i = 0; i < 9; i++) {
+            if (target.getInventory().getStack(i).isOf(spell)) {
+                target.getInventory().setStack(i, ItemStack.EMPTY);
+                source.sendFeedback(() -> Text.literal("Took " + spellName + " from " + target.getName().getString()), true);
+                return 1;
+            }
+        }
+
+        // Check offhand
+        if (target.getOffHandStack().isOf(spell)) {
+            target.getInventory().setStack(40, ItemStack.EMPTY);
+            source.sendFeedback(() -> Text.literal("Took " + spellName + " from " + target.getName().getString()), true);
+            return 1;
+        }
+
+        source.sendError(Text.literal(target.getName().getString() + " doesn't have " + spellName));
+        return 0;
     }
 }
