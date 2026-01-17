@@ -60,9 +60,22 @@ Active buffs show as green bonuses (e.g., "POW: 2 (+2)")
 - Shows all skills with current level
 - Locked skills appear greyed out
 
+### Virtues System
+
+Blade-bound abilities (virtues) have their own inventory, similar to spells. Access via the **Virtues** tab. Virtues can only be stored in:
+- The **Virtue Inventory** (27 slots, accessed via Virtues tab)
+- Your **hotbar** (9 slots)
+- Your **offhand**
+
 ### Navigation
 
-All screens (Inventory, Stats, Spells) have navigation tabs on the left side for easy switching.
+All screens (Inventory, Stats, Spells, Virtues) have navigation tabs on the left side for easy switching.
+
+## Known Issues
+
+- **Mouse briefly flickers to center** when switching between Spells and Virtues tabs (restores immediately)
+- Mixin for Entity.dropStack shows remap warning (doesn't affect functionality)
+- Getting spells from creative inventory doesn't trigger discovery message
 
 ## Commands
 

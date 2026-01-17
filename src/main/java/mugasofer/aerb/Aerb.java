@@ -7,6 +7,7 @@ import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -39,6 +40,7 @@ public class Aerb implements ModInitializer {
 		LOGGER.info("Hello Fabric world!");
 		ModItems.initialize();
 		SpellInventory.init();
+		VirtueInventory.init();
 		PlayerSkills.init();
 		ModScreenHandlers.init();
 		ModNetworking.init();

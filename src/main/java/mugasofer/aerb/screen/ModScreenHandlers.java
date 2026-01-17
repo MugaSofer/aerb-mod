@@ -15,6 +15,13 @@ public class ModScreenHandlers {
             new ScreenHandlerType<>(SpellSlotsScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
         );
 
+    public static final ScreenHandlerType<VirtuesScreenHandler> VIRTUES_SCREEN_HANDLER =
+        Registry.register(
+            Registries.SCREEN_HANDLER,
+            Identifier.of(Aerb.MOD_ID, "virtues"),
+            new ScreenHandlerType<>(VirtuesScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
+        );
+
     public static void init() {
         Aerb.LOGGER.info("Registering screen handlers for " + Aerb.MOD_ID);
     }

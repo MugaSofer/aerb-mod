@@ -114,6 +114,11 @@ public class CharacterSheetScreen extends Screen {
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Spells"), button -> {
             ClientPlayNetworking.send(new ModNetworking.OpenSpellInventoryPayload());
         }).dimensions(tabX, tabY + TAB_SPACING * 2, TAB_WIDTH, TAB_HEIGHT).build());
+
+        // Virtues tab
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Virtues"), button -> {
+            ClientPlayNetworking.send(new ModNetworking.OpenVirtueInventoryPayload());
+        }).dimensions(tabX, tabY + TAB_SPACING * 3, TAB_WIDTH, TAB_HEIGHT).build());
     }
 
     @Override

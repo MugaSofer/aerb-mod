@@ -4,6 +4,7 @@ import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.screen.SpellSlotsScreen;
+import mugasofer.aerb.screen.VirtuesScreen;
 import mugasofer.aerb.skill.ClientSkillCache;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -17,8 +18,9 @@ import net.minecraft.text.Text;
 public class AerbClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		// Register spell slots screen
+		// Register screens
 		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
+		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
 
 		// Register client-side handler for skill sync
 		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SyncSkillsPayload.ID, (payload, context) -> {
@@ -55,6 +57,12 @@ public class AerbClient implements ClientModInitializer {
 					ClientPlayNetworking.send(new ModNetworking.OpenSpellInventoryPayload());
 				}).dimensions(tabX, tabY + tabSpacing * 2, tabWidth, tabHeight).build();
 				Screens.getButtons(inventoryScreen).add(spellsTab);
+
+				// Virtues tab - sends packet to server to open the screen
+				ButtonWidget virtuesTab = ButtonWidget.builder(Text.literal("Virtues"), button -> {
+					ClientPlayNetworking.send(new ModNetworking.OpenVirtueInventoryPayload());
+				}).dimensions(tabX, tabY + tabSpacing * 3, tabWidth, tabHeight).build();
+				Screens.getButtons(inventoryScreen).add(virtuesTab);
 			}
 		});
 	}
