@@ -62,17 +62,20 @@ Active buffs show as green bonuses (e.g., "POW: 2 (+2)")
 
 ### Virtues System
 
-Skill-granted abilities (virtues) have their own inventory, similar to spells. Access via the **Virtues** tab. Virtues can only be stored in:
-- The **Virtue Inventory** (27 slots, accessed via Virtues tab)
-- Your **hotbar** (9 slots)
-- Your **offhand**
+Skill-granted abilities (virtues) have their own inventory, similar to spells. Access via the **Virtues** tab.
+
+Virtues come in two types:
+- **Active virtues** can be stored in virtue inventory, hotbar, or offhand
+- **Passive virtues** (marked "Passive" in tooltip) can only be stored in the virtue inventory
+
+When you obtain a new virtue for the first time, you'll see "New Virtue: [name]!"
 
 ### Virtues
 
 **Blood Magic Virtues:**
-| Virtue | Unlock Level | Effect |
-|--------|--------------|--------|
-| Hypertension | Blood Magic 20 | Doubles max HP (10 → 20 hearts). Take extra damage while above 50% HP based on damage type. |
+| Virtue | Unlock Level | Type | Effect |
+|--------|--------------|------|--------|
+| Hypertension | Blood Magic 20 | Passive | Doubles max HP (10 → 20 hearts). Take extra damage while above 50% HP based on damage type. |
 
 **Hypertension Damage Multipliers:**
 - Pointy damage (arrow, cactus, thorns): 1.25x
@@ -84,6 +87,15 @@ These multipliers are configurable in `config/aerb_hypertension.json`.
 ### Navigation
 
 All screens (Inventory, Stats, Spells, Virtues) have navigation tabs on the left side for easy switching.
+
+### Death Persistence
+
+Spells, virtues, and skills are **preserved on death**. When you respawn:
+- All spells remain in your spell inventory and hotbar
+- All virtues remain in your virtue inventory
+- All skill levels and discoveries are kept
+
+Spells and virtues cannot be dropped - they automatically return to you.
 
 ## Known Issues
 
