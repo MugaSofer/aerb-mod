@@ -1,6 +1,6 @@
 # Aerb Mod
 
-A Minecraft Fabric mod (1.21.11) inspired by "Worth the Candle". Adds magic systems, skills, and a custom spell inventory.
+A Minecraft Fabric mod (1.21.11) inspired by "Worth the Candle" by Alexander Wales. Adds magic systems and skills from Aerb, the setting of Worth the Candle.
 
 ## Features
 
@@ -62,10 +62,24 @@ Active buffs show as green bonuses (e.g., "POW: 2 (+2)")
 
 ### Virtues System
 
-Blade-bound abilities (virtues) have their own inventory, similar to spells. Access via the **Virtues** tab. Virtues can only be stored in:
+Skill-granted abilities (virtues) have their own inventory, similar to spells. Access via the **Virtues** tab. Virtues can only be stored in:
 - The **Virtue Inventory** (27 slots, accessed via Virtues tab)
 - Your **hotbar** (9 slots)
 - Your **offhand**
+
+### Virtues
+
+**Blood Magic Virtues:**
+| Virtue | Unlock Level | Effect |
+|--------|--------------|--------|
+| Hypertension | Blood Magic 20 | Doubles max HP (10 → 20 hearts). Take extra damage while above 50% HP based on damage type. |
+
+**Hypertension Damage Multipliers:**
+- Pointy damage (arrow, cactus, thorns): 1.25x
+- Blunt damage (fall, mob attack): 1.5x
+- Other damage (fire, magic, drowning): 2.0x
+
+These multipliers are configurable in `config/aerb_hypertension.json`.
 
 ### Navigation
 
@@ -97,6 +111,16 @@ All commands support tab-completion.
 ```
 
 **Spell names:** `aardes_touch`, `crimson_fist`, `sanguine_surge`, `physical_tapping`, `power_tapping`, `speed_tapping`, `endurance_tapping`
+
+### Virtue Commands
+```
+/givevirtue <virtue>                - Give yourself a virtue
+/givevirtue <player> <virtue>       - Give a player a virtue
+/takevirtue <virtue>                - Remove a virtue from yourself
+/takevirtue <player> <virtue>       - Remove a virtue from a player
+```
+
+**Virtue names:** `hypertension`
 
 ## Quick Start
 

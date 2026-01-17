@@ -1,12 +1,14 @@
 package mugasofer.aerb;
 
 import mugasofer.aerb.command.ModCommands;
+import mugasofer.aerb.config.HypertensionConfig;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.SpellItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.virtue.VirtueEffects;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
@@ -38,9 +40,11 @@ public class Aerb implements ModInitializer {
 		// Proceed with mild caution.
 
 		LOGGER.info("Hello Fabric world!");
+		HypertensionConfig.load();
 		ModItems.initialize();
 		SpellInventory.init();
 		VirtueInventory.init();
+		VirtueEffects.init();
 		PlayerSkills.init();
 		ModScreenHandlers.init();
 		ModNetworking.init();

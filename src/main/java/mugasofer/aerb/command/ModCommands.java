@@ -6,6 +6,7 @@ import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.item.Item;
@@ -21,6 +22,8 @@ import java.util.Map;
 public class ModCommands {
     // Map of spell names to items for commands
     private static final Map<String, Item> SPELLS = new HashMap<>();
+    // Map of virtue names to items for commands
+    private static final Map<String, Item> VIRTUES = new HashMap<>();
 
     static {
         SPELLS.put("aardes_touch", ModItems.AARDES_TOUCH);
@@ -30,6 +33,8 @@ public class ModCommands {
         SPELLS.put("power_tapping", ModItems.POWER_TAPPING);
         SPELLS.put("speed_tapping", ModItems.SPEED_TAPPING);
         SPELLS.put("endurance_tapping", ModItems.ENDURANCE_TAPPING);
+
+        VIRTUES.put("hypertension", ModItems.HYPERTENSION);
     }
     public static void init() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -157,6 +162,68 @@ public class ModCommands {
                     )
                 )
             );
+
+            // /givevirtue <virtue> - give yourself a virtue
+            // /givevirtue <player> <virtue> - give a player a virtue
+            dispatcher.register(CommandManager.literal("givevirtue")
+                .then(CommandManager.argument("virtue", StringArgumentType.word())
+                    .suggests((context, builder) -> {
+                        VIRTUES.keySet().forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        ServerPlayerEntity player = source.getPlayerOrThrow();
+                        String virtueName = StringArgumentType.getString(context, "virtue");
+                        return giveVirtue(source, player, virtueName);
+                    })
+                )
+                .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(CommandManager.argument("virtue2", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            VIRTUES.keySet().forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                            String virtueName = StringArgumentType.getString(context, "virtue2");
+                            return giveVirtue(source, target, virtueName);
+                        })
+                    )
+                )
+            );
+
+            // /takevirtue <virtue> - remove a virtue from yourself
+            // /takevirtue <player> <virtue> - remove a virtue from a player
+            dispatcher.register(CommandManager.literal("takevirtue")
+                .then(CommandManager.argument("virtue", StringArgumentType.word())
+                    .suggests((context, builder) -> {
+                        VIRTUES.keySet().forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        ServerPlayerEntity player = source.getPlayerOrThrow();
+                        String virtueName = StringArgumentType.getString(context, "virtue");
+                        return takeVirtue(source, player, virtueName);
+                    })
+                )
+                .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(CommandManager.argument("virtue2", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            VIRTUES.keySet().forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                            String virtueName = StringArgumentType.getString(context, "virtue2");
+                            return takeVirtue(source, target, virtueName);
+                        })
+                    )
+                )
+            );
         });
     }
 
@@ -165,8 +232,9 @@ public class ModCommands {
         skills.setSkillLevel(skill, level);
         ModNetworking.syncSkillsToClient(target);
 
-        // Check for spell unlocks
+        // Check for spell and virtue unlocks
         checkSpellUnlocks(target, skill, level);
+        checkVirtueUnlocks(target, skill, level);
 
         source.sendFeedback(() -> Text.literal("Set " + target.getName().getString() + "'s " + skill + " to level " + level), true);
         return 1;
@@ -236,12 +304,73 @@ public class ModCommands {
     }
 
     /**
+     * Grant virtues when skills reach certain thresholds.
+     */
+    private static void checkVirtueUnlocks(ServerPlayerEntity player, String skill, int level) {
+        // Blood Magic virtue unlocks
+        if (skill.equals(PlayerSkills.BLOOD_MAGIC)) {
+            if (level >= 20) grantVirtueIfMissing(player, ModItems.HYPERTENSION, "Hypertension");
+        }
+    }
+
+    /**
+     * Add a virtue to the player's virtue inventory if they don't already have it.
+     */
+    private static void grantVirtueIfMissing(ServerPlayerEntity player, Item virtue, String virtueName) {
+        VirtueInventory virtueInv = player.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+        String virtueId = net.minecraft.registry.Registries.ITEM.getId(virtue).toString();
+
+        // Check if player already has this virtue
+        for (int i = 0; i < virtueInv.size(); i++) {
+            if (virtueInv.getStack(i).isOf(virtue)) {
+                return; // Already has it
+            }
+        }
+
+        // Also check hotbar and offhand
+        for (int i = 0; i < 9; i++) {
+            if (player.getInventory().getStack(i).isOf(virtue)) {
+                return; // Already has it in hotbar
+            }
+        }
+        if (player.getOffHandStack().isOf(virtue)) {
+            return; // Already has it in offhand
+        }
+
+        // Find empty slot in virtue inventory and add the virtue
+        for (int i = 0; i < VirtueInventory.TOTAL_SLOTS; i++) {
+            if (virtueInv.getStack(i).isEmpty()) {
+                virtueInv.setStack(i, new ItemStack(virtue));
+                sendVirtueDiscoveryMessage(player, virtueId, virtueName);
+                return;
+            }
+        }
+
+        // If virtue inventory is full, try to give directly
+        if (!player.giveItemStack(new ItemStack(virtue))) {
+            player.sendMessage(Text.literal("No room for " + virtueName + "!"), false);
+        } else {
+            sendVirtueDiscoveryMessage(player, virtueId, virtueName);
+        }
+    }
+
+    /**
      * Send discovery message if this is a new spell discovery.
      */
     public static void sendDiscoveryMessage(ServerPlayerEntity player, String spellId, String spellName) {
         PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
         if (skills.discoverSpell(spellId)) {
             player.sendMessage(Text.literal("Spell discovered: " + spellName + "!"), false);
+        }
+    }
+
+    /**
+     * Send discovery message for virtues.
+     */
+    public static void sendVirtueDiscoveryMessage(ServerPlayerEntity player, String virtueId, String virtueName) {
+        PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+        if (skills.discoverSpell(virtueId)) { // Reuse spell discovery tracking for virtues
+            player.sendMessage(Text.literal("Virtue discovered: " + virtueName + "!"), false);
         }
     }
 
@@ -321,6 +450,85 @@ public class ModCommands {
         }
 
         source.sendError(Text.literal(target.getName().getString() + " doesn't have " + spellName));
+        return 0;
+    }
+
+    /**
+     * Give a virtue to a player via command.
+     */
+    private static int giveVirtue(ServerCommandSource source, ServerPlayerEntity target, String virtueName) {
+        Item virtue = VIRTUES.get(virtueName);
+        if (virtue == null) {
+            source.sendError(Text.literal("Unknown virtue: " + virtueName));
+            return 0;
+        }
+
+        VirtueInventory virtueInv = target.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+        String virtueId = net.minecraft.registry.Registries.ITEM.getId(virtue).toString();
+
+        // Find empty slot in virtue inventory
+        for (int i = 0; i < VirtueInventory.TOTAL_SLOTS; i++) {
+            if (virtueInv.getStack(i).isEmpty()) {
+                virtueInv.setStack(i, new ItemStack(virtue));
+                sendVirtueDiscoveryMessage(target, virtueId, virtueName);
+                source.sendFeedback(() -> Text.literal("Gave " + virtueName + " to " + target.getName().getString()), true);
+                return 1;
+            }
+        }
+
+        // Try hotbar if virtue inventory is full
+        if (target.giveItemStack(new ItemStack(virtue))) {
+            sendVirtueDiscoveryMessage(target, virtueId, virtueName);
+            source.sendFeedback(() -> Text.literal("Gave " + virtueName + " to " + target.getName().getString()), true);
+            return 1;
+        }
+
+        source.sendError(Text.literal(target.getName().getString() + " has no room for " + virtueName));
+        return 0;
+    }
+
+    /**
+     * Remove a virtue from a player via command. Also removes from discovered list.
+     */
+    private static int takeVirtue(ServerCommandSource source, ServerPlayerEntity target, String virtueName) {
+        Item virtue = VIRTUES.get(virtueName);
+        if (virtue == null) {
+            source.sendError(Text.literal("Unknown virtue: " + virtueName));
+            return 0;
+        }
+
+        VirtueInventory virtueInv = target.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+        String virtueId = net.minecraft.registry.Registries.ITEM.getId(virtue).toString();
+
+        // Check virtue inventory
+        for (int i = 0; i < virtueInv.size(); i++) {
+            if (virtueInv.getStack(i).isOf(virtue)) {
+                virtueInv.setStack(i, ItemStack.EMPTY);
+                target.getAttachedOrCreate(PlayerSkills.ATTACHMENT).forgetSpell(virtueId);
+                source.sendFeedback(() -> Text.literal("Took " + virtueName + " from " + target.getName().getString()), true);
+                return 1;
+            }
+        }
+
+        // Check hotbar
+        for (int i = 0; i < 9; i++) {
+            if (target.getInventory().getStack(i).isOf(virtue)) {
+                target.getInventory().setStack(i, ItemStack.EMPTY);
+                target.getAttachedOrCreate(PlayerSkills.ATTACHMENT).forgetSpell(virtueId);
+                source.sendFeedback(() -> Text.literal("Took " + virtueName + " from " + target.getName().getString()), true);
+                return 1;
+            }
+        }
+
+        // Check offhand
+        if (target.getOffHandStack().isOf(virtue)) {
+            target.getInventory().setStack(40, ItemStack.EMPTY);
+            target.getAttachedOrCreate(PlayerSkills.ATTACHMENT).forgetSpell(virtueId);
+            source.sendFeedback(() -> Text.literal("Took " + virtueName + " from " + target.getName().getString()), true);
+            return 1;
+        }
+
+        source.sendError(Text.literal(target.getName().getString() + " doesn't have " + virtueName));
         return 0;
     }
 }

@@ -81,6 +81,12 @@ public class ModItems {
             )
         ));
 
+    // Virtues (Blade-bound)
+    public static final Item HYPERTENSION = register("hypertension",
+        new HypertensionItem(new Item.Settings()
+            .maxCount(1)
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "hypertension")))));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -90,6 +96,7 @@ public class ModItems {
 
         // Add to the Tools item group in creative menu
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(entries -> {
+            // Spells
             entries.add(PHYSICAL_TAPPING);
             entries.add(POWER_TAPPING);
             entries.add(SPEED_TAPPING);
@@ -97,6 +104,8 @@ public class ModItems {
             entries.add(AARDES_TOUCH);
             entries.add(CRIMSON_FIST);
             entries.add(SANGUINE_SURGE);
+            // Virtues
+            entries.add(HYPERTENSION);
         });
     }
 }
