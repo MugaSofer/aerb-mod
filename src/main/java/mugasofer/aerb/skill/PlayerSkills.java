@@ -102,6 +102,13 @@ public class PlayerSkills {
         return discoveredSpells.add(spellId);
     }
 
+    /**
+     * Remove a spell from discovered list (for /takespell command).
+     */
+    public void forgetSpell(String spellId) {
+        discoveredSpells.remove(spellId);
+    }
+
     public static void init() {
         // Force class loading to register the attachment
     }

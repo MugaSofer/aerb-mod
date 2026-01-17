@@ -1,4 +1,4 @@
-# AERB Mod
+# Aerb Mod
 
 A Minecraft Fabric mod (1.21.11) inspired by "Worth the Candle". Adds magic systems, skills, and a custom spell inventory.
 
@@ -9,7 +9,7 @@ A Minecraft Fabric mod (1.21.11) inspired by "Worth the Candle". Adds magic syst
 Players have skills that start **locked** (-1) and can be unlocked and leveled up. View your skills in the **Stats** tab (accessible from inventory).
 
 **Current Skills:**
-- **Blood Magic** - Magic powered by blood sacrifice
+- **Blood Magic** - Magic powered by your pumping blood
 - **Bone Magic** - Magic using bones as a catalyst
 
 Skills show as "Locked" in grey until unlocked. Use `/setskill` to unlock and level skills.
@@ -28,7 +28,7 @@ Spells cannot be dropped - they automatically return to you. They cannot be plac
 **Blood Magic Spells:**
 | Spell | Unlock Level | Effect |
 |-------|--------------|--------|
-| Aarde's Touch | Blood Magic 0 | Heals touched entity, damages caster |
+| Aarde's Touch | Blood Magic 0 | Glowing flame, can light things on fire |
 | Crimson Fist | Blood Magic 2 | Strength IV buff (costs health) |
 | Sanguine Surge | Blood Magic 5 | Jump Boost IV buff (costs health) |
 
@@ -79,8 +79,8 @@ All commands support tab-completion.
 ```
 /givespell <spell>                  - Give yourself a spell
 /givespell <player> <spell>         - Give a player a spell
-/takespell <spell>                  - Remove a spell from yourself
-/takespell <player> <spell>         - Remove a spell from a player
+/takespell <spell>                  - Remove a known spell from yourself
+/takespell <player> <spell>         - Remove a known spell from a player
 ```
 
 **Spell names:** `aardes_touch`, `crimson_fist`, `sanguine_surge`, `physical_tapping`, `power_tapping`, `speed_tapping`, `endurance_tapping`

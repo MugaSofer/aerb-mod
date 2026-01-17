@@ -280,7 +280,7 @@ public class ModCommands {
     }
 
     /**
-     * Remove a spell from a player via command.
+     * Remove a spell from a player via command. Also removes from discovered list.
      */
     private static int takeSpell(ServerCommandSource source, ServerPlayerEntity target, String spellName) {
         Item spell = SPELLS.get(spellName);
@@ -290,11 +290,13 @@ public class ModCommands {
         }
 
         SpellInventory spellInv = target.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+        String spellId = net.minecraft.registry.Registries.ITEM.getId(spell).toString();
 
         // Check spell inventory
         for (int i = 0; i < spellInv.size(); i++) {
             if (spellInv.getStack(i).isOf(spell)) {
                 spellInv.setStack(i, ItemStack.EMPTY);
+                target.getAttachedOrCreate(PlayerSkills.ATTACHMENT).forgetSpell(spellId);
                 source.sendFeedback(() -> Text.literal("Took " + spellName + " from " + target.getName().getString()), true);
                 return 1;
             }
@@ -304,6 +306,7 @@ public class ModCommands {
         for (int i = 0; i < 9; i++) {
             if (target.getInventory().getStack(i).isOf(spell)) {
                 target.getInventory().setStack(i, ItemStack.EMPTY);
+                target.getAttachedOrCreate(PlayerSkills.ATTACHMENT).forgetSpell(spellId);
                 source.sendFeedback(() -> Text.literal("Took " + spellName + " from " + target.getName().getString()), true);
                 return 1;
             }
@@ -312,6 +315,7 @@ public class ModCommands {
         // Check offhand
         if (target.getOffHandStack().isOf(spell)) {
             target.getInventory().setStack(40, ItemStack.EMPTY);
+            target.getAttachedOrCreate(PlayerSkills.ATTACHMENT).forgetSpell(spellId);
             source.sendFeedback(() -> Text.literal("Took " + spellName + " from " + target.getName().getString()), true);
             return 1;
         }

@@ -22,13 +22,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class AardesTouchItem extends Item implements SpellItem {
     private static final int LIGHT_LEVEL = 14; // Slightly less than max (15) for torch-like feel
     private static final int FREEZE_INTERVAL = 30; // Add 1 frozen tick every 30 game ticks (slower than powder snow)
-    private static final HashMap<UUID, BlockPos> playerLightPositions = new HashMap<>();
+    // Track multiple light positions per player (feet and torso)
+    private static final HashMap<UUID, List<BlockPos>> playerLightPositions = new HashMap<>();
     private static boolean eventRegistered = false;
 
     public AardesTouchItem(Settings settings) {
@@ -52,20 +55,34 @@ public class AardesTouchItem extends Item implements SpellItem {
 
                 if (holdingTouch) {
                     // === Dynamic Light ===
-                    BlockPos oldPos = playerLightPositions.get(playerId);
+                    BlockPos feetPos = currentPos;
+                    BlockPos torsoPos = currentPos.up(); // One block above feet
+                    List<BlockPos> oldPositions = playerLightPositions.get(playerId);
 
                     // Only update if position changed or no light placed yet
-                    if (oldPos == null || !oldPos.equals(currentPos)) {
-                        // Remove old light block
-                        if (oldPos != null) {
-                            removeLightBlock(world, oldPos);
+                    if (oldPositions == null || oldPositions.isEmpty() || !oldPositions.contains(feetPos)) {
+                        // Remove old light blocks
+                        if (oldPositions != null) {
+                            for (BlockPos oldPos : oldPositions) {
+                                removeLightBlock(world, oldPos);
+                            }
                         }
 
-                        // Place new light block if the space is air
-                        if (world.getBlockState(currentPos).isAir()) {
-                            world.setBlockState(currentPos,
+                        // Place new light blocks at feet and torso if spaces are air
+                        List<BlockPos> newPositions = new ArrayList<>();
+                        if (world.getBlockState(feetPos).isAir()) {
+                            world.setBlockState(feetPos,
                                 Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, LIGHT_LEVEL));
-                            playerLightPositions.put(playerId, currentPos);
+                            newPositions.add(feetPos);
+                        }
+                        if (world.getBlockState(torsoPos).isAir()) {
+                            world.setBlockState(torsoPos,
+                                Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, LIGHT_LEVEL));
+                            newPositions.add(torsoPos);
+                        }
+
+                        if (!newPositions.isEmpty()) {
+                            playerLightPositions.put(playerId, newPositions);
                         } else {
                             playerLightPositions.remove(playerId);
                         }
@@ -82,10 +99,12 @@ public class AardesTouchItem extends Item implements SpellItem {
                         player.setFrozenTicks(Math.min(maxFrozen, currentFrozen + 1));
                     }
                 } else {
-                    // Not holding - remove any existing light
-                    BlockPos oldPos = playerLightPositions.remove(playerId);
-                    if (oldPos != null) {
-                        removeLightBlock(world, oldPos);
+                    // Not holding - remove any existing lights
+                    List<BlockPos> oldPositions = playerLightPositions.remove(playerId);
+                    if (oldPositions != null) {
+                        for (BlockPos oldPos : oldPositions) {
+                            removeLightBlock(world, oldPos);
+                        }
                     }
                 }
             }
