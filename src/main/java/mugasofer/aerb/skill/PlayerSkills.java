@@ -109,6 +109,17 @@ public class PlayerSkills {
         discoveredSpells.remove(spellId);
     }
 
+    /**
+     * Copy all skills and discovered spells from another PlayerSkills instance.
+     * Used for preserving data on death/respawn.
+     */
+    public void copyFrom(PlayerSkills other) {
+        this.skills.clear();
+        this.skills.putAll(other.skills);
+        this.discoveredSpells.clear();
+        this.discoveredSpells.addAll(other.discoveredSpells);
+    }
+
     public static void init() {
         // Force class loading to register the attachment
     }

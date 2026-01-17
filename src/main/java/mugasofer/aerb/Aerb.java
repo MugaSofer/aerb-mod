@@ -4,6 +4,7 @@ import mugasofer.aerb.command.ModCommands;
 import mugasofer.aerb.config.HypertensionConfig;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.SpellItem;
+import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.skill.PlayerSkills;
@@ -11,6 +12,7 @@ import mugasofer.aerb.spell.SpellInventory;
 import mugasofer.aerb.virtue.VirtueEffects;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.entity.ItemEntity;
@@ -56,11 +58,48 @@ public class Aerb implements ModInitializer {
 			ModNetworking.syncSkillsToClient(player);
 		});
 
-		// Prevent spell items from being dropped - return them to nearest player
+		// Preserve spell/virtue inventories and skills on death/respawn
+		ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
+			// Copy spell inventory
+			SpellInventory oldSpellInv = oldPlayer.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+			SpellInventory newSpellInv = newPlayer.getAttachedOrCreate(SpellInventory.ATTACHMENT);
+			for (int i = 0; i < oldSpellInv.size(); i++) {
+				newSpellInv.setStack(i, oldSpellInv.getStack(i).copy());
+			}
+
+			// Copy virtue inventory
+			VirtueInventory oldVirtueInv = oldPlayer.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+			VirtueInventory newVirtueInv = newPlayer.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+			for (int i = 0; i < oldVirtueInv.size(); i++) {
+				newVirtueInv.setStack(i, oldVirtueInv.getStack(i).copy());
+			}
+
+			// Copy skills (including discovered spells)
+			PlayerSkills oldSkills = oldPlayer.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+			PlayerSkills newSkills = newPlayer.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+			newSkills.copyFrom(oldSkills);
+
+			// Also preserve any spells/virtues that were in hotbar/offhand
+			for (int i = 0; i < 9; i++) {
+				ItemStack stack = oldPlayer.getInventory().getStack(i);
+				if (SpellItem.isSpell(stack) || VirtueItem.isVirtue(stack)) {
+					newPlayer.getInventory().setStack(i, stack.copy());
+				}
+			}
+			ItemStack offhand = oldPlayer.getOffHandStack();
+			if (SpellItem.isSpell(offhand) || VirtueItem.isVirtue(offhand)) {
+				newPlayer.setStackInHand(net.minecraft.util.Hand.OFF_HAND, offhand.copy());
+			}
+		});
+
+		// Prevent spell/virtue items from being dropped - return them to nearest player
 		ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {
 			if (entity instanceof ItemEntity itemEntity) {
 				ItemStack stack = itemEntity.getStack();
-				if (SpellItem.isSpell(stack)) {
+				boolean isSpell = SpellItem.isSpell(stack);
+				boolean isVirtue = VirtueItem.isVirtue(stack);
+
+				if (isSpell || isVirtue) {
 					// Find the nearest player within 10 blocks
 					Box searchBox = entity.getBoundingBox().expand(10.0);
 					List<PlayerEntity> nearbyPlayers = world.getEntitiesByClass(
@@ -77,16 +116,31 @@ public class Aerb implements ModInitializer {
 							}
 						}
 
-						// Give the item back to the player
-						if (!closest.giveItemStack(stack.copy())) {
-							// If inventory is full, put in spell inventory
+						// Try to put in appropriate special inventory first
+						boolean placed = false;
+						if (isSpell) {
 							SpellInventory spellInv = closest.getAttachedOrCreate(SpellInventory.ATTACHMENT);
 							for (int i = 0; i < spellInv.size(); i++) {
 								if (spellInv.getStack(i).isEmpty()) {
 									spellInv.setStack(i, stack.copy());
+									placed = true;
 									break;
 								}
 							}
+						} else if (isVirtue) {
+							VirtueInventory virtueInv = closest.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+							for (int i = 0; i < virtueInv.size(); i++) {
+								if (virtueInv.getStack(i).isEmpty()) {
+									virtueInv.setStack(i, stack.copy());
+									placed = true;
+									break;
+								}
+							}
+						}
+
+						// If special inventory is full, try hotbar (only for non-passive)
+						if (!placed && !VirtueItem.isPassiveVirtue(stack)) {
+							closest.giveItemStack(stack.copy());
 						}
 					}
 
