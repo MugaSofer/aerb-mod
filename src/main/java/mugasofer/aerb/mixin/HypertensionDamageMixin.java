@@ -66,27 +66,16 @@ public class HypertensionDamageMixin {
     private static final ThreadLocal<Boolean> isProcessingDamage = ThreadLocal.withInitial(() -> false);
 
     /**
-     * Check if player has Hypertension in virtue inventory, hotbar, or offhand.
+     * Check if player has Hypertension in virtue inventory.
+     * (Hypertension is passive, so it can only be in virtue inventory)
      */
     private boolean hasHypertension(ServerPlayerEntity player) {
-        // Check virtue inventory
+        // Check virtue inventory only (Hypertension is passive)
         VirtueInventory virtueInv = player.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
         for (int i = 0; i < virtueInv.size(); i++) {
             if (virtueInv.getStack(i).isOf(ModItems.HYPERTENSION)) {
                 return true;
             }
-        }
-
-        // Check hotbar (slots 0-8)
-        for (int i = 0; i < 9; i++) {
-            if (player.getInventory().getStack(i).isOf(ModItems.HYPERTENSION)) {
-                return true;
-            }
-        }
-
-        // Check offhand
-        if (player.getOffHandStack().isOf(ModItems.HYPERTENSION)) {
-            return true;
         }
 
         return false;

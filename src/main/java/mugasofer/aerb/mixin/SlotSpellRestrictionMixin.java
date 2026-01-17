@@ -1,7 +1,9 @@
 package mugasofer.aerb.mixin;
 
 import mugasofer.aerb.item.SpellItem;
+import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.virtue.VirtueInventory;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.inventory.CraftingResultInventory;
@@ -18,7 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Mixin to prevent spell items from being placed in non-spell slots.
- * Exception: Crafting slots are allowed.
+ * Also prevents passive virtues from being placed in hotbar/offhand.
+ * Exception: Crafting slots are allowed for spells.
  */
 @Mixin(Slot.class)
 public class SlotSpellRestrictionMixin {
@@ -28,9 +31,20 @@ public class SlotSpellRestrictionMixin {
 
     /**
      * Prevent inserting spell items into non-spell, non-crafting, non-hotbar slots.
+     * Prevent inserting passive virtues into hotbar/offhand.
      */
     @Inject(method = "canInsert(Lnet/minecraft/item/ItemStack;)Z", at = @At("HEAD"), cancellable = true)
     private void restrictSpellInsertion(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        // Handle passive virtues - only allow in VirtueInventory
+        if (VirtueItem.isPassiveVirtue(stack)) {
+            if (inventory instanceof VirtueInventory) {
+                return; // Allow in virtue inventory
+            }
+            // Block everywhere else (including hotbar and offhand)
+            cir.setReturnValue(false);
+            return;
+        }
+
         if (SpellItem.isSpell(stack)) {
             // Allow in SpellInventory
             if (inventory instanceof SpellInventory) {

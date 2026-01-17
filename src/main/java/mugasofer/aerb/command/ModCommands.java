@@ -3,6 +3,7 @@ package mugasofer.aerb.command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import mugasofer.aerb.item.ModItems;
+import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
@@ -319,22 +320,25 @@ public class ModCommands {
     private static void grantVirtueIfMissing(ServerPlayerEntity player, Item virtue, String virtueName) {
         VirtueInventory virtueInv = player.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
         String virtueId = net.minecraft.registry.Registries.ITEM.getId(virtue).toString();
+        boolean isPassive = virtue instanceof VirtueItem v && v.isPassive();
 
-        // Check if player already has this virtue
+        // Check if player already has this virtue in virtue inventory
         for (int i = 0; i < virtueInv.size(); i++) {
             if (virtueInv.getStack(i).isOf(virtue)) {
                 return; // Already has it
             }
         }
 
-        // Also check hotbar and offhand
-        for (int i = 0; i < 9; i++) {
-            if (player.getInventory().getStack(i).isOf(virtue)) {
-                return; // Already has it in hotbar
+        // For non-passive virtues, also check hotbar and offhand
+        if (!isPassive) {
+            for (int i = 0; i < 9; i++) {
+                if (player.getInventory().getStack(i).isOf(virtue)) {
+                    return; // Already has it in hotbar
+                }
             }
-        }
-        if (player.getOffHandStack().isOf(virtue)) {
-            return; // Already has it in offhand
+            if (player.getOffHandStack().isOf(virtue)) {
+                return; // Already has it in offhand
+            }
         }
 
         // Find empty slot in virtue inventory and add the virtue
@@ -346,11 +350,17 @@ public class ModCommands {
             }
         }
 
-        // If virtue inventory is full, try to give directly
-        if (!player.giveItemStack(new ItemStack(virtue))) {
+        // If virtue inventory is full
+        if (isPassive) {
+            // Passive virtues can only go in virtue inventory
             player.sendMessage(Text.literal("No room for " + virtueName + "!"), false);
         } else {
-            sendVirtueDiscoveryMessage(player, virtueId, virtueName);
+            // Non-passive virtues can overflow to hotbar/inventory
+            if (!player.giveItemStack(new ItemStack(virtue))) {
+                player.sendMessage(Text.literal("No room for " + virtueName + "!"), false);
+            } else {
+                sendVirtueDiscoveryMessage(player, virtueId, virtueName);
+            }
         }
     }
 
@@ -370,7 +380,7 @@ public class ModCommands {
     public static void sendVirtueDiscoveryMessage(ServerPlayerEntity player, String virtueId, String virtueName) {
         PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
         if (skills.discoverSpell(virtueId)) { // Reuse spell discovery tracking for virtues
-            player.sendMessage(Text.literal("Virtue discovered: " + virtueName + "!"), false);
+            player.sendMessage(Text.literal("New Virtue: " + virtueName + "!"), false);
         }
     }
 

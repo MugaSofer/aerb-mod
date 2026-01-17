@@ -59,25 +59,32 @@ public class VirtueEffects {
     }
 
     /**
-     * Check if player has a specific virtue item in virtue inventory, hotbar, or offhand.
+     * Check if player has a specific virtue item.
+     * For passive virtues, only checks virtue inventory.
+     * For non-passive virtues, also checks hotbar and offhand.
      */
     private static boolean playerHasVirtue(ServerPlayerEntity player, net.minecraft.item.Item virtueItem) {
         // Check virtue inventory
         VirtueInventory virtueInv = player.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
         for (int i = 0; i < virtueInv.size(); i++) {
-            if (virtueInv.getStack(i).isOf(virtueItem)) {
+            ItemStack stack = virtueInv.getStack(i);
+            if (stack.isOf(virtueItem)) {
                 return true;
             }
         }
 
-        // Check hotbar (slots 0-8)
+        // For passive virtues, only check virtue inventory
+        if (virtueItem instanceof VirtueItem virtue && virtue.isPassive()) {
+            return false;
+        }
+
+        // For non-passive virtues, also check hotbar and offhand
         for (int i = 0; i < 9; i++) {
             if (player.getInventory().getStack(i).isOf(virtueItem)) {
                 return true;
             }
         }
 
-        // Check offhand
         if (player.getOffHandStack().isOf(virtueItem)) {
             return true;
         }
