@@ -1,15 +1,18 @@
 package mugasofer.aerb.combat;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.stat.StatCalculator;
+import mugasofer.aerb.virtue.VirtueInventory;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
@@ -154,7 +157,7 @@ public class ParryHandler {
 
         // Enemy: 1d100 + modifier
         int enemyRoll = random.nextInt(100) + 1;
-        int enemyModifier = getAttackModifier(source);
+        int enemyModifier = getAttackModifier(player, source);
         int enemyTotal = enemyRoll + enemyModifier;
 
         // Determine success (player wins ties)
@@ -166,7 +169,7 @@ public class ParryHandler {
             success ? "SUCCESS" : "FAIL");
 
         if (success) {
-            onParrySuccess(player);
+            onParrySuccess(player, damage);
         } else {
             onParryFail(player);
         }
@@ -176,10 +179,14 @@ public class ParryHandler {
 
     /**
      * Get the attack modifier for a damage source.
+     * Prescient Blade virtue halves projectile modifier.
      */
-    private static int getAttackModifier(DamageSource source) {
-        // Arrows and other projectiles get +25
+    private static int getAttackModifier(ServerPlayerEntity player, DamageSource source) {
+        // Arrows and other projectiles get +25 (or +12 with Prescient Blade)
         if (source.getSource() instanceof ProjectileEntity) {
+            if (hasVirtue(player, ModItems.PRESCIENT_BLADE)) {
+                return ARROW_MODIFIER / 2; // Half penalty with Prescient Blade
+            }
             return ARROW_MODIFIER;
         }
         // Default: no modifier
@@ -187,12 +194,39 @@ public class ParryHandler {
     }
 
     /**
-     * Called when a parry succeeds.
+     * Check if a player has a specific virtue in their virtue inventory.
      */
-    private static void onParrySuccess(ServerPlayerEntity player) {
+    private static boolean hasVirtue(ServerPlayerEntity player, net.minecraft.item.Item virtue) {
+        VirtueInventory virtueInv = player.getAttachedOrCreate(VirtueInventory.ATTACHMENT);
+        for (int i = 0; i < virtueInv.size(); i++) {
+            if (virtueInv.getStack(i).isOf(virtue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Minimum damage threshold for weapon durability loss (like shields)
+    private static final int PARRY_DAMAGE_THRESHOLD = 3;
+
+    /**
+     * Called when a parry succeeds.
+     * Damages the weapon used to parry (like shields - damage equal to attack, threshold of 3).
+     */
+    private static void onParrySuccess(ServerPlayerEntity player, float attackDamage) {
         // Play parry success sound (metallic clang)
         player.getEntityWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
             SoundEvents.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1.0f, 1.2f);
+
+        // Damage the weapon (durability = attack damage, with threshold of 3)
+        ItemStack weapon = player.getMainHandStack();
+        if (!weapon.isEmpty() && weapon.isDamageable() && attackDamage >= PARRY_DAMAGE_THRESHOLD) {
+            int durabilityDamage = (int) Math.ceil(attackDamage);
+            weapon.damage(durabilityDamage, (ServerWorld) player.getEntityWorld(), player, item -> {
+                // Weapon broke from parrying
+                player.sendMessage(Text.literal("Your weapon broke!"), false);
+            });
+        }
 
         // Send success message
         player.sendMessage(Text.literal("Parried!"), true);

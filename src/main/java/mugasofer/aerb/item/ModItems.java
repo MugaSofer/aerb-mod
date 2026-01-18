@@ -85,7 +85,7 @@ public class ModItems {
             )
         ));
 
-    // Virtues (Blade-bound)
+    // Virtues (Blood Magic)
     public static final Item HYPERTENSION = register("hypertension",
         new HypertensionItem(new Item.Settings()
             .maxCount(1)
@@ -93,6 +93,15 @@ public class ModItems {
                 List.of(Text.literal("Passive").formatted(Formatting.GRAY, Formatting.ITALIC))
             ))
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "hypertension")))));
+
+    // Virtues (Parry)
+    public static final Item PRESCIENT_BLADE = register("prescient_blade",
+        new PrescientBladeItem(new Item.Settings()
+            .maxCount(1)
+            .component(DataComponentTypes.LORE, new LoreComponent(
+                List.of(Text.literal("Passive").formatted(Formatting.GRAY, Formatting.ITALIC))
+            ))
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "prescient_blade")))));
 
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
@@ -113,6 +122,7 @@ public class ModItems {
             entries.add(SANGUINE_SURGE);
             // Virtues
             entries.add(HYPERTENSION);
+            entries.add(PRESCIENT_BLADE);
         });
     }
 }

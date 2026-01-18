@@ -11,6 +11,7 @@ Players have skills that start **locked** (-1) and can be unlocked and leveled u
 **Current Skills:**
 - **Blood Magic** - Magic powered by your pumping blood
 - **Bone Magic** - Magic using bones as a catalyst
+- **Parry** - Deflect attacks while swinging your weapon
 
 Skills show as "Locked" in grey until unlocked. Use `/setskill` to unlock and level skills.
 
@@ -43,6 +44,25 @@ Spells cannot be dropped - they automatically return to you. They cannot be plac
 ### Spell Discovery
 
 When you obtain a new spell for the first time, you'll see "Spell discovered: [name]!" This is tracked persistently - you only see the message once per spell.
+
+### Parry System
+
+Swing a sword or axe to enter a brief parry window (0.5 seconds). Frontal attacks during this window trigger a parry attempt.
+
+**Parry Roll:**
+- Player: `1d100 + (SPD × Parry level)`
+- Enemy: `1d100 + modifier`
+- Player wins ties
+
+**Modifiers:**
+- Projectiles (arrows, etc.): +25
+
+**On Success:**
+- Attack is completely blocked
+- Weapon takes durability damage equal to the attack (threshold of 3)
+
+**Skill Unlock:**
+Your first parry attempt (success or fail) unlocks the Parry skill.
 
 ### Character Sheet
 
@@ -83,6 +103,11 @@ When you obtain a new virtue for the first time, you'll see "New Virtue: [name]!
 - Other damage (e.g. fire, magic, drowning): 2.0x
 
 These multipliers are configurable in `config/aerb_hypertension.json`.
+
+**Parry Virtues:**
+| Virtue | Unlock Level | Type | Effect |
+|--------|--------------|------|--------|
+| Prescient Blade | Parry 20 | Passive | Halves the projectile modifier for parry rolls (+25 → +12) |
 
 ### Navigation
 
@@ -132,7 +157,7 @@ All commands support tab-completion.
 /takevirtue <player> <virtue>       - Remove a virtue from a player
 ```
 
-**Virtue names:** `hypertension`
+**Virtue names:** `hypertension`, `prescient_blade`
 
 ## Quick Start
 

@@ -36,6 +36,7 @@ public class ModCommands {
         SPELLS.put("endurance_tapping", ModItems.ENDURANCE_TAPPING);
 
         VIRTUES.put("hypertension", ModItems.HYPERTENSION);
+        VIRTUES.put("prescient_blade", ModItems.PRESCIENT_BLADE);
     }
     public static void init() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -315,6 +316,11 @@ public class ModCommands {
         // Blood Magic virtue unlocks
         if (skill.equals(PlayerSkills.BLOOD_MAGIC)) {
             if (level >= 20) grantVirtueIfMissing(player, ModItems.HYPERTENSION, "Hypertension");
+        }
+
+        // Parry virtue unlocks
+        if (skill.equals(PlayerSkills.PARRY)) {
+            if (level >= 20) grantVirtueIfMissing(player, ModItems.PRESCIENT_BLADE, "Prescient Blade");
         }
     }
 
