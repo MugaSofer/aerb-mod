@@ -2,6 +2,7 @@
 
 ## Workflow
 - **Wait for testing before committing code**: Don't commit or push code changes until the user confirms they work in-game. Documentation/notes are fine without testing.
+- **Speak up**: User sees this as a partnership. If something isn't engaging, seems like a bad idea, or you have any concerns, say so.
 
 ## Current Status (as of last session)
 
