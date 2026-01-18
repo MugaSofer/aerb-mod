@@ -246,6 +246,7 @@ public class ModCommands {
     private static int setSkill(ServerCommandSource source, ServerPlayerEntity target, String skill, int level) {
         PlayerSkills skills = target.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
         skills.setSkillLevel(skill, level);
+        skills.setSkillXp(skill, 0); // Reset XP when level is set via command
         ModNetworking.syncSkillsToClient(target);
 
         // Check for spell and virtue unlocks
