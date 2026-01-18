@@ -274,21 +274,32 @@ public class ParryHandler {
     }
 
     /**
-     * Get the attack damage value of a weapon.
+     * Get the DPS (damage per second) of a weapon.
+     * This accounts for both damage and attack speed.
      */
     private static double getWeaponDamage(ItemStack stack) {
-        // Get attack damage from attribute modifiers component
+        // Get attribute modifiers from component
         var modifiers = stack.getOrDefault(
             net.minecraft.component.DataComponentTypes.ATTRIBUTE_MODIFIERS,
             net.minecraft.component.type.AttributeModifiersComponent.DEFAULT
         );
+
+        double damage = 1.0;
+        double attackSpeedModifier = 0.0;
+
         for (var entry : modifiers.modifiers()) {
-            if (entry.attribute().value().getTranslationKey().contains("attack_damage")) {
-                return entry.modifier().value();
+            String translationKey = entry.attribute().value().getTranslationKey();
+            if (translationKey.contains("attack_damage")) {
+                damage = entry.modifier().value();
+            } else if (translationKey.contains("attack_speed")) {
+                attackSpeedModifier = entry.modifier().value();
             }
         }
-        // Default base damage for tools
-        return 1.0;
+
+        // Base attack speed is 4.0, weapons apply negative modifiers
+        // DPS = damage * attacks_per_second
+        double attackSpeed = 4.0 + attackSpeedModifier;
+        return damage * attackSpeed;
     }
 
     // Minimum damage threshold for weapon durability loss (like shields)
