@@ -30,6 +30,25 @@ public class AerbClient implements ClientModInitializer {
 			ParrySkillCache.setParryLevel(payload.parry());
 		});
 
+		// Register client-side handler for setting selected hotbar slot (Prophetic Blade)
+		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SetSelectedSlotPayload.ID, (payload, context) -> {
+			var client = context.client();
+			var player = client.player;
+			if (player != null && payload.slot() >= 0 && payload.slot() < 9) {
+				// If swing requested, skip the equip animation
+				if (payload.swingAfter()) {
+					mugasofer.aerb.combat.ParryAnimationState.requestSkipEquipAnimation();
+				}
+
+				player.getInventory().setSelectedSlot(payload.slot());
+
+				// If swing requested, swing immediately
+				if (payload.swingAfter()) {
+					player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+				}
+			}
+		});
+
 		// Add navigation tabs to inventory screen (left side to match other screens)
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			if (screen instanceof InventoryScreen inventoryScreen) {

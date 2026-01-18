@@ -54,6 +54,11 @@ public class ParryDamageMixin {
             return;
         }
 
+        // Prophetic Blade: switch to best weapon and swing BEFORE parry
+        if (hasPropheticBlade) {
+            ParryHandler.switchToBestWeaponAndSwing(player);
+        }
+
         // Attempt parry!
         ParryHandler.ParryResult result = ParryHandler.attemptParry(player, source, amount);
 

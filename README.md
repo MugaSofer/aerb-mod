@@ -109,6 +109,7 @@ These multipliers are configurable in `config/aerb_hypertension.json`.
 | Virtue | Unlock Level | Type | Effect |
 |--------|--------------|------|--------|
 | Prescient Blade | Parry 20 | Passive | Halves the projectile modifier for parry rolls (+25 → +12) |
+| Prophetic Blade | Parry 40 | Active | When in hotbar: always parrying, parry from any direction, auto-switch to best weapon and swing on parry |
 
 ### Navigation
 
@@ -158,7 +159,7 @@ All commands support tab-completion.
 /takevirtue <player> <virtue>       - Remove a virtue from a player
 ```
 
-**Virtue names:** `hypertension`, `prescient_blade`
+**Virtue names:** `hypertension`, `prescient_blade`, `prophetic_blade`
 
 ## Quick Start
 

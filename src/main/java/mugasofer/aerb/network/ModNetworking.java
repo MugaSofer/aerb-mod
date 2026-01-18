@@ -25,6 +25,7 @@ public class ModNetworking {
     public static final Identifier OPEN_SPELL_INVENTORY_ID = Identifier.of(Aerb.MOD_ID, "open_spell_inventory");
     public static final Identifier OPEN_VIRTUE_INVENTORY_ID = Identifier.of(Aerb.MOD_ID, "open_virtue_inventory");
     public static final Identifier SYNC_SKILLS_ID = Identifier.of(Aerb.MOD_ID, "sync_skills");
+    public static final Identifier SET_SELECTED_SLOT_ID = Identifier.of(Aerb.MOD_ID, "set_selected_slot");
 
     // Custom payload for opening spell inventory (empty payload, just a signal)
     public record OpenSpellInventoryPayload() implements CustomPayload {
@@ -67,6 +68,38 @@ public class ModNetworking {
         }
     }
 
+    // Payload for setting client's selected hotbar slot (server to client)
+    // If swingAfter is true, client will also swing the weapon immediately
+    public record SetSelectedSlotPayload(int slot, boolean swingAfter) implements CustomPayload {
+        public static final Id<SetSelectedSlotPayload> ID = new Id<>(SET_SELECTED_SLOT_ID);
+        public static final PacketCodec<RegistryByteBuf, SetSelectedSlotPayload> CODEC = PacketCodec.of(
+            (value, buf) -> {
+                buf.writeInt(value.slot);
+                buf.writeBoolean(value.swingAfter);
+            },
+            buf -> new SetSelectedSlotPayload(buf.readInt(), buf.readBoolean())
+        );
+
+        @Override
+        public Id<? extends CustomPayload> getId() {
+            return ID;
+        }
+    }
+
+    /**
+     * Tell the client to change their selected hotbar slot.
+     */
+    public static void setSelectedSlot(ServerPlayerEntity player, int slot) {
+        ServerPlayNetworking.send(player, new SetSelectedSlotPayload(slot, false));
+    }
+
+    /**
+     * Tell the client to change their selected hotbar slot and swing immediately.
+     */
+    public static void setSelectedSlotAndSwing(ServerPlayerEntity player, int slot) {
+        ServerPlayNetworking.send(player, new SetSelectedSlotPayload(slot, true));
+    }
+
     /**
      * Send skill data to a player's client.
      */
@@ -86,6 +119,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playC2S().register(OpenSpellInventoryPayload.ID, OpenSpellInventoryPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(OpenVirtueInventoryPayload.ID, OpenVirtueInventoryPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncSkillsPayload.ID, SyncSkillsPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(SetSelectedSlotPayload.ID, SetSelectedSlotPayload.CODEC);
 
         // Register server-side handler for spell inventory
         ServerPlayNetworking.registerGlobalReceiver(OpenSpellInventoryPayload.ID, (payload, context) -> {

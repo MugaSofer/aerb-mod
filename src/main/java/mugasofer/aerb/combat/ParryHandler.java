@@ -227,17 +227,16 @@ public class ParryHandler {
     }
 
     /**
-     * Switch player to the best weapon in their hotbar.
-     * Best = highest attack damage among parryable weapons.
+     * Find the best weapon slot in the player's hotbar.
+     * Returns -1 if no parryable weapon found.
      */
-    public static void switchToBestWeapon(ServerPlayerEntity player) {
+    public static int findBestWeaponSlot(ServerPlayerEntity player) {
         int bestSlot = -1;
         double bestDamage = 0;
 
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getStack(i);
             if (isParryableWeapon(stack)) {
-                // Get the attack damage attribute
                 double damage = getWeaponDamage(stack);
                 if (damage > bestDamage) {
                     bestDamage = damage;
@@ -245,11 +244,33 @@ public class ParryHandler {
                 }
             }
         }
+        return bestSlot;
+    }
 
-        if (bestSlot != -1 && bestSlot != player.getInventory().getSelectedSlot()) {
-            player.getInventory().setSelectedSlot(bestSlot);
-            Aerb.LOGGER.debug("Prophetic Blade: Switched to slot {} (damage: {})", bestSlot, bestDamage);
+    /**
+     * Switch player to best weapon, swing it, and update server state.
+     * Called BEFORE parry attempt when Prophetic Blade is active.
+     * Returns true if a weapon was found and switched to.
+     */
+    public static boolean switchToBestWeaponAndSwing(ServerPlayerEntity player) {
+        int bestSlot = findBestWeaponSlot(player);
+        if (bestSlot == -1) {
+            return false;
         }
+
+        int currentSlot = player.getInventory().getSelectedSlot();
+        if (bestSlot != currentSlot) {
+            // Update server-side slot immediately so durability damage applies to correct weapon
+            player.getInventory().setSelectedSlot(bestSlot);
+            // Tell client to switch AND swing (skips equip animation)
+            ModNetworking.setSelectedSlotAndSwing(player, bestSlot);
+            Aerb.LOGGER.debug("Prophetic Blade: Switching to slot {} and swinging", bestSlot);
+        } else {
+            // Already on best weapon, just swing
+            player.swingHand(net.minecraft.util.Hand.MAIN_HAND, true);
+            Aerb.LOGGER.debug("Prophetic Blade: Swinging weapon in slot {}", bestSlot);
+        }
+        return true;
     }
 
     /**
@@ -276,7 +297,6 @@ public class ParryHandler {
     /**
      * Called when a parry succeeds.
      * Damages the weapon used to parry (like shields - damage equal to attack, threshold of 3).
-     * If Prophetic Blade is active, switches to best weapon in hotbar.
      */
     private static void onParrySuccess(ServerPlayerEntity player, float attackDamage) {
         // Play parry success sound (metallic clang)
@@ -291,11 +311,6 @@ public class ParryHandler {
                 // Weapon broke from parrying
                 player.sendMessage(Text.literal("Your weapon broke!"), false);
             });
-        }
-
-        // Prophetic Blade: switch to best weapon after parry
-        if (hasPropheticBlade(player)) {
-            switchToBestWeapon(player);
         }
 
         // Send success message
