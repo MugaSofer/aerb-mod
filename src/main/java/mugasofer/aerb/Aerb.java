@@ -1,6 +1,7 @@
 package mugasofer.aerb;
 
 import mugasofer.aerb.command.ModCommands;
+import mugasofer.aerb.config.DescriptionConfig;
 import mugasofer.aerb.config.HypertensionConfig;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.SpellItem;
@@ -43,6 +44,7 @@ public class Aerb implements ModInitializer {
 
 		LOGGER.info("Hello Fabric world!");
 		HypertensionConfig.load();
+		DescriptionConfig.load();
 		ModItems.initialize();
 		SpellInventory.init();
 		VirtueInventory.init();

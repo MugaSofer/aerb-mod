@@ -2,8 +2,6 @@ package mugasofer.aerb.item;
 
 import mugasofer.aerb.Aerb;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
@@ -11,8 +9,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import java.util.List;
@@ -89,18 +85,12 @@ public class ModItems {
     public static final Item HYPERTENSION = register("hypertension",
         new HypertensionItem(new Item.Settings()
             .maxCount(1)
-            .component(DataComponentTypes.LORE, new LoreComponent(
-                List.of(Text.literal("Passive").formatted(Formatting.GRAY, Formatting.ITALIC))
-            ))
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "hypertension")))));
 
     // Virtues (Parry)
     public static final Item PRESCIENT_BLADE = register("prescient_blade",
         new PrescientBladeItem(new Item.Settings()
             .maxCount(1)
-            .component(DataComponentTypes.LORE, new LoreComponent(
-                List.of(Text.literal("Passive").formatted(Formatting.GRAY, Formatting.ITALIC))
-            ))
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "prescient_blade")))));
 
     public static final Item PROPHETIC_BLADE = register("prophetic_blade",

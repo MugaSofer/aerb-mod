@@ -105,11 +105,29 @@ When you obtain a new virtue for the first time, you'll see "New Virtue: [name]!
 
 These multipliers are configurable in `config/aerb_hypertension.json`.
 
+### Description Config
+
+Spell and virtue descriptions are stored in `config/aerb_descriptions.json` and can be edited freely. Each item has an array of description lines that appear as gray italic text in tooltips.
+
+Example format:
+```json
+{
+  "descriptions": {
+    "aardes_touch": [
+      "A glowing flame that can light things on fire.",
+      "The first spell of Blood Magic."
+    ]
+  }
+}
+```
+
+The config file is created with defaults on first run and reloaded on game startup.
+
 **Parry Virtues:**
 | Virtue | Unlock Level | Type | Effect |
 |--------|--------------|------|--------|
 | Prescient Blade | Parry 20 | Passive | Halves the projectile modifier for parry rolls (+25 → +12) |
-| Prophetic Blade | Parry 40 | Active | When in hotbar: always parrying, parry from any direction, auto-switch to best weapon and swing on parry |
+| Prophetic Blade | Parry 40 | Active | When in hotbar: parry from any direction, auto-switch to best weapon and parry if not equipped when attacked|
 
 ### Navigation
 

@@ -1,6 +1,9 @@
 package mugasofer.aerb;
 
 import mugasofer.aerb.combat.ParrySkillCache;
+import mugasofer.aerb.config.DescriptionConfig;
+import mugasofer.aerb.item.SpellItem;
+import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
 import mugasofer.aerb.screen.ModScreenHandlers;
@@ -8,13 +11,18 @@ import mugasofer.aerb.screen.SpellSlotsScreen;
 import mugasofer.aerb.screen.VirtuesScreen;
 import mugasofer.aerb.skill.ClientSkillCache;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+
+import java.util.List;
 
 public class AerbClient implements ClientModInitializer {
 	@Override
@@ -22,6 +30,26 @@ public class AerbClient implements ClientModInitializer {
 		// Register screens
 		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
 		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
+
+		// Add custom descriptions to spell and virtue tooltips
+		ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
+			if (SpellItem.isSpell(stack) || VirtueItem.isVirtue(stack)) {
+				// Get item ID from registry
+				String itemId = Registries.ITEM.getId(stack.getItem()).getPath();
+				List<String> descriptionLines = DescriptionConfig.get().getDescription(itemId);
+
+				if (!descriptionLines.isEmpty()) {
+					// Add a blank line before description if there's already content
+					if (lines.size() > 1) {
+						lines.add(Text.empty());
+					}
+					// Add each description line in gray italic
+					for (String line : descriptionLines) {
+						lines.add(Text.literal(line).formatted(Formatting.GRAY, Formatting.ITALIC));
+					}
+				}
+			}
+		});
 
 		// Register client-side handler for skill sync
 		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SyncSkillsPayload.ID, (payload, context) -> {
