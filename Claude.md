@@ -1,5 +1,8 @@
 # AERB Mod Development Notes
 
+## Workflow
+- **Wait for testing before committing code**: Don't commit or push code changes until the user confirms they work in-game. Documentation/notes are fine without testing.
+
 ## Current Status (as of last session)
 
 ### Completed Systems
