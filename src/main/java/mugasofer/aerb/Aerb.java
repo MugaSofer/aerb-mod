@@ -3,6 +3,7 @@ package mugasofer.aerb;
 import mugasofer.aerb.command.ModCommands;
 import mugasofer.aerb.config.DescriptionConfig;
 import mugasofer.aerb.config.HypertensionConfig;
+import mugasofer.aerb.config.XpConfig;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.SpellItem;
 import mugasofer.aerb.item.VirtueItem;
@@ -45,6 +46,7 @@ public class Aerb implements ModInitializer {
 		LOGGER.info("Hello Fabric world!");
 		HypertensionConfig.load();
 		DescriptionConfig.load();
+		XpConfig.load();
 		ModItems.initialize();
 		SpellInventory.init();
 		VirtueInventory.init();

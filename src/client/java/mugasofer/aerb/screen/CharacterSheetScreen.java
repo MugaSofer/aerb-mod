@@ -157,15 +157,19 @@ public class CharacterSheetScreen extends Screen {
         this.endWidget.setMessage(formatStat("END", BASE_END, end));
 
         // Update skill widgets (from client cache, synced from server)
-        // Locked skills (-1) show greyed out, unlocked skills (0+) show level
+        // Locked skills (-1) show greyed out, unlocked skills (0+) show level with XP progress
         int bloodLevel = ClientSkillCache.getBloodMagic();
         int boneLevel = ClientSkillCache.getBoneMagic();
         int oneHandedLevel = ClientSkillCache.getOneHanded();
         int parryLevel = ClientSkillCache.getParry();
-        this.bloodMagicWidget.setMessage(formatSkill("Blood Magic", bloodLevel));
-        this.boneMagicWidget.setMessage(formatSkill("Bone Magic", boneLevel));
-        this.oneHandedWidget.setMessage(formatSkill("One-Handed", oneHandedLevel));
-        this.parryWidget.setMessage(formatSkill("Parry", parryLevel));
+        int bloodXp = ClientSkillCache.getBloodMagicXp();
+        int boneXp = ClientSkillCache.getBoneMagicXp();
+        int oneHandedXp = ClientSkillCache.getOneHandedXp();
+        int parryXp = ClientSkillCache.getParryXp();
+        this.bloodMagicWidget.setMessage(formatSkill("Blood Magic", bloodLevel, bloodXp));
+        this.boneMagicWidget.setMessage(formatSkill("Bone Magic", boneLevel, boneXp));
+        this.oneHandedWidget.setMessage(formatSkill("One-Handed", oneHandedLevel, oneHandedXp));
+        this.parryWidget.setMessage(formatSkill("Parry", parryLevel, parryXp));
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);
@@ -181,14 +185,26 @@ public class CharacterSheetScreen extends Screen {
         }
     }
 
-    private Text formatSkill(String name, int level) {
+    private Text formatSkill(String name, int level, int xp) {
         if (level < 0) {
             // Locked - show greyed out
             return Text.literal(name + ": Locked").withColor(0x555555);
         } else {
-            // Unlocked - show level
-            return Text.literal(name + ": " + level).withColor(0xAAAAAA);
+            // Unlocked - show level with XP progress
+            int xpNeeded = getXpForNextLevel(level);
+            return Text.literal(name + ": " + level).withColor(0xAAAAAA)
+                .append(Text.literal(" (" + xp + "/" + xpNeeded + " XP)").withColor(0x777777));
         }
+    }
+
+    /**
+     * Calculate XP needed for next level (mirrors server-side XpConfig formula).
+     * Formula: (nextLevel + 1)^2
+     * This means: 0->1 needs 4 XP, 1->2 needs 9 XP, 2->3 needs 16 XP, etc.
+     */
+    private int getXpForNextLevel(int currentLevel) {
+        int nextLevel = currentLevel + 1;
+        return (nextLevel + 1) * (nextLevel + 1);
     }
 
     private int calculatePOW() {

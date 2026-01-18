@@ -1,5 +1,8 @@
 package mugasofer.aerb.item;
 
+import mugasofer.aerb.config.XpConfig;
+import mugasofer.aerb.skill.PlayerSkills;
+import mugasofer.aerb.skill.XpHelper;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -8,6 +11,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
@@ -45,6 +49,11 @@ public class PhysicalTappingItem extends Item implements SpellItem {
             entity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, EFFECT_DURATION, 0));
 
             entity.playSound(SoundEvents.BLOCK_FIRE_EXTINGUISH, 1.0f, 1.0f);
+
+            // Award Bone Magic XP
+            if (user instanceof ServerPlayerEntity serverPlayer) {
+                XpHelper.awardXp(serverPlayer, PlayerSkills.BONE_MAGIC, XpConfig.get().xpPerSpellCast);
+            }
         }
 
         user.getItemCooldownManager().set(stack, 20);
@@ -78,6 +87,11 @@ public class PhysicalTappingItem extends Item implements SpellItem {
             // Play a bone-crunching sound
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.PLAYERS, 1.0f, 1.0f);
+
+            // Award Bone Magic XP
+            if (user instanceof ServerPlayerEntity serverPlayer) {
+                XpHelper.awardXp(serverPlayer, PlayerSkills.BONE_MAGIC, XpConfig.get().xpPerSpellCast);
+            }
         }
 
         // Add cooldown to prevent spam (optional, 1 second)

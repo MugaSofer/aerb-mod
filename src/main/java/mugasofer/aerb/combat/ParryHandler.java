@@ -1,9 +1,11 @@
 package mugasofer.aerb.combat;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.config.XpConfig;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
+import mugasofer.aerb.skill.XpHelper;
 import mugasofer.aerb.stat.StatCalculator;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.minecraft.entity.Entity;
@@ -354,6 +356,9 @@ public class ParryHandler {
                     player.getName().getString(), attacker.getName().getString());
             }
         }
+
+        // Award Parry XP
+        XpHelper.awardXp(player, PlayerSkills.PARRY, XpConfig.get().xpPerParry);
 
         // Send success message
         if (riposted) {

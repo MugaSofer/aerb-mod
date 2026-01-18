@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Stores player skill levels and discovered spells.
+ * Stores player skill levels, XP, and discovered spells/items.
  * Skills start at -1 (locked) and can be unlocked/leveled up.
  * A skill at -1 is locked (greyed out in UI). At 0+ the skill is unlocked.
  */
@@ -31,7 +31,9 @@ public class PlayerSkills {
     public static final Codec<PlayerSkills> CODEC = RecordCodecBuilder.create(instance ->
         instance.group(
             Codec.unboundedMap(Codec.STRING, Codec.INT).fieldOf("skills").forGetter(ps -> ps.skills),
-            Codec.STRING.listOf().fieldOf("discovered_spells").orElse(new ArrayList<>()).forGetter(ps -> new ArrayList<>(ps.discoveredSpells))
+            Codec.STRING.listOf().fieldOf("discovered_spells").orElse(new ArrayList<>()).forGetter(ps -> new ArrayList<>(ps.discoveredSpells)),
+            Codec.unboundedMap(Codec.STRING, Codec.INT).fieldOf("skill_xp").orElse(new HashMap<>()).forGetter(ps -> ps.skillXp),
+            Codec.STRING.listOf().fieldOf("discovered_items").orElse(new ArrayList<>()).forGetter(ps -> new ArrayList<>(ps.discoveredItems))
         ).apply(instance, PlayerSkills::new)
     );
 
@@ -42,16 +44,23 @@ public class PlayerSkills {
 
     private final Map<String, Integer> skills;
     private final Set<String> discoveredSpells;
+    private final Map<String, Integer> skillXp;
+    private final Set<String> discoveredItems;
 
     public PlayerSkills() {
         this.skills = new HashMap<>();
         this.discoveredSpells = new HashSet<>();
+        this.skillXp = new HashMap<>();
+        this.discoveredItems = new HashSet<>();
     }
 
     // Constructor for deserialization
-    private PlayerSkills(Map<String, Integer> skills, List<String> discoveredSpells) {
+    private PlayerSkills(Map<String, Integer> skills, List<String> discoveredSpells,
+                         Map<String, Integer> skillXp, List<String> discoveredItems) {
         this.skills = new HashMap<>(skills);
         this.discoveredSpells = new HashSet<>(discoveredSpells);
+        this.skillXp = new HashMap<>(skillXp);
+        this.discoveredItems = new HashSet<>(discoveredItems);
     }
 
     /**
@@ -111,8 +120,57 @@ public class PlayerSkills {
         discoveredSpells.remove(spellId);
     }
 
+    // ============ XP Methods ============
+
     /**
-     * Copy all skills and discovered spells from another PlayerSkills instance.
+     * Get the current XP for a skill. Returns 0 if not set.
+     */
+    public int getSkillXp(String skillName) {
+        return skillXp.getOrDefault(skillName, 0);
+    }
+
+    /**
+     * Set the XP for a skill.
+     */
+    public void setSkillXp(String skillName, int xp) {
+        skillXp.put(skillName, Math.max(0, xp));
+    }
+
+    /**
+     * Add XP to a skill. Returns the new total.
+     */
+    public int addSkillXp(String skillName, int amount) {
+        int current = getSkillXp(skillName);
+        int newXp = current + amount;
+        setSkillXp(skillName, newXp);
+        return newXp;
+    }
+
+    /**
+     * Get all skill XP as a map.
+     */
+    public Map<String, Integer> getAllSkillXp() {
+        return new HashMap<>(skillXp);
+    }
+
+    // ============ Discovered Items Methods ============
+
+    /**
+     * Check if an item has been discovered before (for first-equip XP).
+     */
+    public boolean hasDiscoveredItem(String itemId) {
+        return discoveredItems.contains(itemId);
+    }
+
+    /**
+     * Mark an item as discovered. Returns true if this is a new discovery.
+     */
+    public boolean discoverItem(String itemId) {
+        return discoveredItems.add(itemId);
+    }
+
+    /**
+     * Copy all skills, XP, and discovered spells/items from another PlayerSkills instance.
      * Used for preserving data on death/respawn.
      */
     public void copyFrom(PlayerSkills other) {
@@ -120,6 +178,10 @@ public class PlayerSkills {
         this.skills.putAll(other.skills);
         this.discoveredSpells.clear();
         this.discoveredSpells.addAll(other.discoveredSpells);
+        this.skillXp.clear();
+        this.skillXp.putAll(other.skillXp);
+        this.discoveredItems.clear();
+        this.discoveredItems.addAll(other.discoveredItems);
     }
 
     public static void init() {

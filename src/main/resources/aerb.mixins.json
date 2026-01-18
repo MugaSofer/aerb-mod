@@ -9,7 +9,9 @@
 		"SpellItemRestrictionMixin",
 		"HypertensionDamageMixin",
 		"AttackSwingMixin",
-		"ParryDamageMixin"
+		"ParryDamageMixin",
+		"KillXpMixin",
+		"ItemEquipMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

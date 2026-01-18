@@ -251,7 +251,7 @@ public class ModCommands {
     /**
      * Grant spells when skills reach certain thresholds.
      */
-    private static void checkSpellUnlocks(ServerPlayerEntity player, String skill, int level) {
+    public static void checkSpellUnlocks(ServerPlayerEntity player, String skill, int level) {
         // Blood Magic unlocks
         if (skill.equals(PlayerSkills.BLOOD_MAGIC)) {
             if (level >= 0) grantSpellIfMissing(player, ModItems.AARDES_TOUCH, "Aarde's Touch");
@@ -314,7 +314,7 @@ public class ModCommands {
     /**
      * Grant virtues when skills reach certain thresholds.
      */
-    private static void checkVirtueUnlocks(ServerPlayerEntity player, String skill, int level) {
+    public static void checkVirtueUnlocks(ServerPlayerEntity player, String skill, int level) {
         // Blood Magic virtue unlocks
         if (skill.equals(PlayerSkills.BLOOD_MAGIC)) {
             if (level >= 20) grantVirtueIfMissing(player, ModItems.HYPERTENSION, "Hypertension");

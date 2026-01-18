@@ -49,8 +49,11 @@ public class ModNetworking {
         }
     }
 
-    // Payload for syncing skills from server to client
-    public record SyncSkillsPayload(int bloodMagic, int boneMagic, int oneHanded, int parry) implements CustomPayload {
+    // Payload for syncing skills from server to client (includes levels and XP)
+    public record SyncSkillsPayload(
+        int bloodMagic, int boneMagic, int oneHanded, int parry,
+        int bloodMagicXp, int boneMagicXp, int oneHandedXp, int parryXp
+    ) implements CustomPayload {
         public static final Id<SyncSkillsPayload> ID = new Id<>(SYNC_SKILLS_ID);
         public static final PacketCodec<RegistryByteBuf, SyncSkillsPayload> CODEC = PacketCodec.of(
             (value, buf) -> {
@@ -58,8 +61,15 @@ public class ModNetworking {
                 buf.writeInt(value.boneMagic);
                 buf.writeInt(value.oneHanded);
                 buf.writeInt(value.parry);
+                buf.writeInt(value.bloodMagicXp);
+                buf.writeInt(value.boneMagicXp);
+                buf.writeInt(value.oneHandedXp);
+                buf.writeInt(value.parryXp);
             },
-            buf -> new SyncSkillsPayload(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt())
+            buf -> new SyncSkillsPayload(
+                buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(),
+                buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt()
+            )
         );
 
         @Override
@@ -109,7 +119,11 @@ public class ModNetworking {
             skills.getSkillLevel(PlayerSkills.BLOOD_MAGIC),
             skills.getSkillLevel(PlayerSkills.BONE_MAGIC),
             skills.getSkillLevel(PlayerSkills.ONE_HANDED),
-            skills.getSkillLevel(PlayerSkills.PARRY)
+            skills.getSkillLevel(PlayerSkills.PARRY),
+            skills.getSkillXp(PlayerSkills.BLOOD_MAGIC),
+            skills.getSkillXp(PlayerSkills.BONE_MAGIC),
+            skills.getSkillXp(PlayerSkills.ONE_HANDED),
+            skills.getSkillXp(PlayerSkills.PARRY)
         );
         ServerPlayNetworking.send(player, payload);
     }

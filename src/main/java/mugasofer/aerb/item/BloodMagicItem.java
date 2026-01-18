@@ -1,5 +1,8 @@
 package mugasofer.aerb.item;
 
+import mugasofer.aerb.config.XpConfig;
+import mugasofer.aerb.skill.PlayerSkills;
+import mugasofer.aerb.skill.XpHelper;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.damage.DamageTypes;
@@ -57,6 +60,11 @@ public class BloodMagicItem extends Item implements SpellItem {
 
             // Play blood magic sound
             entity.playSound(SoundEvents.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, 0.5f, 1.2f);
+
+            // Award Blood Magic XP
+            if (user instanceof ServerPlayerEntity serverPlayer) {
+                XpHelper.awardXp(serverPlayer, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
+            }
         }
 
         user.getItemCooldownManager().set(stack, 20);
@@ -81,6 +89,11 @@ public class BloodMagicItem extends Item implements SpellItem {
             // Play blood magic sound
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, SoundCategory.PLAYERS, 0.5f, 1.2f);
+
+            // Award Blood Magic XP
+            if (user instanceof ServerPlayerEntity serverPlayer) {
+                XpHelper.awardXp(serverPlayer, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
+            }
         }
 
         // Add cooldown to prevent spam (1 second)

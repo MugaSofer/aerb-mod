@@ -36,7 +36,7 @@ public class HypertensionDamageMixin {
         }
 
         // Get the damage type identifier
-        String damageTypeId = getDamageTypeId(source);
+        String damageTypeId = aerb$getHypertensionDamageTypeId(source);
 
         // Get multiplier from config
         double multiplier = HypertensionConfig.get().getMultiplier(damageTypeId);
@@ -84,7 +84,7 @@ public class HypertensionDamageMixin {
     /**
      * Get the damage type identifier string from a DamageSource.
      */
-    private String getDamageTypeId(DamageSource source) {
+    private String aerb$getHypertensionDamageTypeId(DamageSource source) {
         // The damage type is stored in the registry key
         var typeKey = source.getTypeRegistryEntry().getKey();
         if (typeKey.isPresent()) {

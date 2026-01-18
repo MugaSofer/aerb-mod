@@ -87,7 +87,7 @@ public class ParryDamageMixin {
      * Not parryable: environmental, magic, etc.
      */
     private boolean isParryableDamage(DamageSource source) {
-        String damageTypeId = getDamageTypeId(source);
+        String damageTypeId = aerb$getParryDamageTypeId(source);
 
         // Parryable damage types (melee and projectiles)
         if (damageTypeId.contains("player_attack") ||
@@ -120,7 +120,7 @@ public class ParryDamageMixin {
     /**
      * Get the damage type identifier string from a DamageSource.
      */
-    private String getDamageTypeId(DamageSource source) {
+    private String aerb$getParryDamageTypeId(DamageSource source) {
         var typeKey = source.getTypeRegistryEntry().getKey();
         if (typeKey.isPresent()) {
             return typeKey.get().getValue().toString();

@@ -1,5 +1,8 @@
 package mugasofer.aerb.item;
 
+import mugasofer.aerb.config.XpConfig;
+import mugasofer.aerb.skill.PlayerSkills;
+import mugasofer.aerb.skill.XpHelper;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.BlockState;
@@ -130,6 +133,11 @@ public class AardesTouchItem extends Item implements SpellItem {
             if (!world.isClient()) {
                 world.setBlockState(pos, state.with(Properties.LIT, true));
                 world.emitGameEvent(player, GameEvent.BLOCK_CHANGE, pos);
+
+                // Award Blood Magic XP
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    XpHelper.awardXp(serverPlayer, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
+                }
             }
             playFireSound(world, pos);
             return ActionResult.SUCCESS;
@@ -142,6 +150,11 @@ public class AardesTouchItem extends Item implements SpellItem {
                 BlockState fireState = AbstractFireBlock.getState(world, firePos);
                 world.setBlockState(firePos, fireState);
                 world.emitGameEvent(player, GameEvent.BLOCK_PLACE, firePos);
+
+                // Award Blood Magic XP
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    XpHelper.awardXp(serverPlayer, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
+                }
             }
             playFireSound(world, firePos);
             return ActionResult.SUCCESS;
