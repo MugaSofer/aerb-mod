@@ -1,6 +1,6 @@
 # Aerb Mod
 
-A Minecraft Fabric mod (1.21.11) inspired by "Worth the Candle" by Alexander Wales. Adds magic systems and skills from Aerb, the setting of Worth the Candle.
+A Minecraft Fabric mod (1.21.11) inspired by Worth the Candle by Alexander Wales. Adds magic systems and skills from Aerb, the setting of Worth the Candle.
 
 ## Features
 
@@ -11,6 +11,7 @@ Players have skills that start **locked** (-1) and can be unlocked and leveled u
 **Current Skills:**
 - **Blood Magic** - Magic powered by your pumping blood
 - **Bone Magic** - Magic using bones as a catalyst
+- **One-Handed Weapons** - Combat with axes and swords.
 - **Parry** - Deflect attacks while swinging your weapon
 
 Skills show as "Locked" in grey until unlocked. Use `/setskill` to unlock and level skills.
@@ -47,7 +48,7 @@ When you obtain a new spell for the first time, you'll see "Spell discovered: [n
 
 ### Parry System
 
-Swing a sword or axe to enter a brief parry window (0.5 seconds). Frontal attacks during this window trigger a parry attempt.
+Swing a weapon or tool to enter a brief parry window (0.5 seconds). Frontal attacks during this window trigger a parry attempt.
 
 **Parry Roll:**
 - Player: `1d100 + (SPD × Parry level)`
@@ -116,8 +117,8 @@ All screens (Inventory, Stats, Spells, Virtues) have navigation tabs on the left
 ### Death Persistence
 
 Spells, virtues, and skills are **preserved on death**. When you respawn:
-- All spells remain in your spell inventory; any in your hotbar or offhand return there
-- All virtues remain in your virtue inventory; any in your hotbar or offhand return there
+- All spells remain in your spell inventory; any in your hotbar or offhand return to your spell list
+- All virtues remain in your virtue inventory; any in your hotbar or offhand return to your virtues list
 - All skill levels and discoveries are kept
 
 Spells and virtues cannot be dropped - they automatically return to you.

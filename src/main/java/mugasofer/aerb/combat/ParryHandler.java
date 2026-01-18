@@ -11,6 +11,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -25,7 +26,7 @@ import java.util.UUID;
 
 /**
  * Handles attack-based parry system.
- * When swinging a sword/axe, player can parry frontal attacks.
+ * When swinging a weapon (sword, tool, or trident), player can parry frontal attacks.
  * Parry success is determined by dice roll: 1d100 + (SPD x Parry) vs 1d100 + modifier
  */
 public class ParryHandler {
@@ -59,23 +60,23 @@ public class ParryHandler {
     }
 
     /**
-     * Check if an item is a parryable weapon (sword or axe).
+     * Check if an item is a parryable weapon (sword, tool, spear, or trident).
      */
     public static boolean isParryableWeapon(ItemStack stack) {
         if (stack.isEmpty()) return false;
 
-        // Check swords
-        if (stack.isOf(Items.WOODEN_SWORD) || stack.isOf(Items.STONE_SWORD) ||
-            stack.isOf(Items.IRON_SWORD) || stack.isOf(Items.GOLDEN_SWORD) ||
-            stack.isOf(Items.DIAMOND_SWORD) || stack.isOf(Items.NETHERITE_SWORD)) {
-            return true;
-        }
-        // Check axes
-        if (stack.isOf(Items.WOODEN_AXE) || stack.isOf(Items.STONE_AXE) ||
-            stack.isOf(Items.IRON_AXE) || stack.isOf(Items.GOLDEN_AXE) ||
-            stack.isOf(Items.DIAMOND_AXE) || stack.isOf(Items.NETHERITE_AXE)) {
-            return true;
-        }
+        // Swords
+        if (stack.isIn(ItemTags.SWORDS)) return true;
+        // Spears
+        if (stack.isIn(ItemTags.SPEARS)) return true;
+        // Tools (axes, hoes, pickaxes, shovels)
+        if (stack.isIn(ItemTags.AXES)) return true;
+        if (stack.isIn(ItemTags.PICKAXES)) return true;
+        if (stack.isIn(ItemTags.SHOVELS)) return true;
+        if (stack.isIn(ItemTags.HOES)) return true;
+        // Trident
+        if (stack.isOf(Items.TRIDENT)) return true;
+
         return false;
     }
 
