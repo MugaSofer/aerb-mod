@@ -103,6 +103,11 @@ public class ModItems {
             ))
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "prescient_blade")))));
 
+    public static final Item PROPHETIC_BLADE = register("prophetic_blade",
+        new PropheticBladeItem(new Item.Settings()
+            .maxCount(1)
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "prophetic_blade")))));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -123,6 +128,7 @@ public class ModItems {
             // Virtues
             entries.add(HYPERTENSION);
             entries.add(PRESCIENT_BLADE);
+            entries.add(PROPHETIC_BLADE);
         });
     }
 }

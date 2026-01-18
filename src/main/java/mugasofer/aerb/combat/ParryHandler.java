@@ -207,12 +207,76 @@ public class ParryHandler {
         return false;
     }
 
+    /**
+     * Check if a player has a specific virtue in their hotbar.
+     */
+    private static boolean hasVirtueInHotbar(ServerPlayerEntity player, net.minecraft.item.Item virtue) {
+        for (int i = 0; i < 9; i++) {
+            if (player.getInventory().getStack(i).isOf(virtue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if player has Prophetic Blade in hotbar (enables always-parry mode).
+     */
+    public static boolean hasPropheticBlade(ServerPlayerEntity player) {
+        return hasVirtueInHotbar(player, ModItems.PROPHETIC_BLADE);
+    }
+
+    /**
+     * Switch player to the best weapon in their hotbar.
+     * Best = highest attack damage among parryable weapons.
+     */
+    public static void switchToBestWeapon(ServerPlayerEntity player) {
+        int bestSlot = -1;
+        double bestDamage = 0;
+
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (isParryableWeapon(stack)) {
+                // Get the attack damage attribute
+                double damage = getWeaponDamage(stack);
+                if (damage > bestDamage) {
+                    bestDamage = damage;
+                    bestSlot = i;
+                }
+            }
+        }
+
+        if (bestSlot != -1 && bestSlot != player.getInventory().getSelectedSlot()) {
+            player.getInventory().setSelectedSlot(bestSlot);
+            Aerb.LOGGER.debug("Prophetic Blade: Switched to slot {} (damage: {})", bestSlot, bestDamage);
+        }
+    }
+
+    /**
+     * Get the attack damage value of a weapon.
+     */
+    private static double getWeaponDamage(ItemStack stack) {
+        // Get attack damage from attribute modifiers component
+        var modifiers = stack.getOrDefault(
+            net.minecraft.component.DataComponentTypes.ATTRIBUTE_MODIFIERS,
+            net.minecraft.component.type.AttributeModifiersComponent.DEFAULT
+        );
+        for (var entry : modifiers.modifiers()) {
+            if (entry.attribute().value().getTranslationKey().contains("attack_damage")) {
+                return entry.modifier().value();
+            }
+        }
+        // Default base damage for tools
+        return 1.0;
+    }
+
     // Minimum damage threshold for weapon durability loss (like shields)
     private static final int PARRY_DAMAGE_THRESHOLD = 3;
 
     /**
      * Called when a parry succeeds.
      * Damages the weapon used to parry (like shields - damage equal to attack, threshold of 3).
+     * If Prophetic Blade is active, switches to best weapon in hotbar.
      */
     private static void onParrySuccess(ServerPlayerEntity player, float attackDamage) {
         // Play parry success sound (metallic clang)
@@ -227,6 +291,11 @@ public class ParryHandler {
                 // Weapon broke from parrying
                 player.sendMessage(Text.literal("Your weapon broke!"), false);
             });
+        }
+
+        // Prophetic Blade: switch to best weapon after parry
+        if (hasPropheticBlade(player)) {
+            switchToBestWeapon(player);
         }
 
         // Send success message

@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Mixin to check for parry when player takes damage.
  * If player is in attack swing and hit from the front, attempt parry roll.
+ * Prophetic Blade: always parrying when in hotbar, parry from any direction.
  */
 @Mixin(ServerPlayerEntity.class)
 public class ParryDamageMixin {
@@ -24,13 +25,20 @@ public class ParryDamageMixin {
     private void onDamage(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         ServerPlayerEntity player = (ServerPlayerEntity) (Object) this;
 
+        boolean hasPropheticBlade = ParryHandler.hasPropheticBlade(player);
+
         // Check if player is holding a parryable weapon
-        if (!ParryHandler.isParryableWeapon(player.getMainHandStack())) {
+        // Prophetic Blade: only need a parryable weapon somewhere in hotbar
+        if (!hasPropheticBlade && !ParryHandler.isParryableWeapon(player.getMainHandStack())) {
+            return;
+        }
+        if (hasPropheticBlade && !hasParryableWeaponInHotbar(player)) {
             return;
         }
 
         // Check if player is in attack swing
-        if (!ParryHandler.isInAttackSwing(player)) {
+        // Prophetic Blade: always parrying when in hotbar
+        if (!hasPropheticBlade && !ParryHandler.isInAttackSwing(player)) {
             return;
         }
 
@@ -40,7 +48,8 @@ public class ParryDamageMixin {
         }
 
         // Check if attack is from the front
-        if (!ParryHandler.isFrontalAttack(player, source)) {
+        // Prophetic Blade: parry from any direction
+        if (!hasPropheticBlade && !ParryHandler.isFrontalAttack(player, source)) {
             Aerb.LOGGER.debug("Attack not frontal, no parry attempt");
             return;
         }
@@ -53,6 +62,18 @@ public class ParryDamageMixin {
             cir.setReturnValue(false);
         }
         // If parry failed, damage proceeds normally
+    }
+
+    /**
+     * Check if player has any parryable weapon in their hotbar.
+     */
+    private boolean hasParryableWeaponInHotbar(ServerPlayerEntity player) {
+        for (int i = 0; i < 9; i++) {
+            if (ParryHandler.isParryableWeapon(player.getInventory().getStack(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
