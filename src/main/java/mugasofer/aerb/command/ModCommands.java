@@ -12,6 +12,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.command.permission.Permission;
+import net.minecraft.command.permission.PermissionLevel;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -45,6 +47,7 @@ public class ModCommands {
             // /setskill <skill> <level> - set your own skill
             // /setskill <player> <skill> <level> - set another player's skill
             dispatcher.register(CommandManager.literal("setskill")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
                 // Self version: /setskill <skill> <level>
                 .then(CommandManager.argument("skill", StringArgumentType.word())
                     .suggests((context, builder) -> {
@@ -87,6 +90,7 @@ public class ModCommands {
 
             // /getskill <skill>
             dispatcher.register(CommandManager.literal("getskill")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
                 .then(CommandManager.argument("skill", StringArgumentType.word())
                     .suggests((context, builder) -> {
                         builder.suggest(PlayerSkills.BLOOD_MAGIC);
@@ -112,6 +116,7 @@ public class ModCommands {
             // /givespell <spell> - give yourself a spell
             // /givespell <player> <spell> - give a player a spell
             dispatcher.register(CommandManager.literal("givespell")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
                 .then(CommandManager.argument("spell", StringArgumentType.word())
                     .suggests((context, builder) -> {
                         SPELLS.keySet().forEach(builder::suggest);
@@ -143,6 +148,7 @@ public class ModCommands {
             // /takespell <spell> - remove a spell from yourself
             // /takespell <player> <spell> - remove a spell from a player
             dispatcher.register(CommandManager.literal("takespell")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
                 .then(CommandManager.argument("spell", StringArgumentType.word())
                     .suggests((context, builder) -> {
                         SPELLS.keySet().forEach(builder::suggest);
@@ -174,6 +180,7 @@ public class ModCommands {
             // /givevirtue <virtue> - give yourself a virtue
             // /givevirtue <player> <virtue> - give a player a virtue
             dispatcher.register(CommandManager.literal("givevirtue")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
                 .then(CommandManager.argument("virtue", StringArgumentType.word())
                     .suggests((context, builder) -> {
                         VIRTUES.keySet().forEach(builder::suggest);
@@ -205,6 +212,7 @@ public class ModCommands {
             // /takevirtue <virtue> - remove a virtue from yourself
             // /takevirtue <player> <virtue> - remove a virtue from a player
             dispatcher.register(CommandManager.literal("takevirtue")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
                 .then(CommandManager.argument("virtue", StringArgumentType.word())
                     .suggests((context, builder) -> {
                         VIRTUES.keySet().forEach(builder::suggest);
