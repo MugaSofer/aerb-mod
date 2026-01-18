@@ -38,6 +38,7 @@ public class ModCommands {
         VIRTUES.put("hypertension", ModItems.HYPERTENSION);
         VIRTUES.put("prescient_blade", ModItems.PRESCIENT_BLADE);
         VIRTUES.put("prophetic_blade", ModItems.PROPHETIC_BLADE);
+        VIRTUES.put("riposter", ModItems.RIPOSTER);
     }
     public static void init() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -323,6 +324,11 @@ public class ModCommands {
         if (skill.equals(PlayerSkills.PARRY)) {
             if (level >= 20) grantVirtueIfMissing(player, ModItems.PRESCIENT_BLADE, "Prescient Blade");
             if (level >= 40) grantVirtueIfMissing(player, ModItems.PROPHETIC_BLADE, "Prophetic Blade");
+        }
+
+        // One-Handed Weapons virtue unlocks
+        if (skill.equals(PlayerSkills.ONE_HANDED)) {
+            if (level >= 40) grantVirtueIfMissing(player, ModItems.RIPOSTER, "Riposter");
         }
     }
 

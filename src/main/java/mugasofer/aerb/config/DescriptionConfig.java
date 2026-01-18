@@ -104,7 +104,6 @@ public class DescriptionConfig {
 
         // Blood Magic Virtues
         config.descriptions.put("hypertension", List.of(
-            "Blood Magic 20",
             "Passive",
             "Doubles blood volume.",
 			"2x max HP, but extra HP is only effective vs bleeding."
@@ -112,15 +111,20 @@ public class DescriptionConfig {
 
         // Parry Virtues
         config.descriptions.put("prescient_blade", List.of(
-            "Parry 20",
             "Passive",
             "Halves the projectile modifier for parry rolls."
         ));
         config.descriptions.put("prophetic_blade", List.of(
-            "Parry 40",
-            "Active when in hotbar",
+            "Active (when in hotbar)",
             "Always parrying, from any direction.",
             "Auto-switches to best weapon on parry."
+        ));
+
+        // One-Handed Weapons Virtues
+        config.descriptions.put("riposter", List.of(
+            "Active (when in hotbar)",
+            "On successful parry with sword or axe,",
+            "immediately counterattack."
         ));
 
         return config;

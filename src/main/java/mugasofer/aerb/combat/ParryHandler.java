@@ -170,7 +170,7 @@ public class ParryHandler {
             success ? "SUCCESS" : "FAIL");
 
         if (success) {
-            onParrySuccess(player, damage);
+            onParrySuccess(player, damage, source);
         } else {
             onParryFail(player);
         }
@@ -224,6 +224,21 @@ public class ParryHandler {
      */
     public static boolean hasPropheticBlade(ServerPlayerEntity player) {
         return hasVirtueInHotbar(player, ModItems.PROPHETIC_BLADE);
+    }
+
+    /**
+     * Check if player has Riposter in hotbar (enables riposte on parry).
+     */
+    public static boolean hasRiposter(ServerPlayerEntity player) {
+        return hasVirtueInHotbar(player, ModItems.RIPOSTER);
+    }
+
+    /**
+     * Check if a weapon is one-handed (sword or axe).
+     */
+    public static boolean isOneHandedWeapon(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        return stack.isIn(ItemTags.SWORDS) || stack.isIn(ItemTags.AXES);
     }
 
     /**
@@ -308,8 +323,9 @@ public class ParryHandler {
     /**
      * Called when a parry succeeds.
      * Damages the weapon used to parry (like shields - damage equal to attack, threshold of 3).
+     * If Riposter is active with a one-handed weapon, performs an immediate counterattack.
      */
-    private static void onParrySuccess(ServerPlayerEntity player, float attackDamage) {
+    private static void onParrySuccess(ServerPlayerEntity player, float attackDamage, DamageSource source) {
         // Play parry success sound (metallic clang)
         player.getEntityWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
             SoundEvents.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1.0f, 1.2f);
@@ -324,8 +340,27 @@ public class ParryHandler {
             });
         }
 
+        // Check for Riposter riposte
+        boolean riposted = false;
+        if (hasRiposter(player) && isOneHandedWeapon(player.getMainHandStack())) {
+            Entity attacker = source.getAttacker();
+            if (attacker != null && attacker.isAlive()) {
+                // Perform immediate counterattack
+                // The attack cooldown from the parry swing should be ready or nearly ready
+                player.attack(attacker);
+                player.swingHand(net.minecraft.util.Hand.MAIN_HAND, true);
+                riposted = true;
+                Aerb.LOGGER.info("Riposter: {} counterattacked {}",
+                    player.getName().getString(), attacker.getName().getString());
+            }
+        }
+
         // Send success message
-        player.sendMessage(Text.literal("Parried!"), true);
+        if (riposted) {
+            player.sendMessage(Text.literal("Parried and riposted!"), true);
+        } else {
+            player.sendMessage(Text.literal("Parried!"), true);
+        }
     }
 
     /**

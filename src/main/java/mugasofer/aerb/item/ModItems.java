@@ -98,6 +98,12 @@ public class ModItems {
             .maxCount(1)
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "prophetic_blade")))));
 
+    // Virtues (One-Handed Weapons)
+    public static final Item RIPOSTER = register("riposter",
+        new RiposterItem(new Item.Settings()
+            .maxCount(1)
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "riposter")))));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -119,6 +125,7 @@ public class ModItems {
             entries.add(HYPERTENSION);
             entries.add(PRESCIENT_BLADE);
             entries.add(PROPHETIC_BLADE);
+            entries.add(RIPOSTER);
         });
     }
 }

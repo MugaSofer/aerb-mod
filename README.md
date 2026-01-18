@@ -129,6 +129,11 @@ The config file is created with defaults on first run and reloaded on game start
 | Prescient Blade | Parry 20 | Passive | Halves the projectile modifier for parry rolls (+25 → +12) |
 | Prophetic Blade | Parry 40 | Active | When in hotbar: parry from any direction, auto-switch to best weapon and parry if not equipped when attacked|
 
+**One-Handed Weapons Virtues:**
+| Virtue | Unlock Level | Type | Effect |
+|--------|--------------|------|--------|
+| Riposter | One-Handed 40 | Active | When in hotbar: on successful parry with sword or axe, immediately counterattack |
+
 ### Navigation
 
 All screens (Inventory, Stats, Spells, Virtues) have navigation tabs on the left side for easy switching.
@@ -177,7 +182,7 @@ All commands support tab-completion.
 /takevirtue <player> <virtue>       - Remove a virtue from a player
 ```
 
-**Virtue names:** `hypertension`, `prescient_blade`, `prophetic_blade`
+**Virtue names:** `hypertension`, `prescient_blade`, `prophetic_blade`, `riposter`
 
 ## Quick Start
 
