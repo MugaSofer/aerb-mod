@@ -16,6 +16,22 @@ Players have skills that start **locked** (-1) and can be unlocked and leveled u
 
 Skills show as "Locked" in grey until unlocked. Use `/setskill` to unlock and level skills.
 
+### Skill XP System
+
+Skills gain XP through relevant actions and level up automatically. XP needed for next level = (level + 2)².
+
+**XP Sources:**
+- **One-Handed**: Deal damage with sword/axe, kill enemies
+- **Parry**: Attempt parries (success or failure)
+- **Blood Magic**: Hold Aarde's Touch (1 XP per 6 seconds), cast blood spells
+- **Bone Magic**: Cast bone spells
+
+**Messages:**
+- "Skill unlocked: X!" - First XP gain unlocks the skill
+- "Skill increased: X lvl Y!" - Level up notification
+
+XP values are configurable in `config/aerb_xp.json`.
+
 ### Spell System
 
 Spells are special items that can only be stored in:

@@ -39,7 +39,7 @@ public class XpHelper {
         if (!skills.isUnlocked(skillName)) {
             skills.setSkillLevel(skillName, 0);
             currentLevel = 0;
-            player.sendMessage(Text.literal("New Skill: " + formatSkillName(skillName) + "!"), false);
+            player.sendMessage(Text.literal("Skill unlocked: " + formatSkillName(skillName) + "!"), false);
 
             // Check for level-0 unlocks (e.g., Aarde's Touch at Blood Magic 0)
             ModCommands.checkSpellUnlocks(player, skillName, 0);
@@ -64,7 +64,7 @@ public class XpHelper {
 
         if (leveledUp) {
             skills.setSkillLevel(skillName, currentLevel);
-            player.sendMessage(Text.literal(formatSkillName(skillName) + " leveled up to " + currentLevel + "!"), false);
+            player.sendMessage(Text.literal("Skill increased: " + formatSkillName(skillName) + " lvl " + currentLevel + "!"), false);
 
             // Check for unlock thresholds (spells/virtues)
             ModCommands.checkSpellUnlocks(player, skillName, currentLevel);

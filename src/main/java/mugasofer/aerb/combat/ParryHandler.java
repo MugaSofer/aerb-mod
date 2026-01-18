@@ -146,7 +146,7 @@ public class ParryHandler {
         boolean skillUnlocked = false;
         if (!skills.isUnlocked(PlayerSkills.PARRY)) {
             skills.setSkillLevel(PlayerSkills.PARRY, 0);
-            player.sendMessage(Text.literal("New Skill: Parry!"), false);
+            player.sendMessage(Text.literal("Skill unlocked: Parry!"), false);
             ModNetworking.syncSkillsToClient(player);
             skillUnlocked = true;
             parryLevel = 0;
@@ -370,10 +370,12 @@ public class ParryHandler {
 
     /**
      * Called when a parry fails.
+     * Still awards Parry XP - you learn from your mistakes!
      */
     private static void onParryFail(ServerPlayerEntity player) {
-        // Could play a different sound or show message
-        // For now, just log it
+        // Award Parry XP even on failure
+        XpHelper.awardXp(player, PlayerSkills.PARRY, XpConfig.get().xpPerParry);
+
         Aerb.LOGGER.debug("Parry failed for {}", player.getName().getString());
     }
 

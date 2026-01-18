@@ -33,6 +33,7 @@ import java.util.UUID;
 public class AardesTouchItem extends Item implements SpellItem {
     private static final int LIGHT_LEVEL = 14; // Slightly less than max (15) for torch-like feel
     private static final int FREEZE_INTERVAL = 30; // Add 1 frozen tick every 30 game ticks (slower than powder snow)
+    private static final int XP_INTERVAL = 120; // Award 1 XP every 6 seconds (120 ticks) while holding
     // Track multiple light positions per player (feet and torso)
     private static final HashMap<UUID, List<BlockPos>> playerLightPositions = new HashMap<>();
     private static boolean eventRegistered = false;
@@ -101,6 +102,12 @@ public class AardesTouchItem extends Item implements SpellItem {
                         int maxFrozen = player.getMinFreezeDamageTicks();
                         player.setFrozenTicks(Math.min(maxFrozen, currentFrozen + 1));
                     }
+
+                    // === Blood Magic XP ===
+                    // Award 1 XP every 6 seconds while holding
+                    if (server.getTicks() % XP_INTERVAL == 0) {
+                        XpHelper.awardXp(player, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
+                    }
                 } else {
                     // Not holding - remove any existing lights
                     List<BlockPos> oldPositions = playerLightPositions.remove(playerId);
@@ -133,11 +140,6 @@ public class AardesTouchItem extends Item implements SpellItem {
             if (!world.isClient()) {
                 world.setBlockState(pos, state.with(Properties.LIT, true));
                 world.emitGameEvent(player, GameEvent.BLOCK_CHANGE, pos);
-
-                // Award Blood Magic XP
-                if (player instanceof ServerPlayerEntity serverPlayer) {
-                    XpHelper.awardXp(serverPlayer, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
-                }
             }
             playFireSound(world, pos);
             return ActionResult.SUCCESS;
@@ -150,11 +152,6 @@ public class AardesTouchItem extends Item implements SpellItem {
                 BlockState fireState = AbstractFireBlock.getState(world, firePos);
                 world.setBlockState(firePos, fireState);
                 world.emitGameEvent(player, GameEvent.BLOCK_PLACE, firePos);
-
-                // Award Blood Magic XP
-                if (player instanceof ServerPlayerEntity serverPlayer) {
-                    XpHelper.awardXp(serverPlayer, PlayerSkills.BLOOD_MAGIC, XpConfig.get().xpPerSpellCast);
-                }
             }
             playFireSound(world, firePos);
             return ActionResult.SUCCESS;
