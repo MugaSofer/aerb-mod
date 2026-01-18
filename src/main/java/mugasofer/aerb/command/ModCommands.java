@@ -47,9 +47,11 @@ public class ModCommands {
                     .suggests((context, builder) -> {
                         builder.suggest(PlayerSkills.BLOOD_MAGIC);
                         builder.suggest(PlayerSkills.BONE_MAGIC);
+                        builder.suggest(PlayerSkills.ONE_HANDED);
+                        builder.suggest(PlayerSkills.PARRY);
                         return builder.buildFuture();
                     })
-                    .then(CommandManager.argument("level", IntegerArgumentType.integer(-1, 100))
+                    .then(CommandManager.argument("level", IntegerArgumentType.integer(-1, 300))
                         .executes(context -> {
                             ServerCommandSource source = context.getSource();
                             ServerPlayerEntity player = source.getPlayerOrThrow();
@@ -67,7 +69,7 @@ public class ModCommands {
                             builder.suggest(PlayerSkills.BONE_MAGIC);
                             return builder.buildFuture();
                         })
-                        .then(CommandManager.argument("level2", IntegerArgumentType.integer(-1, 100))
+                        .then(CommandManager.argument("level2", IntegerArgumentType.integer(-1, 300))
                             .executes(context -> {
                                 ServerCommandSource source = context.getSource();
                                 ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
@@ -86,6 +88,8 @@ public class ModCommands {
                     .suggests((context, builder) -> {
                         builder.suggest(PlayerSkills.BLOOD_MAGIC);
                         builder.suggest(PlayerSkills.BONE_MAGIC);
+                        builder.suggest(PlayerSkills.ONE_HANDED);
+                        builder.suggest(PlayerSkills.PARRY);
                         return builder.buildFuture();
                     })
                     .executes(context -> {

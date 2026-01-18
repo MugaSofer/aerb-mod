@@ -25,6 +25,8 @@ public class PlayerSkills {
     // Known skill names
     public static final String BLOOD_MAGIC = "blood_magic";
     public static final String BONE_MAGIC = "bone_magic";
+    public static final String ONE_HANDED = "one_handed";
+    public static final String PARRY = "parry";
 
     public static final Codec<PlayerSkills> CODEC = RecordCodecBuilder.create(instance ->
         instance.group(

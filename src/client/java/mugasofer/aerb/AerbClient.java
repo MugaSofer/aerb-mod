@@ -1,5 +1,6 @@
 package mugasofer.aerb;
 
+import mugasofer.aerb.combat.ParrySkillCache;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
 import mugasofer.aerb.screen.ModScreenHandlers;
@@ -24,7 +25,9 @@ public class AerbClient implements ClientModInitializer {
 
 		// Register client-side handler for skill sync
 		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SyncSkillsPayload.ID, (payload, context) -> {
-			ClientSkillCache.update(payload.bloodMagic(), payload.boneMagic());
+			ClientSkillCache.update(payload.bloodMagic(), payload.boneMagic(), payload.oneHanded(), payload.parry());
+			// Also update the parry skill cache for animation timing
+			ParrySkillCache.setParryLevel(payload.parry());
 		});
 
 		// Add navigation tabs to inventory screen (left side to match other screens)

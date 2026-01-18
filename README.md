@@ -78,9 +78,9 @@ When you obtain a new virtue for the first time, you'll see "New Virtue: [name]!
 | Hypertension | Blood Magic 20 | Passive | Doubles max HP (10 → 20 hearts). Take extra damage while above 50% HP based on damage type. |
 
 **Hypertension Damage Multipliers:**
-- Pointy damage (arrow, cactus, thorns): 1.25x
-- Blunt damage (fall, mob attack): 1.5x
-- Other damage (fire, magic, drowning): 2.0x
+- Pointy damage (e.g. arrow, cactus, thorns): 1.25x
+- Blunt damage (e.g. fall, mob attack): 1.5x
+- Other damage (e.g. fire, magic, drowning): 2.0x
 
 These multipliers are configurable in `config/aerb_hypertension.json`.
 
@@ -91,8 +91,8 @@ All screens (Inventory, Stats, Spells, Virtues) have navigation tabs on the left
 ### Death Persistence
 
 Spells, virtues, and skills are **preserved on death**. When you respawn:
-- All spells remain in your spell inventory and hotbar
-- All virtues remain in your virtue inventory
+- All spells remain in your spell inventory; any in your hotbar or offhand return there
+- All virtues remain in your virtue inventory; any in your hotbar or offhand return there
 - All skill levels and discoveries are kept
 
 Spells and virtues cannot be dropped - they automatically return to you.

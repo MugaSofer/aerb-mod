@@ -6,7 +6,10 @@
 		"ExampleMixin",
 		"SlotSpellRestrictionMixin",
 		"SpellDiscoveryMixin",
-		"HypertensionDamageMixin"
+		"SpellItemRestrictionMixin",
+		"HypertensionDamageMixin",
+		"AttackSwingMixin",
+		"ParryDamageMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

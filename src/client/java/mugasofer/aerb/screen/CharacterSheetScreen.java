@@ -37,6 +37,8 @@ public class CharacterSheetScreen extends Screen {
     // TextWidgets for dynamic skill display
     private TextWidget bloodMagicWidget;
     private TextWidget boneMagicWidget;
+    private TextWidget oneHandedWidget;
+    private TextWidget parryWidget;
 
     public CharacterSheetScreen(PlayerEntity player) {
         super(Text.literal("Character Sheet"));
@@ -93,6 +95,16 @@ public class CharacterSheetScreen extends Screen {
         this.boneMagicWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
             Text.literal("Bone Magic: 0").withColor(0xAAAAAA), this.textRenderer);
         this.addDrawableChild(this.boneMagicWidget);
+        y += lineHeight;
+
+        this.oneHandedWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
+            Text.literal("One-Handed: 0").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.oneHandedWidget);
+        y += lineHeight;
+
+        this.parryWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
+            Text.literal("Parry: 0").withColor(0xAAAAAA), this.textRenderer);
+        this.addDrawableChild(this.parryWidget);
 
         // Navigation tabs on the left side (consistent position across screens)
         int tabX = panelX - TAB_WIDTH - 4;
@@ -148,8 +160,12 @@ public class CharacterSheetScreen extends Screen {
         // Locked skills (-1) show greyed out, unlocked skills (0+) show level
         int bloodLevel = ClientSkillCache.getBloodMagic();
         int boneLevel = ClientSkillCache.getBoneMagic();
+        int oneHandedLevel = ClientSkillCache.getOneHanded();
+        int parryLevel = ClientSkillCache.getParry();
         this.bloodMagicWidget.setMessage(formatSkill("Blood Magic", bloodLevel));
         this.boneMagicWidget.setMessage(formatSkill("Bone Magic", boneLevel));
+        this.oneHandedWidget.setMessage(formatSkill("One-Handed", oneHandedLevel));
+        this.parryWidget.setMessage(formatSkill("Parry", parryLevel));
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);

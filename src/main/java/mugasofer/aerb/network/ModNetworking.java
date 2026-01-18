@@ -49,12 +49,16 @@ public class ModNetworking {
     }
 
     // Payload for syncing skills from server to client
-    public record SyncSkillsPayload(int bloodMagic, int boneMagic) implements CustomPayload {
+    public record SyncSkillsPayload(int bloodMagic, int boneMagic, int oneHanded, int parry) implements CustomPayload {
         public static final Id<SyncSkillsPayload> ID = new Id<>(SYNC_SKILLS_ID);
-        public static final PacketCodec<RegistryByteBuf, SyncSkillsPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.INTEGER, SyncSkillsPayload::bloodMagic,
-            PacketCodecs.INTEGER, SyncSkillsPayload::boneMagic,
-            SyncSkillsPayload::new
+        public static final PacketCodec<RegistryByteBuf, SyncSkillsPayload> CODEC = PacketCodec.of(
+            (value, buf) -> {
+                buf.writeInt(value.bloodMagic);
+                buf.writeInt(value.boneMagic);
+                buf.writeInt(value.oneHanded);
+                buf.writeInt(value.parry);
+            },
+            buf -> new SyncSkillsPayload(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt())
         );
 
         @Override
@@ -70,7 +74,9 @@ public class ModNetworking {
         PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
         SyncSkillsPayload payload = new SyncSkillsPayload(
             skills.getSkillLevel(PlayerSkills.BLOOD_MAGIC),
-            skills.getSkillLevel(PlayerSkills.BONE_MAGIC)
+            skills.getSkillLevel(PlayerSkills.BONE_MAGIC),
+            skills.getSkillLevel(PlayerSkills.ONE_HANDED),
+            skills.getSkillLevel(PlayerSkills.PARRY)
         );
         ServerPlayNetworking.send(player, payload);
     }
