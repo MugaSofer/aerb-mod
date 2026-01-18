@@ -35,6 +35,13 @@ public class ItemEquipMixin {
                 return;
             }
 
+            PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+
+            // Unlock one-handed skill when equipping any sword or axe
+            if (XpHelper.isOneHandedWeapon(currentMainHand) && !skills.isUnlocked(PlayerSkills.ONE_HANDED)) {
+                XpHelper.awardXp(player, PlayerSkills.ONE_HANDED, 0); // Unlock with 0 XP
+            }
+
             // Get the relevant skill for this item
             String relevantSkill = XpHelper.getRelevantSkill(currentMainHand);
             if (relevantSkill == null) {
@@ -48,12 +55,11 @@ public class ItemEquipMixin {
             }
 
             // Check if this is a new item (not discovered before)
-            PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
             if (!skills.hasDiscoveredItem(itemId)) {
                 // Mark as discovered
                 skills.discoverItem(itemId);
 
-                // Award XP if the skill is unlocked
+                // Award XP
                 XpHelper.awardXp(player, relevantSkill, XpConfig.get().xpPerNewItemEquip);
             }
         }
