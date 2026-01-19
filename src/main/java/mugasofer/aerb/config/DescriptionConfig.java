@@ -82,6 +82,11 @@ public class DescriptionConfig {
             "Channels the force of your blood to gain kinetic energy in the form of a leap.",
 			"Costs a small amount of blood."
         ));
+        config.descriptions.put("claret_spear", List.of(
+            "Channels the force of your blood into a pointed weapon.",
+            "Reduces max HP by 1 heart while held.",
+            "Throwing spends the blood; unequipping returns it."
+        ));
 
         // Bone Magic Spells
         config.descriptions.put("physical_tapping", List.of(
@@ -125,6 +130,16 @@ public class DescriptionConfig {
             "Active (when in hotbar)",
             "On successful parry with sword or axe,",
             "immediately counterattack."
+        ));
+
+        // Commoner's Guides
+        config.descriptions.put("commoners_guide_blood_magic", List.of(
+            "A simple guide to Blood Magic for the common folk.",
+            "Hold to unlock the Blood Magic skill."
+        ));
+        config.descriptions.put("commoners_guide_bone_magic", List.of(
+            "A simple guide to Bone Magic for the common folk.",
+            "Hold to unlock the Bone Magic skill."
         ));
 
         return config;

@@ -2,8 +2,8 @@ package mugasofer.aerb;
 
 import mugasofer.aerb.combat.ParrySkillCache;
 import mugasofer.aerb.config.DescriptionConfig;
-import mugasofer.aerb.item.SpellItem;
-import mugasofer.aerb.item.VirtueItem;
+import mugasofer.aerb.entity.ModEntities;
+import mugasofer.aerb.item.DescribedItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
 import mugasofer.aerb.screen.ModScreenHandlers;
@@ -13,11 +13,13 @@ import mugasofer.aerb.skill.ClientSkillCache;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -31,9 +33,13 @@ public class AerbClient implements ClientModInitializer {
 		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
 		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
 
-		// Add custom descriptions to spell and virtue tooltips
+		// Register entity renderers
+		// TODO: Create custom renderer to rotate spear to face direction of travel (1.21.11 API changes)
+		EntityRendererRegistry.register(ModEntities.CLARET_SPEAR, FlyingItemEntityRenderer::new);
+
+		// Add custom descriptions to items that implement DescribedItem
 		ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
-			if (SpellItem.isSpell(stack) || VirtueItem.isVirtue(stack)) {
+			if (DescribedItem.hasDescription(stack)) {
 				// Get item ID from registry
 				String itemId = Registries.ITEM.getId(stack.getItem()).getPath();
 				List<String> descriptionLines = DescriptionConfig.get().getDescription(itemId);

@@ -4,6 +4,22 @@
 - **Wait for testing before committing code**: Don't commit or push code changes until the user confirms they work in-game. Documentation/notes are fine without testing.
 - **Speak up**: User sees this as a partnership. If something isn't engaging, seems like a bad idea, or you have any concerns, say so.
 
+## Adding New Items
+New items require THREE resource files (not just model + texture):
+1. `assets/aerb/items/<item_name>.json` - Item definition (points to model)
+2. `assets/aerb/models/item/<item_name>.json` - Model (points to texture)
+3. `assets/aerb/textures/item/<item_name>.png` - Texture
+
+The item definition format (in `items/` folder):
+```json
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "aerb:item/<item_name>"
+  }
+}
+```
+
 ## Current Status (as of last session)
 
 ### Completed Systems

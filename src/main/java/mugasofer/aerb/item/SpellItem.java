@@ -1,6 +1,5 @@
 package mugasofer.aerb.item;
 
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 /**
@@ -8,7 +7,7 @@ import net.minecraft.item.ItemStack;
  * Items implementing this interface can only be stored in the spell inventory,
  * not in regular inventory, chests, or dropped. They CAN be placed in crafting grids.
  */
-public interface SpellItem {
+public interface SpellItem extends DescribedItem {
 
     /**
      * Check if an ItemStack contains a spell item.

@@ -1,6 +1,7 @@
 package mugasofer.aerb.item;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.skill.PlayerSkills;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.Item;
@@ -104,6 +105,29 @@ public class ModItems {
             .maxCount(1)
             .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "riposter")))));
 
+    // Blood Magic Spells (continued)
+    public static final Item CLARET_SPEAR = register("claret_spear",
+        new ClaretSpearItem(new Item.Settings()
+            .maxCount(1)
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "claret_spear")))));
+
+    // Commoner's Guides (skill-unlocking books)
+    public static final Item COMMONERS_GUIDE_BLOOD_MAGIC = register("commoners_guide_blood_magic",
+        new CommonersGuideItem(
+            new Item.Settings()
+                .maxCount(1)
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "commoners_guide_blood_magic"))),
+            PlayerSkills.BLOOD_MAGIC
+        ));
+
+    public static final Item COMMONERS_GUIDE_BONE_MAGIC = register("commoners_guide_bone_magic",
+        new CommonersGuideItem(
+            new Item.Settings()
+                .maxCount(1)
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "commoners_guide_bone_magic"))),
+            PlayerSkills.BONE_MAGIC
+        ));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -121,11 +145,15 @@ public class ModItems {
             entries.add(AARDES_TOUCH);
             entries.add(CRIMSON_FIST);
             entries.add(SANGUINE_SURGE);
+            entries.add(CLARET_SPEAR);
             // Virtues
             entries.add(HYPERTENSION);
             entries.add(PRESCIENT_BLADE);
             entries.add(PROPHETIC_BLADE);
             entries.add(RIPOSTER);
+            // Guides
+            entries.add(COMMONERS_GUIDE_BLOOD_MAGIC);
+            entries.add(COMMONERS_GUIDE_BONE_MAGIC);
         });
     }
 }

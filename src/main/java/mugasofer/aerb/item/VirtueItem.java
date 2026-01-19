@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack;
  * Passive virtues (isPassive() returns true) can ONLY be stored in the virtue
  * inventory - not hotbar or offhand.
  */
-public interface VirtueItem {
+public interface VirtueItem extends DescribedItem {
     /**
      * Check if an ItemStack is a virtue item.
      */

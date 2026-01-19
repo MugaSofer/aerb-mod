@@ -4,6 +4,7 @@ import mugasofer.aerb.command.ModCommands;
 import mugasofer.aerb.config.DescriptionConfig;
 import mugasofer.aerb.config.HypertensionConfig;
 import mugasofer.aerb.config.XpConfig;
+import mugasofer.aerb.entity.ModEntities;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.SpellItem;
 import mugasofer.aerb.item.VirtueItem;
@@ -47,6 +48,7 @@ public class Aerb implements ModInitializer {
 		HypertensionConfig.load();
 		DescriptionConfig.load();
 		XpConfig.load();
+		ModEntities.initialize();
 		ModItems.initialize();
 		SpellInventory.init();
 		VirtueInventory.init();

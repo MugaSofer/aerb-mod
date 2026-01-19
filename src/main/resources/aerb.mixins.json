@@ -11,7 +11,8 @@
 		"AttackSwingMixin",
 		"ParryDamageMixin",
 		"KillXpMixin",
-		"ItemEquipMixin"
+		"ItemEquipMixin",
+		"ClaretSpearDamageMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
