@@ -32,6 +32,7 @@ public class ModCommands {
         SPELLS.put("aardes_touch", ModItems.AARDES_TOUCH);
         SPELLS.put("crimson_fist", ModItems.CRIMSON_FIST);
         SPELLS.put("sanguine_surge", ModItems.SANGUINE_SURGE);
+        SPELLS.put("claret_spear", ModItems.CLARET_SPEAR);
         SPELLS.put("physical_tapping", ModItems.PHYSICAL_TAPPING);
         SPELLS.put("power_tapping", ModItems.POWER_TAPPING);
         SPELLS.put("speed_tapping", ModItems.SPEED_TAPPING);
@@ -266,6 +267,7 @@ public class ModCommands {
             if (level >= 0) grantSpellIfMissing(player, ModItems.AARDES_TOUCH, "Aarde's Touch");
             if (level >= 2) grantSpellIfMissing(player, ModItems.CRIMSON_FIST, "Crimson Fist");
             if (level >= 5) grantSpellIfMissing(player, ModItems.SANGUINE_SURGE, "Sanguine Surge");
+            if (level >= 25) grantSpellIfMissing(player, ModItems.CLARET_SPEAR, "Claret Spear");
         }
 
         // Bone Magic unlocks

@@ -34,7 +34,7 @@ public class AerbClient implements ClientModInitializer {
 		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
 
 		// Register entity renderers
-		// TODO: Create custom renderer to rotate spear to face direction of travel (1.21.11 API changes)
+		// TODO: Custom renderer for rotation - 1.21.11 texture binding API needs investigation
 		EntityRendererRegistry.register(ModEntities.CLARET_SPEAR, FlyingItemEntityRenderer::new);
 
 		// Add custom descriptions to items that implement DescribedItem

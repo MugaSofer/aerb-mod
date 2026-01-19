@@ -3,7 +3,9 @@ package mugasofer.aerb.item;
 import mugasofer.aerb.config.XpConfig;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.skill.XpHelper;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -46,6 +48,19 @@ public class AardesTouchItem extends Item implements SpellItem {
     private static void registerTickEvent() {
         if (eventRegistered) return;
         eventRegistered = true;
+
+        // Clean up lights when player dies
+        ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -> {
+            if (entity instanceof ServerPlayerEntity player) {
+                cleanupPlayerLights(player);
+            }
+        });
+
+        // Clean up lights when player disconnects
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            ServerPlayerEntity player = handler.getPlayer();
+            cleanupPlayerLights(player);
+        });
 
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
@@ -125,6 +140,17 @@ public class AardesTouchItem extends Item implements SpellItem {
         BlockState state = world.getBlockState(pos);
         if (state.isOf(Blocks.LIGHT)) {
             world.setBlockState(pos, Blocks.AIR.getDefaultState());
+        }
+    }
+
+    private static void cleanupPlayerLights(ServerPlayerEntity player) {
+        UUID playerId = player.getUuid();
+        List<BlockPos> oldPositions = playerLightPositions.remove(playerId);
+        if (oldPositions != null) {
+            World world = player.getEntityWorld();
+            for (BlockPos oldPos : oldPositions) {
+                removeLightBlock(world, oldPos);
+            }
         }
     }
 
