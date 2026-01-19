@@ -1,11 +1,16 @@
 package mugasofer.aerb.item;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.entity.ModEntities;
 import mugasofer.aerb.skill.PlayerSkills;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.TypedEntityData;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
+import net.minecraft.item.SpawnEggItem;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -128,6 +133,13 @@ public class ModItems {
             PlayerSkills.BONE_MAGIC
         ));
 
+    // Spawn Eggs
+    public static final Item UNDEAD_SPAWN_EGG = register("undead_spawn_egg",
+        new SpawnEggItem(
+            new Item.Settings()
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "undead_spawn_egg")))
+                .component(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(ModEntities.UNDEAD, new NbtCompound()))));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -154,6 +166,11 @@ public class ModItems {
             // Guides
             entries.add(COMMONERS_GUIDE_BLOOD_MAGIC);
             entries.add(COMMONERS_GUIDE_BONE_MAGIC);
+        });
+
+        // Add spawn eggs to the Spawn Eggs item group
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register(entries -> {
+            entries.add(UNDEAD_SPAWN_EGG);
         });
     }
 }

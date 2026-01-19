@@ -12,5 +12,7 @@
   "item.aerb.riposter": "Riposter",
   "item.aerb.claret_spear": "Claret Spear",
   "item.aerb.commoners_guide_blood_magic": "Commoner's Guide to Blood Magic",
-  "item.aerb.commoners_guide_bone_magic": "Commoner's Guide to Bone Magic"
+  "item.aerb.commoners_guide_bone_magic": "Commoner's Guide to Bone Magic",
+  "item.aerb.undead_spawn_egg": "Undead Spawn Egg",
+  "entity.aerb.undead": "Undead"
 }

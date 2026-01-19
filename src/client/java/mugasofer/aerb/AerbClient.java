@@ -19,7 +19,8 @@ import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
+import mugasofer.aerb.render.ClaretSpearEntityRenderer;
+import mugasofer.aerb.render.UndeadEntityRenderer;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -34,8 +35,8 @@ public class AerbClient implements ClientModInitializer {
 		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
 
 		// Register entity renderers
-		// TODO: Custom renderer for rotation - 1.21.11 texture binding API needs investigation
-		EntityRendererRegistry.register(ModEntities.CLARET_SPEAR, FlyingItemEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntities.CLARET_SPEAR, ClaretSpearEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntities.UNDEAD, UndeadEntityRenderer::new);
 
 		// Add custom descriptions to items that implement DescribedItem
 		ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {

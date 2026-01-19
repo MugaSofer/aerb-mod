@@ -20,6 +20,15 @@ public class ModEntities {
             .build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(Aerb.MOD_ID, "claret_spear")))
     );
 
+    public static final EntityType<UndeadEntity> UNDEAD = Registry.register(
+        Registries.ENTITY_TYPE,
+        Identifier.of(Aerb.MOD_ID, "undead"),
+        EntityType.Builder.<UndeadEntity>create(UndeadEntity::new, SpawnGroup.MONSTER)
+            .dimensions(0.6f, 1.95f) // Same as zombie
+            .maxTrackingRange(8)
+            .build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(Aerb.MOD_ID, "undead")))
+    );
+
     public static void initialize() {
         Aerb.LOGGER.info("Registering entities for " + Aerb.MOD_ID);
     }
