@@ -49,6 +49,15 @@ Spells cannot be dropped - they automatically return to you. They cannot be plac
 | Aarde's Touch | Blood Magic 0 | Glowing flame, can light things on fire |
 | Crimson Fist | Blood Magic 2 | Strength IV buff (costs health) |
 | Sanguine Surge | Blood Magic 5 | Jump Boost IV buff (costs health) |
+| Claret Spear | Blood Magic 25 | Throwable blood spear (costs 1 heart while held) |
+
+**Claret Spear Details:**
+- Reduces max HP by 1 heart while held in main hand
+- Right-click to throw as a projectile
+- Damage: 6 base + 0.5 per Blood Magic level
+- On throw: max HP restores but the health is spent (blood forms the spear)
+- On unequip without throwing: max HP and health both restore
+- Can be used for parrying like other weapons
 
 **Bone Magic Spells:**
 | Spell | Unlock Level | Effect |
@@ -163,6 +172,17 @@ Spells, virtues, and skills are **preserved on death**. When you respawn:
 
 Spells and virtues cannot be dropped - they automatically return to you.
 
+### Mobs
+
+**Undead** - Zombie variants from the Risen Lands
+- Glowing red eyes (requires [Entity Texture Features](https://modrinth.com/mod/entitytexturefeatures) for true emissive glow)
+- Takes **4x damage** when hit in the heart (chest area, 40-70% up the body)
+- Cannot pick up items from the ground
+- Cannot hold weapons (will drop any weapons they're spawned with)
+- Can wear armor
+- No baby variants
+- Spawn egg available in creative inventory
+
 ## Known Issues
 
 - **Mouse briefly flickers to center** when switching between Spells and Virtues tabs (restores immediately)
@@ -188,7 +208,7 @@ All commands support tab-completion.
 /takespell <player> <spell>         - Remove a known spell from a player
 ```
 
-**Spell names:** `aardes_touch`, `crimson_fist`, `sanguine_surge`, `physical_tapping`, `power_tapping`, `speed_tapping`, `endurance_tapping`
+**Spell names:** `aardes_touch`, `crimson_fist`, `sanguine_surge`, `claret_spear`, `physical_tapping`, `power_tapping`, `speed_tapping`, `endurance_tapping`
 
 ### Virtue Commands
 ```
