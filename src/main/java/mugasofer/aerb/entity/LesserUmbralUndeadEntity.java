@@ -12,7 +12,14 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particle.BlockStateParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
+import mugasofer.aerb.sound.ModSounds;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -31,31 +38,38 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
         LesserUmbralUndeadEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Boolean> REARING_UP = DataTracker.registerData(
         LesserUmbralUndeadEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> HAS_REACHED_FULL_SIZE = DataTracker.registerData(
+        LesserUmbralUndeadEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     // Constants
     public static final int MIN_CORPSES = 5;  // Minimum during formation
+    public static final int DEFAULT_CORPSES = 30;  // Default when summoned
     public static final int FULL_SIZE_CORPSES = 20;  // "Normal" size reference for scaling
-    public static final int MAX_CORPSES = 40;
-    // Base dimensions at FULL_SIZE_CORPSES (20)
-    public static final float BASE_WIDTH = 2.75f;
-    public static final float BASE_HEIGHT = 3.25f;
+    public static final int MAX_CORPSES = 255;
+    // Base dimensions at FULL_SIZE_CORPSES (20) - slightly smaller hitbox than visual
+    public static final float BASE_WIDTH = 2.2f;
+    public static final float BASE_HEIGHT = 2.8f;
     public static final float HEALTH_PER_CORPSE = 10.0f;
     public static final float MAX_BREAKABLE_HARDNESS = 6.0f;
     public static final int BLOCK_BREAK_INTERVAL = 10;
     public static final int ABSORB_SEARCH_RADIUS = 4;
     public static final float MOVEMENT_SPEED = 0.2f;
-    public static final float DEATH_SURVIVAL_RATE_MIN = 0.3f;
-    public static final float DEATH_SURVIVAL_RATE_MAX = 0.5f;
 
     // Absorption settings
     private static final int ABSORB_INTERVAL = 100; // 5 seconds between looking for new target
     private static final double SUCK_IN_SPEED = 0.15; // How fast absorbed undead fly toward us (slower)
     private static final double ABSORB_DISTANCE = 1.5; // Distance at which they're actually absorbed
 
+    // Damage shedding settings
+    private static final float DAMAGE_PER_SHED = 10.0f; // Shed a body every 10 damage
+    private static final double SHED_BODY_SPEED = 0.5; // How fast shed bodies fly away
+    private static final float SHED_SURVIVAL_CHANCE = 0.05f; // 5% chance shed body survives
+
     // Instance state
     private int blockBreakCooldown = 0;
     private int absorbCooldown = 0;
     private LivingEntity beingAbsorbed = null; // Entity currently being sucked in
+    private float accumulatedDamage = 0; // Tracks damage for shedding bodies
 
     public LesserUmbralUndeadEntity(EntityType<? extends HostileEntity> entityType, World world) {
         super(entityType, world);
@@ -64,13 +78,14 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
-        builder.add(CORPSE_COUNT, MIN_CORPSES);
+        builder.add(CORPSE_COUNT, DEFAULT_CORPSES);
         builder.add(REARING_UP, false);
+        builder.add(HAS_REACHED_FULL_SIZE, true);  // Summoned entities start at full size
     }
 
     public static DefaultAttributeContainer.Builder createAttributes() {
         return HostileEntity.createHostileAttributes()
-            .add(EntityAttributes.MAX_HEALTH, MIN_CORPSES * HEALTH_PER_CORPSE)
+            .add(EntityAttributes.MAX_HEALTH, DEFAULT_CORPSES * HEALTH_PER_CORPSE)
             .add(EntityAttributes.MOVEMENT_SPEED, MOVEMENT_SPEED)
             .add(EntityAttributes.ATTACK_DAMAGE, 8.0)
             .add(EntityAttributes.KNOCKBACK_RESISTANCE, 0.8)
@@ -81,13 +96,38 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
     @Override
     protected void initGoals() {
         this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new MeleeAttackGoal(this, 1.0, false));
+        this.goalSelector.add(1, new UmbralMeleeAttackGoal(this, 1.0, false));
         this.goalSelector.add(2, new WanderAroundFarGoal(this, 0.8));
         this.goalSelector.add(3, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f));
         this.goalSelector.add(4, new LookAroundGoal(this));
 
         this.targetSelector.add(1, new RevengeGoal(this));
         this.targetSelector.add(2, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
+    }
+
+    /**
+     * Custom melee attack goal with attack range that scales with hitbox.
+     * Allows attacking ~1.5 blocks beyond their hitbox edge.
+     */
+    private static class UmbralMeleeAttackGoal extends MeleeAttackGoal {
+        private final LesserUmbralUndeadEntity umbral;
+        private static final double REACH_BEYOND_HITBOX = 1.5;
+
+        public UmbralMeleeAttackGoal(LesserUmbralUndeadEntity mob, double speed, boolean pauseWhenMobIdle) {
+            super(mob, speed, pauseWhenMobIdle);
+            this.umbral = mob;
+        }
+
+        @Override
+        protected boolean canAttack(LivingEntity target) {
+            // Attack range = half our width + reach + half target width
+            // This lets us hit things ~1.5 blocks from our hitbox edge
+            double ourHalfWidth = umbral.getWidth() / 2.0;
+            double targetHalfWidth = target.getWidth() / 2.0;
+            double maxRange = ourHalfWidth + REACH_BEYOND_HITBOX + targetHalfWidth;
+            double distSq = umbral.squaredDistanceTo(target);
+            return distSq <= maxRange * maxRange && super.canAttack(target);
+        }
     }
 
     @Override
@@ -116,15 +156,42 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
     public void setCorpseCount(int count) {
         int clamped = Math.max(MIN_CORPSES, Math.min(MAX_CORPSES, count));
         this.dataTracker.set(CORPSE_COUNT, clamped);
+        // Once we reach full size, lock minimum size at 20
+        if (clamped >= FULL_SIZE_CORPSES) {
+            this.dataTracker.set(HAS_REACHED_FULL_SIZE, true);
+        }
         updateHealthForCorpseCount();
+    }
+
+    public boolean hasReachedFullSize() {
+        return this.dataTracker.get(HAS_REACHED_FULL_SIZE);
+    }
+
+    /**
+     * Used by formation handler to spawn a small, growing Umbral.
+     * Resets the full size flag so it can grow from small.
+     */
+    public void setCorpseCountForFormation(int count) {
+        this.dataTracker.set(HAS_REACHED_FULL_SIZE, false);
+        setCorpseCount(count);
     }
 
     private void updateHealthForCorpseCount() {
         float newMaxHealth = getCorpseCount() * HEALTH_PER_CORPSE;
         var healthAttr = this.getAttributeInstance(EntityAttributes.MAX_HEALTH);
         if (healthAttr != null) {
+            float oldMax = (float) healthAttr.getBaseValue();
+            float currentHealth = this.getHealth();
             healthAttr.setBaseValue(newMaxHealth);
-            if (this.getHealth() > newMaxHealth) {
+            // Never heal a dead/dying entity
+            if (currentHealth <= 0) {
+                return;
+            }
+            // If max health increased, heal to full
+            // If max health decreased, cap current health at new max
+            if (newMaxHealth > oldMax) {
+                this.setHealth(newMaxHealth);
+            } else if (currentHealth > newMaxHealth) {
                 this.setHealth(newMaxHealth);
             }
         }
@@ -133,11 +200,66 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
     @Override
     public boolean damage(ServerWorld world, DamageSource source, float amount) {
         boolean damaged = super.damage(world, source, amount);
-        if (damaged && !this.isDead()) {
-            // Check if health has dropped enough to lose corpses
+        // Only process shedding if still alive (health > 0 check catches death before isDead flag is set)
+        if (damaged && !this.isDead() && this.getHealth() > 0) {
+            // Track damage for body shedding
+            accumulatedDamage += amount;
+
+            // Shed bodies based on accumulated damage
+            while (accumulatedDamage >= DAMAGE_PER_SHED && getCorpseCount() > MIN_CORPSES) {
+                accumulatedDamage -= DAMAGE_PER_SHED;
+                shedBody(world, source);
+            }
+
+            // Update corpse count based on remaining health
             updateCorpseCountFromHealth();
         }
         return damaged;
+    }
+
+    private void shedBody(ServerWorld world, DamageSource source) {
+        // Spawn an undead that flies away from the damage source
+        UndeadEntity undead = ModEntities.UNDEAD.create(world, SpawnReason.MOB_SUMMONED);
+        if (undead == null) return;
+
+        // Spawn at our position
+        double x = this.getX();
+        double y = this.getY() + 1.0;
+        double z = this.getZ();
+        undead.refreshPositionAndAngles(x, y, z, this.random.nextFloat() * 360, 0);
+
+        // Calculate direction away from damage source
+        Vec3d awayDir;
+        if (source.getPosition() != null) {
+            awayDir = new Vec3d(x, y, z).subtract(source.getPosition()).normalize();
+        } else {
+            // Random direction if no source position
+            double angle = this.random.nextDouble() * Math.PI * 2;
+            awayDir = new Vec3d(Math.cos(angle), 0.3, Math.sin(angle)).normalize();
+        }
+
+        // Launch the undead away
+        undead.setVelocity(
+            awayDir.x * SHED_BODY_SPEED,
+            0.3 + this.random.nextDouble() * 0.2,
+            awayDir.z * SHED_BODY_SPEED
+        );
+
+        world.spawnEntity(undead);
+
+        // 95% of the time, the shed body dies immediately (visual effect)
+        // 5% chance it survives
+        if (this.random.nextFloat() > SHED_SURVIVAL_CHANCE) {
+            undead.damage(world, this.getDamageSources().generic(), 1000f);
+        }
+
+        // Crunchy bone/meat tearing sound
+        world.playSound(null, this.getX(), this.getY(), this.getZ(),
+            ModSounds.UMBRAL_CRUNCH, SoundCategory.HOSTILE,
+            1.5f, 0.8f + this.random.nextFloat() * 0.3f);
+
+        // Reduce corpse count
+        setCorpseCount(getCorpseCount() - 1);
     }
 
     private void updateCorpseCountFromHealth() {
@@ -163,14 +285,30 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
 
     // Scale based on corpse count using cube root formula
     // At 5 corpses: ~0.63x, at 20 corpses: 1.0x, at 40 corpses: ~1.26x
+    // Once full size (20) is reached, minimum scale is locked at 1.0x
     public float calculateScale() {
         int corpses = getCorpseCount();
+        // If we've ever reached full size, don't shrink below that
+        if (hasReachedFullSize() && corpses < FULL_SIZE_CORPSES) {
+            corpses = FULL_SIZE_CORPSES;
+        }
         return (float) (Math.cbrt(corpses) / Math.cbrt(FULL_SIZE_CORPSES));
     }
 
     @Override
     public EntityDimensions getBaseDimensions(EntityPose pose) {
-        return EntityDimensions.fixed(BASE_WIDTH, BASE_HEIGHT);
+        // Scale hitbox with corpse count
+        float scale = calculateScale();
+        return EntityDimensions.fixed(BASE_WIDTH * scale, BASE_HEIGHT * scale);
+    }
+
+    @Override
+    public void onTrackedDataSet(TrackedData<?> data) {
+        super.onTrackedDataSet(data);
+        // Recalculate bounding box when corpse count or size lock changes
+        if (CORPSE_COUNT.equals(data) || HAS_REACHED_FULL_SIZE.equals(data)) {
+            this.calculateDimensions();
+        }
     }
 
     @Override
@@ -205,6 +343,11 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
                         setCorpseCount(getCorpseCount() + 1);
                         beingAbsorbed.discard();
                         beingAbsorbed = null;
+
+                        // Crunchy absorption sound
+                        serverWorld.playSound(null, this.getX(), this.getY(), this.getZ(),
+                            ModSounds.UMBRAL_CRUNCH, SoundCategory.HOSTILE,
+                            1.5f, 0.6f + this.random.nextFloat() * 0.2f);
                     } else {
                         // Pull it in
                         double speed = SUCK_IN_SPEED;
@@ -251,21 +394,55 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
         Box boundingBox = this.getBoundingBox();
         double boxHalfWidth = (boundingBox.maxX - boundingBox.minX) / 2;
 
-        // Check blocks in a column toward the target
-        int minY = (int) Math.floor(boundingBox.minY);
-        int maxY = (int) Math.ceil(boundingBox.maxY);
+        int feetY = (int) Math.floor(this.getY());
+        int headY = (int) Math.ceil(boundingBox.maxY);
+        double stepHeight = this.getStepHeight();
 
-        // Check blocks from the edge of our hitbox out to 3 blocks ahead
-        for (int y = minY; y <= maxY; y++) {
-            for (double dist = boxHalfWidth + 0.5; dist <= boxHalfWidth + 3.0; dist += 0.5) {
-                double checkX = this.getX() + dirX * dist;
-                double checkZ = this.getZ() + dirZ * dist;
+        // Check blocks from the edge of our hitbox out to 2 blocks ahead
+        for (double dist = boxHalfWidth + 0.3; dist <= boxHalfWidth + 2.0; dist += 0.5) {
+            double checkX = this.getX() + dirX * dist;
+            double checkZ = this.getZ() + dirZ * dist;
+            int blockX = (int) Math.floor(checkX);
+            int blockZ = (int) Math.floor(checkZ);
 
-                BlockPos pos = new BlockPos((int) Math.floor(checkX), y, (int) Math.floor(checkZ));
+            // Check if this is a wall (blocks body) vs terrain (can step over)
+            // Count solid blocks in the column from feet to head
+            int solidCount = 0;
+            int lowestSolid = headY + 1;
+            for (int y = feetY; y <= headY; y++) {
+                BlockPos pos = new BlockPos(blockX, y, blockZ);
                 BlockState state = world.getBlockState(pos);
-
                 if (!state.isAir() && canBreakBlock(world, pos, state)) {
-                    world.breakBlock(pos, true, this);
+                    solidCount++;
+                    if (y < lowestSolid) lowestSolid = y;
+                }
+            }
+
+            // If lowest solid is within step height and there's only 1-2 blocks, skip (terrain)
+            // Otherwise it's a wall - break it
+            boolean isTerrain = (lowestSolid <= feetY + stepHeight) && solidCount <= 2;
+
+            if (!isTerrain && solidCount > 0) {
+                // This is a wall - break blocks from feet to head
+                for (int y = feetY; y <= headY; y++) {
+                    BlockPos pos = new BlockPos(blockX, y, blockZ);
+                    BlockState state = world.getBlockState(pos);
+
+                    if (!state.isAir() && canBreakBlock(world, pos, state)) {
+                        // Spawn extra block particles for dramatic effect
+                        world.spawnParticles(
+                            new BlockStateParticleEffect(ParticleTypes.BLOCK, state),
+                            pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                            15, 0.3, 0.3, 0.3, 0.05
+                        );
+
+                        // Crashing/smashing sound
+                        world.playSound(null, pos,
+                            ModSounds.UMBRAL_SMASH, SoundCategory.HOSTILE,
+                            1.5f, 0.8f + this.random.nextFloat() * 0.2f);
+
+                        world.breakBlock(pos, true, this);
+                    }
                 }
             }
         }
@@ -335,20 +512,12 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
         }
     }
 
-    @Override
-    public void onDeath(DamageSource source) {
-        if (this.getEntityWorld() instanceof ServerWorld serverWorld) {
-            spawnSurvivingUndead(serverWorld);
-        }
-        super.onDeath(source);
-    }
-
     private void spawnSurvivingUndead(ServerWorld world) {
+        // Spawn 5-15 undead survivors, but never more than corpse count
         int corpses = getCorpseCount();
-        // 30-50% survival rate
-        float survivalRate = DEATH_SURVIVAL_RATE_MIN +
-            this.random.nextFloat() * (DEATH_SURVIVAL_RATE_MAX - DEATH_SURVIVAL_RATE_MIN);
-        int survivors = (int) (corpses * survivalRate);
+        int minSurvivors = Math.min(5, corpses);
+        int maxSurvivors = Math.min(15, corpses);
+        int survivors = minSurvivors + this.random.nextInt(maxSurvivors - minSurvivors + 1);
 
         // Spawn in a wider area around the death location to avoid crowding
         double centerX = this.getX();
@@ -372,5 +541,48 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
         }
     }
 
-    // Note: CORPSE_COUNT is tracked via DataTracker which handles persistence automatically
+
+    // === Sound overrides for meaty/crunchy sounds ===
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        // Crunchy bone/meat sounds for ambient
+        return ModSounds.UMBRAL_CRUNCH;
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        // Crunchy bone/meat sounds for hurt
+        return ModSounds.UMBRAL_CRUNCH;
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        // Return null - we handle death sounds manually in onDeath
+        return null;
+    }
+
+    @Override
+    public void onDeath(DamageSource source) {
+        // Play multiple layered crunches as the body falls apart
+        if (this.getEntityWorld() instanceof ServerWorld serverWorld) {
+            // Play 3-5 crunches with slight pitch/timing variation
+            int crunches = 3 + this.random.nextInt(3);
+            for (int i = 0; i < crunches; i++) {
+                float pitch = 0.7f + this.random.nextFloat() * 0.4f;
+                float volume = 1.2f + this.random.nextFloat() * 0.3f;
+                serverWorld.playSound(null, this.getX(), this.getY(), this.getZ(),
+                    ModSounds.UMBRAL_CRUNCH, SoundCategory.HOSTILE,
+                    volume, pitch);
+            }
+            spawnSurvivingUndead(serverWorld);
+        }
+        super.onDeath(source);
+    }
+
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        // Crunchy bone/meat sounds for steps
+        this.playSound(ModSounds.UMBRAL_CRUNCH, 1.0f, 0.8f + this.random.nextFloat() * 0.2f);
+    }
 }

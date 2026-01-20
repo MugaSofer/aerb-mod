@@ -177,17 +177,26 @@ Spells and virtues cannot be dropped - they automatically return to you.
 **Undead** - Zombie variants from the Risen Lands
 - Glowing red eyes (requires [Entity Texture Features](https://modrinth.com/mod/entitytexturefeatures) for true emissive glow)
 - Takes **4x damage** when hit in the heart (chest area, 40-70% up the body)
+- Unaffected by sunlight
 - Cannot pick up items from the ground
 - Cannot hold weapons (will drop any weapons they're spawned with)
 - Can wear armor
 - No baby variants
 - Spawn egg available in creative inventory
+- When 25 or more undead are gathered together, they will attempt to form...
+
+**Lesser Umbral Undead** - Large, quadrupedal conglomerations of undead corpses
+- Can absorb undead (and vanilla zombies, if present) to heal and grow. (1 undead = 10 HP)
+- Can smash their way through walls to chase their prey
+- Undead occasionally fall off them as they take damage. This can reduce their size, though once they've absorbed at least 20 corpses, they can't be forced below that size.
+- Collapse into a group of undead when they die
 
 ## Known Issues
 
 - **Mouse briefly flickers to center** when switching between Spells and Virtues tabs (restores immediately)
 - Mixin for Entity.dropStack shows remap warning (doesn't affect functionality)
 - Getting spells from creative inventory doesn't trigger discovery message
+- Claret Spear texture does not face the direction it's thrown
 
 ## Commands
 

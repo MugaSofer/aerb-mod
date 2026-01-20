@@ -32,11 +32,11 @@ public class UmbralFormationHandler {
     public static final long FORMATION_COOLDOWN_TICKS = 60 * 20; // 60 seconds
     private static final int CHECK_INTERVAL = 40; // Check every 2 seconds
 
-    // Gradual formation settings
-    private static final double GATHER_SPEED = 0.06; // How fast undead move toward center
+    // Gradual formation settings - faster formation
+    private static final double GATHER_SPEED = 0.12; // How fast undead move toward center
     private static final double MERGE_RADIUS = 3.0; // Distance at which undead start getting absorbed
-    private static final int TICKS_BETWEEN_ABSORBS = 30; // Absorb one every 1.5 seconds
-    private static final double SUCK_IN_SPEED = 0.3; // Pull speed when being absorbed
+    private static final int TICKS_BETWEEN_ABSORBS = 15; // Absorb one every 0.75 seconds
+    private static final double SUCK_IN_SPEED = 0.5; // Pull speed when being absorbed
     private static final double ABSORB_DISTANCE = 0.8; // Distance at which absorbed entity disappears
     private static final int ABSORBS_BEFORE_SPAWN = 5; // How many absorbed before Umbral appears
 
@@ -209,8 +209,8 @@ public class UmbralFormationHandler {
             return;
         }
 
-        // Start with minimum corpse count
-        umbral.setCorpseCount(LesserUmbralUndeadEntity.MIN_CORPSES);
+        // Start with minimum corpse count (resets full size flag so it can grow)
+        umbral.setCorpseCountForFormation(LesserUmbralUndeadEntity.MIN_CORPSES);
 
         // Spawn at centroid
         double spawnX = formation.centroid.x;

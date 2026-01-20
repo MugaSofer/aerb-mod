@@ -8,6 +8,7 @@ import mugasofer.aerb.entity.LesserUmbralUndeadEntity;
 import mugasofer.aerb.entity.ModEntities;
 import mugasofer.aerb.event.UmbralFormationHandler;
 import mugasofer.aerb.item.ModItems;
+import mugasofer.aerb.sound.ModSounds;
 import mugasofer.aerb.item.SpellItem;
 import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
@@ -52,6 +53,7 @@ public class Aerb implements ModInitializer {
 		HypertensionConfig.load();
 		DescriptionConfig.load();
 		XpConfig.load();
+		ModSounds.init();
 		ModEntities.initialize();
 		FabricDefaultAttributeRegistry.register(ModEntities.UNDEAD, ZombieEntity.createZombieAttributes());
 		FabricDefaultAttributeRegistry.register(ModEntities.LESSER_UMBRAL_UNDEAD, LesserUmbralUndeadEntity.createAttributes());

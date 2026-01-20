@@ -2,12 +2,17 @@ package mugasofer.aerb.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import mugasofer.aerb.entity.LesserUmbralUndeadEntity;
+import mugasofer.aerb.entity.ModEntities;
+import mugasofer.aerb.entity.UndeadEntity;
 import mugasofer.aerb.item.ModItems;
 import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
 import mugasofer.aerb.virtue.VirtueInventory;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.server.world.ServerWorld;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.item.Item;
@@ -241,7 +246,96 @@ public class ModCommands {
                     )
                 )
             );
+
+            // /spawnhorde [count] - spawn undead in a cluster (default 25)
+            dispatcher.register(CommandManager.literal("spawnhorde")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
+                .executes(context -> {
+                    return spawnUndeadHorde(context.getSource(), 25);
+                })
+                .then(CommandManager.argument("count", IntegerArgumentType.integer(1, 50))
+                    .executes(context -> {
+                        int count = IntegerArgumentType.getInteger(context, "count");
+                        return spawnUndeadHorde(context.getSource(), count);
+                    })
+                )
+            );
+
+            // /spawnumbral [corpses] - spawn a Lesser Umbral Undead with specified corpse count (default 30)
+            dispatcher.register(CommandManager.literal("spawnumbral")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
+                .executes(context -> {
+                    return spawnLesserUmbral(context.getSource(), LesserUmbralUndeadEntity.DEFAULT_CORPSES);
+                })
+                .then(CommandManager.argument("corpses", IntegerArgumentType.integer(
+                        LesserUmbralUndeadEntity.MIN_CORPSES, LesserUmbralUndeadEntity.MAX_CORPSES))
+                    .executes(context -> {
+                        int corpses = IntegerArgumentType.getInteger(context, "corpses");
+                        return spawnLesserUmbral(context.getSource(), corpses);
+                    })
+                )
+            );
         });
+    }
+
+    /**
+     * Spawn a horde of Undead entities in a tight cluster for testing formation.
+     */
+    private static int spawnUndeadHorde(ServerCommandSource source, int count) {
+        if (!(source.getWorld() instanceof ServerWorld world)) {
+            source.sendError(Text.literal("Must be run in a world"));
+            return 0;
+        }
+
+        var pos = source.getPosition();
+        int spawned = 0;
+
+        for (int i = 0; i < count; i++) {
+            UndeadEntity undead = ModEntities.UNDEAD.create(world, SpawnReason.COMMAND);
+            if (undead != null) {
+                // Spawn in a tight 5x5 area around the command source
+                double offsetX = (world.random.nextDouble() - 0.5) * 5;
+                double offsetZ = (world.random.nextDouble() - 0.5) * 5;
+                undead.refreshPositionAndAngles(
+                    pos.x + offsetX,
+                    pos.y,
+                    pos.z + offsetZ,
+                    world.random.nextFloat() * 360,
+                    0
+                );
+                world.spawnEntity(undead);
+                spawned++;
+            }
+        }
+
+        final int finalSpawned = spawned;
+        source.sendFeedback(() -> Text.literal("Spawned " + finalSpawned + " Undead"), true);
+        return spawned;
+    }
+
+    /**
+     * Spawn a Lesser Umbral Undead with a specified corpse count for testing.
+     */
+    private static int spawnLesserUmbral(ServerCommandSource source, int corpseCount) {
+        if (!(source.getWorld() instanceof ServerWorld world)) {
+            source.sendError(Text.literal("Must be run in a world"));
+            return 0;
+        }
+
+        var pos = source.getPosition();
+
+        LesserUmbralUndeadEntity umbral = ModEntities.LESSER_UMBRAL_UNDEAD.create(world, SpawnReason.COMMAND);
+        if (umbral == null) {
+            source.sendError(Text.literal("Failed to create Lesser Umbral Undead"));
+            return 0;
+        }
+
+        umbral.setCorpseCount(corpseCount);
+        umbral.refreshPositionAndAngles(pos.x, pos.y, pos.z, 0, 0);
+        world.spawnEntity(umbral);
+
+        source.sendFeedback(() -> Text.literal("Spawned Lesser Umbral Undead with " + corpseCount + " corpses"), true);
+        return 1;
     }
 
     private static int setSkill(ServerCommandSource source, ServerPlayerEntity target, String skill, int level) {

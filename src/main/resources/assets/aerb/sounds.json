@@ -1,0 +1,30 @@
+{
+  "umbral_crunch": {
+    "subtitle": "Umbral Undead crunches",
+    "sounds": [
+      "minecraft:mob/wither_skeleton/step4",
+      "minecraft:mob/wither_skeleton/hurt4",
+      "minecraft:mob/skeleton/step2",
+      "minecraft:mob/skeleton/hurt2",
+      "minecraft:mob/bogged/ambient4",
+      "minecraft:mob/bogged/hurt1",
+      "minecraft:mob/bogged/step2",
+      "minecraft:mob/bogged/step3",
+      "minecraft:mob/bogged/step4",
+      "minecraft:mob/horse/skeleton/water/gallop3",
+      "minecraft:mob/horse/skeleton/water/gallop4"
+    ]
+  },
+  "umbral_smash": {
+    "subtitle": "Umbral Undead smashes",
+    "sounds": [
+      "minecraft:mob/wither_skeleton/death",
+      "minecraft:random/explode1",
+      "minecraft:random/explode2",
+      "minecraft:mob/bogged/death",
+      "minecraft:mob/bogged/hurt3",
+      "minecraft:mob/horse/skeleton/water/gallop1",
+      "minecraft:mob/horse/skeleton/water/gallop2"
+    ]
+  }
+}
