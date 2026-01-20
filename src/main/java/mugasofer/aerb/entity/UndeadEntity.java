@@ -93,6 +93,24 @@ public class UndeadEntity extends ZombieEntity {
     }
 
     @Override
+    public boolean collidesWith(Entity other) {
+        // Don't collide with Lesser Umbral Undead - allows smooth formation and absorption
+        if (other instanceof LesserUmbralUndeadEntity) {
+            return false;
+        }
+        return super.collidesWith(other);
+    }
+
+    @Override
+    protected void pushAway(Entity entity) {
+        // Don't push Lesser Umbral Undead - allows smooth formation and absorption
+        if (entity instanceof LesserUmbralUndeadEntity) {
+            return;
+        }
+        super.pushAway(entity);
+    }
+
+    @Override
     public boolean isBaby() {
         return false; // Undead don't have baby variants
     }

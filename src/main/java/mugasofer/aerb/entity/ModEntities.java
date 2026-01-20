@@ -29,6 +29,15 @@ public class ModEntities {
             .build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(Aerb.MOD_ID, "undead")))
     );
 
+    public static final EntityType<LesserUmbralUndeadEntity> LESSER_UMBRAL_UNDEAD = Registry.register(
+        Registries.ENTITY_TYPE,
+        Identifier.of(Aerb.MOD_ID, "lesser_umbral_undead"),
+        EntityType.Builder.<LesserUmbralUndeadEntity>create(LesserUmbralUndeadEntity::new, SpawnGroup.MONSTER)
+            .dimensions(LesserUmbralUndeadEntity.BASE_WIDTH, LesserUmbralUndeadEntity.BASE_HEIGHT)
+            .maxTrackingRange(10)
+            .build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(Aerb.MOD_ID, "lesser_umbral_undead")))
+    );
+
     public static void initialize() {
         Aerb.LOGGER.info("Registering entities for " + Aerb.MOD_ID);
     }

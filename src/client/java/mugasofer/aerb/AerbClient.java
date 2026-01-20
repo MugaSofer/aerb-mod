@@ -20,16 +20,27 @@ import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import mugasofer.aerb.render.ClaretSpearEntityRenderer;
+import mugasofer.aerb.render.LesserUmbralUndeadModel;
+import mugasofer.aerb.render.LesserUmbralUndeadRenderer;
 import mugasofer.aerb.render.UndeadEntityRenderer;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
 
 public class AerbClient implements ClientModInitializer {
+	// Model layer for Lesser Umbral Undead
+	public static final EntityModelLayer LESSER_UMBRAL_UNDEAD_LAYER =
+		new EntityModelLayer(Identifier.of(Aerb.MOD_ID, "lesser_umbral_undead"), "main");
+
 	@Override
 	public void onInitializeClient() {
+		// Register model layers
+		EntityModelLayerRegistry.registerModelLayer(LESSER_UMBRAL_UNDEAD_LAYER, LesserUmbralUndeadModel::getTexturedModelData);
 		// Register screens
 		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
 		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
@@ -37,6 +48,7 @@ public class AerbClient implements ClientModInitializer {
 		// Register entity renderers
 		EntityRendererRegistry.register(ModEntities.CLARET_SPEAR, ClaretSpearEntityRenderer::new);
 		EntityRendererRegistry.register(ModEntities.UNDEAD, UndeadEntityRenderer::new);
+		EntityRendererRegistry.register(ModEntities.LESSER_UMBRAL_UNDEAD, LesserUmbralUndeadRenderer::new);
 
 		// Add custom descriptions to items that implement DescribedItem
 		ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {

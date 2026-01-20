@@ -140,6 +140,12 @@ public class ModItems {
                 .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "undead_spawn_egg")))
                 .component(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(ModEntities.UNDEAD, new NbtCompound()))));
 
+    public static final Item LESSER_UMBRAL_UNDEAD_SPAWN_EGG = register("lesser_umbral_undead_spawn_egg",
+        new SpawnEggItem(
+            new Item.Settings()
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "lesser_umbral_undead_spawn_egg")))
+                .component(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(ModEntities.LESSER_UMBRAL_UNDEAD, new NbtCompound()))));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -171,6 +177,7 @@ public class ModItems {
         // Add spawn eggs to the Spawn Eggs item group
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register(entries -> {
             entries.add(UNDEAD_SPAWN_EGG);
+            entries.add(LESSER_UMBRAL_UNDEAD_SPAWN_EGG);
         });
     }
 }

@@ -14,5 +14,7 @@
   "item.aerb.commoners_guide_blood_magic": "Commoner's Guide to Blood Magic",
   "item.aerb.commoners_guide_bone_magic": "Commoner's Guide to Bone Magic",
   "item.aerb.undead_spawn_egg": "Undead Spawn Egg",
-  "entity.aerb.undead": "Undead"
+  "item.aerb.lesser_umbral_undead_spawn_egg": "Lesser Umbral Undead Spawn Egg",
+  "entity.aerb.undead": "Undead",
+  "entity.aerb.lesser_umbral_undead": "Lesser Umbral Undead"
 }
