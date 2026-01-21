@@ -27,6 +27,9 @@ public class PlayerSkills {
     public static final String BONE_MAGIC = "bone_magic";
     public static final String ONE_HANDED = "one_handed";
     public static final String PARRY = "parry";
+    public static final String HORTICULTURE = "horticulture";
+    public static final String ART = "art";
+    public static final String SKIN_MAGIC = "skin_magic";
 
     public static final Codec<PlayerSkills> CODEC = RecordCodecBuilder.create(instance ->
         instance.group(

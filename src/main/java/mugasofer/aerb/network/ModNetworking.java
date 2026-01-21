@@ -52,7 +52,9 @@ public class ModNetworking {
     // Payload for syncing skills from server to client (includes levels and XP)
     public record SyncSkillsPayload(
         int bloodMagic, int boneMagic, int oneHanded, int parry,
-        int bloodMagicXp, int boneMagicXp, int oneHandedXp, int parryXp
+        int horticulture, int art, int skinMagic,
+        int bloodMagicXp, int boneMagicXp, int oneHandedXp, int parryXp,
+        int horticultureXp, int artXp, int skinMagicXp
     ) implements CustomPayload {
         public static final Id<SyncSkillsPayload> ID = new Id<>(SYNC_SKILLS_ID);
         public static final PacketCodec<RegistryByteBuf, SyncSkillsPayload> CODEC = PacketCodec.of(
@@ -61,14 +63,22 @@ public class ModNetworking {
                 buf.writeInt(value.boneMagic);
                 buf.writeInt(value.oneHanded);
                 buf.writeInt(value.parry);
+                buf.writeInt(value.horticulture);
+                buf.writeInt(value.art);
+                buf.writeInt(value.skinMagic);
                 buf.writeInt(value.bloodMagicXp);
                 buf.writeInt(value.boneMagicXp);
                 buf.writeInt(value.oneHandedXp);
                 buf.writeInt(value.parryXp);
+                buf.writeInt(value.horticultureXp);
+                buf.writeInt(value.artXp);
+                buf.writeInt(value.skinMagicXp);
             },
             buf -> new SyncSkillsPayload(
                 buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(),
-                buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt()
+                buf.readInt(), buf.readInt(), buf.readInt(),
+                buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(),
+                buf.readInt(), buf.readInt(), buf.readInt()
             )
         );
 
@@ -120,10 +130,16 @@ public class ModNetworking {
             skills.getSkillLevel(PlayerSkills.BONE_MAGIC),
             skills.getSkillLevel(PlayerSkills.ONE_HANDED),
             skills.getSkillLevel(PlayerSkills.PARRY),
+            skills.getSkillLevel(PlayerSkills.HORTICULTURE),
+            skills.getSkillLevel(PlayerSkills.ART),
+            skills.getSkillLevel(PlayerSkills.SKIN_MAGIC),
             skills.getSkillXp(PlayerSkills.BLOOD_MAGIC),
             skills.getSkillXp(PlayerSkills.BONE_MAGIC),
             skills.getSkillXp(PlayerSkills.ONE_HANDED),
-            skills.getSkillXp(PlayerSkills.PARRY)
+            skills.getSkillXp(PlayerSkills.PARRY),
+            skills.getSkillXp(PlayerSkills.HORTICULTURE),
+            skills.getSkillXp(PlayerSkills.ART),
+            skills.getSkillXp(PlayerSkills.SKIN_MAGIC)
         );
         ServerPlayNetworking.send(player, payload);
     }

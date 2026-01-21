@@ -61,6 +61,9 @@ public class ModCommands {
                         builder.suggest(PlayerSkills.BONE_MAGIC);
                         builder.suggest(PlayerSkills.ONE_HANDED);
                         builder.suggest(PlayerSkills.PARRY);
+                        builder.suggest(PlayerSkills.HORTICULTURE);
+                        builder.suggest(PlayerSkills.ART);
+                        builder.suggest(PlayerSkills.SKIN_MAGIC);
                         return builder.buildFuture();
                     })
                     .then(CommandManager.argument("level", IntegerArgumentType.integer(-1, 300))
@@ -79,6 +82,11 @@ public class ModCommands {
                         .suggests((context, builder) -> {
                             builder.suggest(PlayerSkills.BLOOD_MAGIC);
                             builder.suggest(PlayerSkills.BONE_MAGIC);
+                            builder.suggest(PlayerSkills.ONE_HANDED);
+                            builder.suggest(PlayerSkills.PARRY);
+                            builder.suggest(PlayerSkills.HORTICULTURE);
+                            builder.suggest(PlayerSkills.ART);
+                            builder.suggest(PlayerSkills.SKIN_MAGIC);
                             return builder.buildFuture();
                         })
                         .then(CommandManager.argument("level2", IntegerArgumentType.integer(-1, 300))
@@ -103,6 +111,9 @@ public class ModCommands {
                         builder.suggest(PlayerSkills.BONE_MAGIC);
                         builder.suggest(PlayerSkills.ONE_HANDED);
                         builder.suggest(PlayerSkills.PARRY);
+                        builder.suggest(PlayerSkills.HORTICULTURE);
+                        builder.suggest(PlayerSkills.ART);
+                        builder.suggest(PlayerSkills.SKIN_MAGIC);
                         return builder.buildFuture();
                     })
                     .executes(context -> {

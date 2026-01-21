@@ -4,6 +4,12 @@
 - **Wait for testing before committing code**: Don't commit or push code changes until the user confirms they work in-game. Documentation/notes are fine without testing.
 - **Speak up**: User sees this as a partnership. If something isn't engaging, seems like a bad idea, or you have any concerns, say so.
 
+## Build Commands
+Use forward slashes and full path for gradlew on this Windows system:
+```bash
+C:/Users/IRL/Documents/aerb-template-1.21.11/gradlew.bat build 2>&1
+```
+
 ## Adding New Items
 New items require THREE resource files (not just model + texture):
 1. `assets/aerb/items/<item_name>.json` - Item definition (points to model)
@@ -45,10 +51,67 @@ The item definition format (in `items/` folder):
 - Phase 4: XP system for skill progression
 - Link spell availability to skill levels
 - More spells
-- Scrollable skills list if many skills added
 
 ## Stat Formulas
 - PHY = min(POW, SPD, END) + 1
 - POW: Strength, Jump Boost effects
 - SPD: Speed, Haste effects
 - END: Regeneration, Resistance effects
+
+## Skills Reference (Worth the Candle)
+
+### Currently Implemented
+- **Blood Magic** - manipulate your own blood (Aarde's Touch, Crimson Fist, Sanguine Surge, Claret Spear)
+- **Bone Magic** - burn bones for effects (Physical/Power/Speed/Endurance Tapping)
+- **One-Handed** - sword/axe combat (Riposter virtue)
+- **Parry** - deflect attacks while swinging (Prescient/Prophetic Blade virtues)
+- **Horticulture** - flower magic (planned)
+- **Art** - tattoo magic prerequisite (planned)
+- **Skin Magic** - tattoo magic (planned)
+
+### Magic Skills (potential future additions)
+- **Gem Magic** - store spells in gems
+- **Steel Magic** - metal manipulation
+- **Gold Magic** - healing magic (expensive)
+- **Ink Magic** - written magic
+- **Water Magic** - water manipulation (Excluded)
+- **Fire Magic** - fire manipulation (Excluded)
+- **Air Magic** - wind/air manipulation (Excluded)
+- **Earth Magic** - earth/stone manipulation (Excluded)
+- **Ice Magic** - cold/ice manipulation (Excluded)
+- **Vibration Magic** - sound/vibration (Excluded)
+- **Passion Magic** - emotion manipulation
+- **Spirit** - soul manipulation
+- **Essentialism** - soul/skill manipulation
+- **Revision** - alter recent past
+- **Necromancy** - raise undead
+- **Pustulance** - disease magic
+- **Velocity** - speed manipulation
+- **Warding** - protective barriers
+- **Still Magic** - entropy manipulation
+- **Library Magic** - book-based magic
+- **Luck Magic** - probability manipulation
+
+### Combat Skills (potential)
+- **Two-Handed** - greatswords, battleaxes
+- **Bows** - ranged combat
+- **Thrown Weapons** - throwing knives, etc.
+- **Unarmed** - hand-to-hand
+- **Shields** - blocking
+- **Dodge** - evasion
+- **Dual Wield** - two weapons
+
+### Other Skills (potential)
+- **Athletics** - running, jumping, climbing
+- **Stealth** - sneaking
+- **Engineering** - crafting/machines
+- **Alchemy** - potions
+- **Smithing** - metalwork
+- **Woodworking** - carpentry
+- **Cooking** - food preparation
+- **Medicine** - healing without magic
+- **Survival** - wilderness skills
+- **Rhetoric** - persuasion
+- **Intimidation** - fear tactics
+- **Languages** - communication
+- **Legerdemain** - sleight of hand

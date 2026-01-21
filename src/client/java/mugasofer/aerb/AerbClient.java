@@ -74,7 +74,9 @@ public class AerbClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SyncSkillsPayload.ID, (payload, context) -> {
 			ClientSkillCache.update(
 				payload.bloodMagic(), payload.boneMagic(), payload.oneHanded(), payload.parry(),
-				payload.bloodMagicXp(), payload.boneMagicXp(), payload.oneHandedXp(), payload.parryXp()
+				payload.horticulture(), payload.art(), payload.skinMagic(),
+				payload.bloodMagicXp(), payload.boneMagicXp(), payload.oneHandedXp(), payload.parryXp(),
+				payload.horticultureXp(), payload.artXp(), payload.skinMagicXp()
 			);
 			// Also update the parry skill cache for animation timing
 			ParrySkillCache.setParryLevel(payload.parry());

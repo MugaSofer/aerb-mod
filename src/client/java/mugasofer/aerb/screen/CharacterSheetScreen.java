@@ -12,6 +12,10 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
 public class CharacterSheetScreen extends Screen {
     private static final int BASE_POW = 2;
     private static final int BASE_SPD = 2;
@@ -26,23 +30,89 @@ public class CharacterSheetScreen extends Screen {
     private static final int TAB_HEIGHT = 20;
     private static final int TAB_SPACING = 24;
 
+    // Scrolling for entire content
+    private static final int LINE_HEIGHT = 14;
+    private static final int VISIBLE_LINES = 10; // Number of lines visible at once
+    private static final int CONTENT_PADDING = 10; // Padding from panel edges
+    private int scrollOffset = 0;
+
     private final PlayerEntity player;
 
-    // TextWidgets for dynamic stat display
-    private TextWidget phyWidget;
-    private TextWidget powWidget;
-    private TextWidget spdWidget;
-    private TextWidget endWidget;
+    // Content entries - each provides text dynamically
+    private final List<ContentEntry> contentEntries = new ArrayList<>();
 
-    // TextWidgets for dynamic skill display
-    private TextWidget bloodMagicWidget;
-    private TextWidget boneMagicWidget;
-    private TextWidget oneHandedWidget;
-    private TextWidget parryWidget;
+    // TextWidgets for visible content slots (updated dynamically based on scroll)
+    private final TextWidget[] slotWidgets = new TextWidget[VISIBLE_LINES];
+
+    // Content area bounds for scroll detection
+    private int contentAreaTop;
+    private int contentAreaBottom;
+    private int contentAreaLeft;
+    private int contentAreaRight;
+
+    // Scroll bar bounds
+    private int scrollBarX;
+    private int scrollBarTop;
+    private int scrollBarHeight;
+
+    // Scroll buttons
+    private ButtonWidget scrollUpButton;
+    private ButtonWidget scrollDownButton;
+
+    // Entry types for different indentation/styling
+    private record ContentEntry(Supplier<Text> textSupplier, int indent) {}
 
     public CharacterSheetScreen(PlayerEntity player) {
         super(Text.literal("Character Sheet"));
         this.player = player;
+
+        // Build content list - this defines the full scrollable content
+        buildContentList();
+    }
+
+    private void buildContentList() {
+        contentEntries.clear();
+
+        // PHYSICAL section
+        contentEntries.add(new ContentEntry(
+            () -> Text.literal("PHYSICAL").withColor(0xFFAA00), 0));
+        contentEntries.add(new ContentEntry(
+            () -> formatStat("PHY", getBasePhy(), calculatePHY()), 10));
+        contentEntries.add(new ContentEntry(
+            () -> formatStat("POW", BASE_POW, calculatePOW()), 20));
+        contentEntries.add(new ContentEntry(
+            () -> formatStat("SPD", BASE_SPD, calculateSPD()), 20));
+        contentEntries.add(new ContentEntry(
+            () -> formatStat("END", BASE_END, calculateEND()), 20));
+
+        // Spacer
+        contentEntries.add(new ContentEntry(() -> Text.empty(), 0));
+
+        // SKILLS section
+        contentEntries.add(new ContentEntry(
+            () -> Text.literal("SKILLS").withColor(0xFFAA00), 0));
+
+        // Add all skills
+        addSkillEntry("Blood Magic", ClientSkillCache::getBloodMagic, ClientSkillCache::getBloodMagicXp);
+        addSkillEntry("Bone Magic", ClientSkillCache::getBoneMagic, ClientSkillCache::getBoneMagicXp);
+        addSkillEntry("One-Handed", ClientSkillCache::getOneHanded, ClientSkillCache::getOneHandedXp);
+        addSkillEntry("Parry", ClientSkillCache::getParry, ClientSkillCache::getParryXp);
+        addSkillEntry("Horticulture", ClientSkillCache::getHorticulture, ClientSkillCache::getHorticultureXp);
+        addSkillEntry("Art", ClientSkillCache::getArt, ClientSkillCache::getArtXp);
+        addSkillEntry("Skin Magic", ClientSkillCache::getSkinMagic, ClientSkillCache::getSkinMagicXp);
+    }
+
+    private void addSkillEntry(String name, Supplier<Integer> levelGetter, Supplier<Integer> xpGetter) {
+        contentEntries.add(new ContentEntry(
+            () -> formatSkill(name, levelGetter.get(), xpGetter.get()), 10));
+    }
+
+    private int getBasePhy() {
+        return Math.min(Math.min(BASE_POW, BASE_SPD), BASE_END) + 1;
+    }
+
+    private int calculatePHY() {
+        return Math.min(Math.min(calculatePOW(), calculateSPD()), calculateEND()) + 1;
     }
 
     @Override
@@ -52,59 +122,46 @@ public class CharacterSheetScreen extends Screen {
         // Center panel like vanilla inventory
         int panelX = (this.width - PANEL_WIDTH) / 2;
         int panelY = (this.height - PANEL_HEIGHT) / 2;
-        int lineHeight = 14;
 
-        int y = panelY + 10;
+        // Content area bounds (with padding, leaving room for scroll bar)
+        this.contentAreaTop = panelY + CONTENT_PADDING;
+        this.contentAreaBottom = panelY + PANEL_HEIGHT - CONTENT_PADDING;
+        this.contentAreaLeft = panelX + CONTENT_PADDING;
+        this.contentAreaRight = panelX + PANEL_WIDTH - CONTENT_PADDING - 8; // Leave room for scroll bar
 
-        // PHYSICAL section
-        this.addDrawableChild(new TextWidget(panelX + 10, y, 160, lineHeight,
-            Text.literal("PHYSICAL").withColor(0xFFAA00), this.textRenderer));
-        y += lineHeight;
+        // Scroll bar bounds (on the right edge of the panel)
+        this.scrollBarX = panelX + PANEL_WIDTH - 6;
+        this.scrollBarTop = contentAreaTop;
+        this.scrollBarHeight = VISIBLE_LINES * LINE_HEIGHT;
 
-        // Dynamic stat widgets (updated each frame in render())
-        this.phyWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("PHY: ?"), this.textRenderer);
-        this.addDrawableChild(this.phyWidget);
-        y += lineHeight;
+        // Create TextWidgets for visible slots (content updated in render())
+        int y = contentAreaTop;
+        for (int i = 0; i < VISIBLE_LINES; i++) {
+            slotWidgets[i] = new TextWidget(contentAreaLeft, y, PANEL_WIDTH - (CONTENT_PADDING * 2), LINE_HEIGHT,
+                Text.literal(""), this.textRenderer);
+            this.addDrawableChild(slotWidgets[i]);
+            y += LINE_HEIGHT;
+        }
 
-        this.powWidget = new TextWidget(panelX + 30, y, 140, lineHeight,
-            Text.literal("POW: ?").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.powWidget);
-        y += lineHeight;
+        // Ensure scroll offset is valid
+        int maxScroll = Math.max(0, contentEntries.size() - VISIBLE_LINES);
+        scrollOffset = Math.min(scrollOffset, maxScroll);
 
-        this.spdWidget = new TextWidget(panelX + 30, y, 140, lineHeight,
-            Text.literal("SPD: ?").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.spdWidget);
-        y += lineHeight;
+        // Add scroll buttons if content is scrollable
+        if (contentEntries.size() > VISIBLE_LINES) {
+            // Scroll up button (above scroll track)
+            this.scrollUpButton = ButtonWidget.builder(Text.literal("\u25B2"), button -> {
+                scrollOffset = Math.max(0, scrollOffset - 1);
+            }).dimensions(scrollBarX - 4, scrollBarTop - 14, 12, 12).build();
+            this.addDrawableChild(scrollUpButton);
 
-        this.endWidget = new TextWidget(panelX + 30, y, 140, lineHeight,
-            Text.literal("END: ?").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.endWidget);
-
-        // SKILLS section
-        y += lineHeight + 8;
-        this.addDrawableChild(new TextWidget(panelX + 10, y, 160, lineHeight,
-            Text.literal("SKILLS").withColor(0xFFAA00), this.textRenderer));
-        y += lineHeight;
-
-        this.bloodMagicWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("Blood Magic: 0").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.bloodMagicWidget);
-        y += lineHeight;
-
-        this.boneMagicWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("Bone Magic: 0").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.boneMagicWidget);
-        y += lineHeight;
-
-        this.oneHandedWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("One-Handed: 0").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.oneHandedWidget);
-        y += lineHeight;
-
-        this.parryWidget = new TextWidget(panelX + 20, y, 150, lineHeight,
-            Text.literal("Parry: 0").withColor(0xAAAAAA), this.textRenderer);
-        this.addDrawableChild(this.parryWidget);
+            // Scroll down button (below scroll track)
+            this.scrollDownButton = ButtonWidget.builder(Text.literal("\u25BC"), button -> {
+                int max = Math.max(0, contentEntries.size() - VISIBLE_LINES);
+                scrollOffset = Math.min(max, scrollOffset + 1);
+            }).dimensions(scrollBarX - 4, scrollBarTop + scrollBarHeight + 2, 12, 12).build();
+            this.addDrawableChild(scrollDownButton);
+        }
 
         // Navigation tabs on the left side (consistent position across screens)
         int tabX = panelX - TAB_WIDTH - 4;
@@ -138,41 +195,67 @@ public class CharacterSheetScreen extends Screen {
         // Semi-transparent dark overlay (like vanilla screens)
         context.fill(0, 0, this.width, this.height, 0xC0101010);
 
-        // Dark panel behind stats (centered like inventory)
+        // Dark panel behind content (centered like inventory)
         int panelX = (this.width - PANEL_WIDTH) / 2;
         int panelY = (this.height - PANEL_HEIGHT) / 2;
         context.fill(panelX - 2, panelY - 2, panelX + PANEL_WIDTH + 2, panelY + PANEL_HEIGHT + 2, 0xFF333333);
         context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + PANEL_HEIGHT, 0xFF000000);
 
-        // Update dynamic stat widgets
-        int pow = calculatePOW();
-        int spd = calculateSPD();
-        int end = calculateEND();
-        int phy = Math.min(Math.min(pow, spd), end) + 1;
-        int basePhy = Math.min(Math.min(BASE_POW, BASE_SPD), BASE_END) + 1;
-
-        this.phyWidget.setMessage(formatStat("PHY", basePhy, phy));
-        this.powWidget.setMessage(formatStat("POW", BASE_POW, pow));
-        this.spdWidget.setMessage(formatStat("SPD", BASE_SPD, spd));
-        this.endWidget.setMessage(formatStat("END", BASE_END, end));
-
-        // Update skill widgets (from client cache, synced from server)
-        // Locked skills (-1) show greyed out, unlocked skills (0+) show level with XP progress
-        int bloodLevel = ClientSkillCache.getBloodMagic();
-        int boneLevel = ClientSkillCache.getBoneMagic();
-        int oneHandedLevel = ClientSkillCache.getOneHanded();
-        int parryLevel = ClientSkillCache.getParry();
-        int bloodXp = ClientSkillCache.getBloodMagicXp();
-        int boneXp = ClientSkillCache.getBoneMagicXp();
-        int oneHandedXp = ClientSkillCache.getOneHandedXp();
-        int parryXp = ClientSkillCache.getParryXp();
-        this.bloodMagicWidget.setMessage(formatSkill("Blood Magic", bloodLevel, bloodXp));
-        this.boneMagicWidget.setMessage(formatSkill("Bone Magic", boneLevel, boneXp));
-        this.oneHandedWidget.setMessage(formatSkill("One-Handed", oneHandedLevel, oneHandedXp));
-        this.parryWidget.setMessage(formatSkill("Parry", parryLevel, parryXp));
+        // Update slot widgets based on scroll offset
+        for (int i = 0; i < VISIBLE_LINES; i++) {
+            int entryIndex = scrollOffset + i;
+            if (entryIndex < contentEntries.size()) {
+                ContentEntry entry = contentEntries.get(entryIndex);
+                slotWidgets[i].setMessage(entry.textSupplier.get());
+                slotWidgets[i].setX(contentAreaLeft + entry.indent);
+                slotWidgets[i].visible = true;
+            } else {
+                slotWidgets[i].setMessage(Text.empty());
+                slotWidgets[i].visible = false;
+            }
+        }
 
         // Render all widgets (TextWidgets and buttons)
         super.render(context, mouseX, mouseY, delta);
+
+        // Render scroll indicator if needed (using context.fill which should work)
+        renderScrollIndicator(context);
+    }
+
+    private void renderScrollIndicator(DrawContext context) {
+        int maxScroll = Math.max(0, contentEntries.size() - VISIBLE_LINES);
+        if (maxScroll > 0) {
+            // Track background
+            context.fill(scrollBarX, scrollBarTop, scrollBarX + 4, scrollBarTop + scrollBarHeight, 0xFF333333);
+
+            // Scroll thumb position
+            float scrollProgress = (float) scrollOffset / maxScroll;
+            int thumbHeight = Math.max(15, scrollBarHeight * VISIBLE_LINES / contentEntries.size());
+            int thumbY = scrollBarTop + (int) ((scrollBarHeight - thumbHeight) * scrollProgress);
+
+            context.fill(scrollBarX, thumbY, scrollBarX + 4, thumbY + thumbHeight, 0xFF888888);
+        }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        // Allow scrolling anywhere on the panel
+        int panelX = (this.width - PANEL_WIDTH) / 2;
+        int panelY = (this.height - PANEL_HEIGHT) / 2;
+
+        if (mouseX >= panelX && mouseX <= panelX + PANEL_WIDTH &&
+            mouseY >= panelY && mouseY <= panelY + PANEL_HEIGHT) {
+            int maxScroll = Math.max(0, contentEntries.size() - VISIBLE_LINES);
+            if (verticalAmount > 0) {
+                // Scroll up
+                scrollOffset = Math.max(0, scrollOffset - 1);
+            } else if (verticalAmount < 0) {
+                // Scroll down
+                scrollOffset = Math.min(maxScroll, scrollOffset + 1);
+            }
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
     private Text formatStat(String name, int base, int current) {
