@@ -49,7 +49,9 @@ public class ClaretSpearEntity extends PersistentProjectileEntity implements Fly
         World world = this.getEntityWorld();
         if (world instanceof ServerWorld serverWorld) {
             if (entityHitResult.getEntity().damage(serverWorld, damageSource, damage)) {
-                this.playSound(SoundEvents.ITEM_TRIDENT_HIT, 1.0f, 1.0f);
+                // Wet, visceral sound for blood spear impact
+                this.playSound(SoundEvents.ENTITY_PLAYER_SPLASH, 0.8f, 1.4f);
+                this.playSound(SoundEvents.ENTITY_SLIME_ATTACK, 1.0f, 0.8f);
             }
         }
 
@@ -111,6 +113,7 @@ public class ClaretSpearEntity extends PersistentProjectileEntity implements Fly
 
     @Override
     protected SoundEvent getHitSound() {
-        return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
+        // Wet splat for blood spear hitting ground
+        return SoundEvents.ENTITY_SLIME_SQUISH;
     }
 }

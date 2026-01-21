@@ -328,9 +328,16 @@ public class ParryHandler {
      * If Riposter is active with a one-handed weapon, performs an immediate counterattack.
      */
     private static void onParrySuccess(ServerPlayerEntity player, float attackDamage, DamageSource source) {
-        // Play parry success sound (metallic clang)
+        // Play parry success sound (random metallic blade clash)
+        net.minecraft.sound.SoundEvent[] parrySounds = {
+            SoundEvents.ENTITY_ZOMBIE_ATTACK_IRON_DOOR,
+            SoundEvents.ENTITY_IRON_GOLEM_STEP,
+            SoundEvents.BLOCK_ANVIL_LAND
+        };
+        net.minecraft.sound.SoundEvent parrySound = parrySounds[random.nextInt(parrySounds.length)];
+        float pitch = 1.1f + random.nextFloat() * 0.4f; // 1.1 to 1.5
         player.getEntityWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
-            SoundEvents.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1.0f, 1.2f);
+            parrySound, SoundCategory.PLAYERS, 0.6f, pitch);
 
         // Damage the weapon (durability = attack damage, with threshold of 3)
         ItemStack weapon = player.getMainHandStack();

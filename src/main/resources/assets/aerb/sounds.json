@@ -12,7 +12,10 @@
       "minecraft:mob/bogged/step3",
       "minecraft:mob/bogged/step4",
       "minecraft:mob/horse/skeleton/water/gallop3",
-      "minecraft:mob/horse/skeleton/water/gallop4"
+      "minecraft:mob/horse/skeleton/water/gallop4",
+      "minecraft:mob/camel/eat1",
+      "minecraft:mob/camel/eat2",
+      "minecraft:mob/camel/eat3"
     ]
   },
   "umbral_smash": {

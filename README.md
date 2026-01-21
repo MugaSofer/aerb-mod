@@ -188,7 +188,8 @@ Spells and virtues cannot be dropped - they automatically return to you.
 **Lesser Umbral Undead** - Large, quadrupedal conglomerations of undead corpses
 - Can absorb undead (and vanilla zombies, if present) to heal and grow. (1 undead = 10 HP)
 - Can smash their way through walls to chase their prey
-- Undead occasionally fall off them as they take damage. This can reduce their size, though once they've absorbed at least 20 corpses, they can't be forced below that size.
+- Undead fall off them as they take damage. This can reduce their size
+	- Though once they contain at least 20 corpses, they can't be forced below that size
 - Collapse into a group of undead when they die
 
 ## Known Issues
@@ -228,6 +229,12 @@ All commands support tab-completion.
 ```
 
 **Virtue names:** `hypertension`, `prescient_blade`, `prophetic_blade`, `riposter`
+
+### Mob Commands
+```
+/spawnhorde <number>				- Spawns a horde of undead. Defaults to 25 undead (which should immediately begin trying to form an Umbral Undead.)
+/spawnumbral <corpses>				- Spawns a Lesser Umbral Undead. Defaults to one composed of 30 corpses; can go as high as 255. (<20 corpses will spawn a weakened but full-sized Umbral Undead.)
+```
 
 ## Quick Start
 

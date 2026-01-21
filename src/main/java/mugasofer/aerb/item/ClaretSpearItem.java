@@ -4,9 +4,6 @@ import mugasofer.aerb.Aerb;
 import mugasofer.aerb.entity.ClaretSpearEntity;
 import mugasofer.aerb.skill.PlayerSkills;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.entity.attribute.EntityAttributeInstance;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -16,7 +13,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
@@ -27,18 +23,17 @@ import java.util.UUID;
  * Claret Spear - A blood magic spell that forms a spear from your blood.
  *
  * Mechanics:
- * - Reduces max HP by 2 (1 heart) while held in main hand
- * - On normal unequip: restores max HP AND heals the lost HP
- * - On throw: restores max HP but does NOT heal (blood is spent)
+ * - Costs 2 HP (1 heart) when equipped (blood forms into spear)
+ * - Heals 2 HP when unequipped normally (blood returns to you)
+ * - On throw: no heal on unequip (blood is spent with the spear)
  * - Damage scales with Blood Magic level
  * - Functions as a spear for parrying
  */
 public class ClaretSpearItem extends Item implements SpellItem {
-    private static final Identifier HEALTH_MODIFIER_ID = Identifier.of(Aerb.MOD_ID, "claret_spear_blood_cost");
-    private static final double BLOOD_COST = -2.0; // Reduce max HP by 1 heart (2 HP)
+    private static final float BLOOD_COST = 2.0f; // 1 heart
 
-    // Track players who have the HP modifier active
-    private static final Map<UUID, Boolean> playersWithModifier = new HashMap<>();
+    // Track players currently holding the spear
+    private static final Map<UUID, Boolean> playersHoldingSpear = new HashMap<>();
     // Track players who threw the spear (so we don't heal them on unequip)
     private static final Map<UUID, Boolean> playersThrewSpear = new HashMap<>();
 
@@ -58,22 +53,21 @@ public class ClaretSpearItem extends Item implements SpellItem {
                 UUID playerId = player.getUuid();
                 ItemStack mainHand = player.getMainHandStack();
                 boolean isHoldingSpear = mainHand.getItem() instanceof ClaretSpearItem;
-                boolean hasModifier = playersWithModifier.getOrDefault(playerId, false);
+                boolean wasHoldingSpear = playersHoldingSpear.getOrDefault(playerId, false);
 
-                if (isHoldingSpear && !hasModifier) {
-                    // Just started holding - apply HP reduction
-                    applyBloodCost(player);
-                    playersWithModifier.put(playerId, true);
-                    playersThrewSpear.remove(playerId); // Reset throw flag
-                } else if (!isHoldingSpear && hasModifier) {
-                    // Stopped holding - restore HP
-                    removeBloodCost(player);
-                    playersWithModifier.put(playerId, false);
+                if (isHoldingSpear && !wasHoldingSpear) {
+                    // Just started holding - pay blood cost
+                    net.minecraft.server.world.ServerWorld serverWorld = (net.minecraft.server.world.ServerWorld) player.getEntityWorld();
+                    player.damage(serverWorld, serverWorld.getDamageSources().magic(), BLOOD_COST);
+                    playersHoldingSpear.put(playerId, true);
+                    playersThrewSpear.remove(playerId);
+                } else if (!isHoldingSpear && wasHoldingSpear) {
+                    // Stopped holding
+                    playersHoldingSpear.put(playerId, false);
 
-                    // Heal if we didn't throw the spear
+                    // Heal if we didn't throw the spear (blood returns to us)
                     if (!playersThrewSpear.getOrDefault(playerId, false)) {
-                        // Heal the blood cost back
-                        player.heal((float) -BLOOD_COST);
+                        player.heal(BLOOD_COST);
                     }
                     playersThrewSpear.remove(playerId);
                 }
@@ -81,30 +75,8 @@ public class ClaretSpearItem extends Item implements SpellItem {
         });
     }
 
-    private void applyBloodCost(ServerPlayerEntity player) {
-        EntityAttributeInstance healthAttr = player.getAttributeInstance(EntityAttributes.MAX_HEALTH);
-        if (healthAttr != null && healthAttr.getModifier(HEALTH_MODIFIER_ID) == null) {
-            healthAttr.addPersistentModifier(new EntityAttributeModifier(
-                HEALTH_MODIFIER_ID,
-                BLOOD_COST,
-                EntityAttributeModifier.Operation.ADD_VALUE
-            ));
-            // Clamp health if it exceeds new max
-            if (player.getHealth() > player.getMaxHealth()) {
-                player.setHealth(player.getMaxHealth());
-            }
-        }
-    }
-
-    private static void removeBloodCost(ServerPlayerEntity player) {
-        EntityAttributeInstance healthAttr = player.getAttributeInstance(EntityAttributes.MAX_HEALTH);
-        if (healthAttr != null) {
-            healthAttr.removeModifier(HEALTH_MODIFIER_ID);
-        }
-    }
-
     /**
-     * Mark that a player threw their spear (so we don't heal them).
+     * Mark that a player threw their spear (so we don't heal them on unequip).
      */
     public static void markSpearThrown(UUID playerId) {
         playersThrewSpear.put(playerId, true);
@@ -130,8 +102,11 @@ public class ClaretSpearItem extends Item implements SpellItem {
 
             world.spawnEntity(spearEntity);
 
+            // Blood magic throw sound (frog leap + wet splash)
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ITEM_TRIDENT_THROW, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                SoundEvents.ENTITY_FROG_LONG_JUMP, SoundCategory.PLAYERS, 0.8f, 1.2f);
+            world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.ENTITY_PLAYER_SPLASH, SoundCategory.PLAYERS, 0.5f, 1.5f);
 
             user.incrementStat(Stats.USED.getOrCreateStat(this));
 
