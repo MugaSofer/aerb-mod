@@ -123,16 +123,19 @@ public class CharacterSheetScreen extends Screen {
         int panelX = (this.width - PANEL_WIDTH) / 2;
         int panelY = (this.height - PANEL_HEIGHT) / 2;
 
-        // Content area bounds (with padding, leaving room for scroll bar)
+        // Content area bounds (with padding - full width since scroll bar is outside)
         this.contentAreaTop = panelY + CONTENT_PADDING;
         this.contentAreaBottom = panelY + PANEL_HEIGHT - CONTENT_PADDING;
         this.contentAreaLeft = panelX + CONTENT_PADDING;
-        this.contentAreaRight = panelX + PANEL_WIDTH - CONTENT_PADDING - 8; // Leave room for scroll bar
+        this.contentAreaRight = panelX + PANEL_WIDTH - CONTENT_PADDING;
 
-        // Scroll bar bounds (on the right edge of the panel)
-        this.scrollBarX = panelX + PANEL_WIDTH - 6;
-        this.scrollBarTop = contentAreaTop;
+        // Scroll bar bounds (outside the panel on the right, matching tab spacing)
+        this.scrollBarX = panelX + PANEL_WIDTH + 8;
         this.scrollBarHeight = VISIBLE_LINES * LINE_HEIGHT;
+        // Center scroll apparatus (up button + track + down button) vertically with panel
+        // Total height: 14 (up button + gap) + scrollBarHeight + 14 (gap + down button)
+        int totalScrollHeight = scrollBarHeight + 28;
+        this.scrollBarTop = panelY + (PANEL_HEIGHT - totalScrollHeight) / 2 + 14;
 
         // Create TextWidgets for visible slots (content updated in render())
         int y = contentAreaTop;
