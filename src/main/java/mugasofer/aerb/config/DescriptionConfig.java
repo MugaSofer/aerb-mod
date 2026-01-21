@@ -38,6 +38,20 @@ public class DescriptionConfig {
                 String json = Files.readString(CONFIG_PATH);
                 INSTANCE = GSON.fromJson(json, DescriptionConfig.class);
                 Aerb.LOGGER.info("Loaded description config from " + CONFIG_PATH);
+
+                // Merge in any missing default entries
+                DescriptionConfig defaults = createDefaults();
+                boolean addedNew = false;
+                for (Map.Entry<String, List<String>> entry : defaults.descriptions.entrySet()) {
+                    if (!INSTANCE.descriptions.containsKey(entry.getKey())) {
+                        INSTANCE.descriptions.put(entry.getKey(), entry.getValue());
+                        Aerb.LOGGER.info("Added missing description for: " + entry.getKey());
+                        addedNew = true;
+                    }
+                }
+                if (addedNew) {
+                    save();
+                }
             } catch (IOException e) {
                 Aerb.LOGGER.error("Failed to load description config, using defaults", e);
                 INSTANCE = createDefaults();
@@ -84,7 +98,7 @@ public class DescriptionConfig {
         ));
         config.descriptions.put("claret_spear", List.of(
             "Channels the force of your blood into a pointed weapon.",
-            "Reduces max HP by 1 heart while held.",
+            "Reduces HP by 1 heart while held.",
             "Throwing spends the blood; unequipping returns it."
         ));
 

@@ -65,6 +65,9 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
     private static final double SHED_BODY_SPEED = 0.5; // How fast shed bodies fly away
     private static final float SHED_SURVIVAL_CHANCE = 0.05f; // 5% chance shed body survives
 
+    // Turn speed limit (degrees per tick) - large creature turns slowly
+    private static final float MAX_TURN_SPEED = 3.0f;
+
     // Instance state
     private int blockBreakCooldown = 0;
     private int absorbCooldown = 0;
@@ -311,9 +314,31 @@ public class LesserUmbralUndeadEntity extends HostileEntity {
         }
     }
 
+
+
     @Override
     public void tick() {
+        // Capture yaw before super.tick() changes it
+        float prevBodyYaw = this.bodyYaw;
+        float prevHeadYaw = this.headYaw;
+
         super.tick();
+
+        // Limit turn speed - large creature turns slowly
+        float bodyYawDelta = this.bodyYaw - prevBodyYaw;
+        // Normalize to -180 to 180
+        while (bodyYawDelta > 180) bodyYawDelta -= 360;
+        while (bodyYawDelta < -180) bodyYawDelta += 360;
+        if (Math.abs(bodyYawDelta) > MAX_TURN_SPEED) {
+            this.bodyYaw = prevBodyYaw + Math.signum(bodyYawDelta) * MAX_TURN_SPEED;
+        }
+
+        float headYawDelta = this.headYaw - prevHeadYaw;
+        while (headYawDelta > 180) headYawDelta -= 360;
+        while (headYawDelta < -180) headYawDelta += 360;
+        if (Math.abs(headYawDelta) > MAX_TURN_SPEED) {
+            this.headYaw = prevHeadYaw + Math.signum(headYawDelta) * MAX_TURN_SPEED;
+        }
 
         if (this.getEntityWorld() instanceof ServerWorld serverWorld) {
             // Block breaking while chasing

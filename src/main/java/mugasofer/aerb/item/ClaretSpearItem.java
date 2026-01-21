@@ -29,7 +29,7 @@ import java.util.UUID;
  * - Damage scales with Blood Magic level
  * - Functions as a spear for parrying
  */
-public class ClaretSpearItem extends Item implements SpellItem {
+public class ClaretSpearItem extends Item implements SpellItem, DescribedItem {
     private static final float BLOOD_COST = 2.0f; // 1 heart
 
     // Track players currently holding the spear
