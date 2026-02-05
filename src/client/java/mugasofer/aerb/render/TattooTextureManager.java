@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.entity.player.PlayerSkinType;
 import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.resource.Resource;
 import net.minecraft.util.AssetInfo;
@@ -28,12 +29,21 @@ public class TattooTextureManager {
     // Test tattoo texture
     private static final Identifier TATTOO_TEXTURE = Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_test.png");
 
+    // Skin masks - define which areas are exposed skin vs clothed
+    private static final Identifier MASK_STEVE = Identifier.of(Aerb.MOD_ID, "textures/entity/skin_mask_steve.png");
+    private static final Identifier MASK_ALEX = Identifier.of(Aerb.MOD_ID, "textures/entity/skin_mask_alex.png");
+
     // Cache of modified skin textures per player UUID
     private static final Map<UUID, CachedTattooSkin> skinCache = new HashMap<>();
 
     // Cached tattoo overlay image (loaded once)
     private static NativeImage tattooOverlay = null;
     private static boolean tattooLoadAttempted = false;
+
+    // Cached mask images
+    private static NativeImage maskSteve = null;
+    private static NativeImage maskAlex = null;
+    private static boolean masksLoadAttempted = false;
 
     /**
      * Get modified skin textures with tattoos applied for a player.
@@ -89,6 +99,15 @@ public class TattooTextureManager {
             return null;
         }
 
+        // Load skin masks if not already loaded
+        if (!masksLoadAttempted) {
+            masksLoadAttempted = true;
+            maskSteve = loadMask(MASK_STEVE);
+            maskAlex = loadMask(MASK_ALEX);
+            LOGGER.info("[TATTOO] Loaded skin masks - Steve: {}, Alex: {}",
+                maskSteve != null, maskAlex != null);
+        }
+
         // Get the original skin texture as a NativeImage
         Identifier bodyTextureId = original.body().texturePath();
         NativeImage baseSkin = loadTextureAsImage(bodyTextureId);
@@ -97,8 +116,11 @@ public class TattooTextureManager {
             return null;
         }
 
-        // Composite the tattoo onto the skin
-        NativeImage compositedSkin = compositeTattoo(baseSkin, tattooOverlay);
+        // Select mask based on skin model type (slim = Alex, wide = Steve)
+        NativeImage mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
+
+        // Composite the tattoo onto the skin with masking
+        NativeImage compositedSkin = compositeTattoo(baseSkin, tattooOverlay, mask);
         baseSkin.close(); // Done with the copy
 
         if (compositedSkin == null) {
@@ -195,10 +217,29 @@ public class TattooTextureManager {
     }
 
     /**
-     * Composite the tattoo overlay onto the base skin.
-     * Returns a new NativeImage with the result.
+     * Load a skin mask texture.
      */
-    private static NativeImage compositeTattoo(NativeImage baseSkin, NativeImage tattoo) {
+    private static NativeImage loadMask(Identifier maskId) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        try {
+            Optional<Resource> resource = client.getResourceManager().getResource(maskId);
+            if (resource.isPresent()) {
+                try (InputStream stream = resource.get().getInputStream()) {
+                    return NativeImage.read(stream);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("[TATTOO] Error loading mask {}: {}", maskId, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Composite the tattoo overlay onto the base skin, using mask to limit to exposed areas.
+     * Returns a new NativeImage with the result.
+     * @param mask If non-null, white (255) = show tattoo, black (0) = hide tattoo
+     */
+    private static NativeImage compositeTattoo(NativeImage baseSkin, NativeImage tattoo, NativeImage mask) {
         int width = baseSkin.getWidth();
         int height = baseSkin.getHeight();
 
@@ -212,12 +253,21 @@ public class TattooTextureManager {
             }
         }
 
-        // Overlay tattoo (alpha blend)
+        // Overlay tattoo (alpha blend) with masking
         int tattooWidth = Math.min(width, tattoo.getWidth());
         int tattooHeight = Math.min(height, tattoo.getHeight());
 
         for (int y = 0; y < tattooHeight; y++) {
             for (int x = 0; x < tattooWidth; x++) {
+                // Check mask - if mask exists and pixel is dark, skip this pixel
+                if (mask != null && x < mask.getWidth() && y < mask.getHeight()) {
+                    int maskValue = mask.getColorArgb(x, y) & 0xFF; // Get blue channel (grayscale)
+                    if (maskValue < 128) {
+                        // Masked out (clothed area) - don't apply tattoo here
+                        continue;
+                    }
+                }
+
                 int tattooColor = tattoo.getColorArgb(x, y);
                 int tattooAlpha = (tattooColor >> 24) & 0xFF;
 
