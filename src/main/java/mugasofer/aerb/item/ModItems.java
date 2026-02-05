@@ -3,6 +3,7 @@ package mugasofer.aerb.item;
 import mugasofer.aerb.Aerb;
 import mugasofer.aerb.entity.ModEntities;
 import mugasofer.aerb.skill.PlayerSkills;
+import mugasofer.aerb.tattoo.PlayerTattoos;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.component.DataComponentTypes;
@@ -146,6 +147,37 @@ public class ModItems {
                 .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "lesser_umbral_undead_spawn_egg")))
                 .component(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(ModEntities.LESSER_UMBRAL_UNDEAD, new NbtCompound()))));
 
+    // Tattoo items
+    public static final Item TATTOO_NEEDLE = register("tattoo_needle",
+        new TattooNeedleItem(new Item.Settings()
+            .maxCount(1)
+            .maxDamage(64)
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "tattoo_needle")))));
+
+    public static final Item TATTOO_INK = register("tattoo_ink",
+        new TattooInkItem(new Item.Settings()
+            .maxCount(16)
+            .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "tattoo_ink")))));
+
+    // Tattoo designs
+    public static final Item FALL_RUNE_DESIGN = register("fall_rune_design",
+        new TattooDesignItem(
+            new Item.Settings()
+                .maxCount(1)
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "fall_rune_design"))),
+            PlayerTattoos.FALL_RUNE,
+            0  // Requires Skin Magic level 0
+        ));
+
+    public static final Item ICY_DEVIL_DESIGN = register("icy_devil_design",
+        new TattooDesignItem(
+            new Item.Settings()
+                .maxCount(1)
+                .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "icy_devil_design"))),
+            PlayerTattoos.ICY_DEVIL,
+            5  // Requires Skin Magic level 5
+        ));
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(Aerb.MOD_ID, name), item);
     }
@@ -172,6 +204,11 @@ public class ModItems {
             // Guides
             entries.add(COMMONERS_GUIDE_BLOOD_MAGIC);
             entries.add(COMMONERS_GUIDE_BONE_MAGIC);
+            // Tattoo items
+            entries.add(TATTOO_NEEDLE);
+            entries.add(TATTOO_INK);
+            entries.add(FALL_RUNE_DESIGN);
+            entries.add(ICY_DEVIL_DESIGN);
         });
 
         // Add spawn eggs to the Spawn Eggs item group

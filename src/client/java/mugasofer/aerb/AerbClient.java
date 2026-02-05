@@ -4,10 +4,12 @@ import mugasofer.aerb.combat.ParrySkillCache;
 import mugasofer.aerb.config.DescriptionConfig;
 import mugasofer.aerb.entity.ModEntities;
 import mugasofer.aerb.item.DescribedItem;
+import mugasofer.aerb.item.TattooNeedleItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.CharacterSheetScreen;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.screen.SpellSlotsScreen;
+import mugasofer.aerb.screen.TattooApplicationScreen;
 import mugasofer.aerb.screen.VirtuesScreen;
 import mugasofer.aerb.skill.ClientSkillCache;
 import mugasofer.aerb.tattoo.ClientTattooCache;
@@ -45,6 +47,11 @@ public class AerbClient implements ClientModInitializer {
 		// Register screens
 		HandledScreens.register(ModScreenHandlers.SPELL_SLOTS_SCREEN_HANDLER, SpellSlotsScreen::new);
 		HandledScreens.register(ModScreenHandlers.VIRTUES_SCREEN_HANDLER, VirtuesScreen::new);
+
+		// Set up tattoo needle callback to open tattoo screen
+		TattooNeedleItem.openScreenCallback = () -> {
+			net.minecraft.client.MinecraftClient.getInstance().setScreen(new TattooApplicationScreen());
+		};
 
 		// Register entity renderers
 		EntityRendererRegistry.register(ModEntities.CLARET_SPEAR, ClaretSpearEntityRenderer::new);

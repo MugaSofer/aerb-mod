@@ -1,9 +1,13 @@
 package mugasofer.aerb.network;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.item.TattooDesignItem;
+import mugasofer.aerb.item.TattooInkItem;
+import mugasofer.aerb.item.TattooNeedleItem;
 import mugasofer.aerb.screen.SpellSlotsScreenHandler;
 import mugasofer.aerb.screen.VirtuesScreenHandler;
 import mugasofer.aerb.skill.PlayerSkills;
+import mugasofer.aerb.skill.XpHelper;
 import mugasofer.aerb.spell.SpellInventory;
 import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.PlayerTattoos;
@@ -11,6 +15,7 @@ import mugasofer.aerb.tattoo.TattooInstance;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
@@ -30,6 +35,7 @@ public class ModNetworking {
     public static final Identifier SYNC_SKILLS_ID = Identifier.of(Aerb.MOD_ID, "sync_skills");
     public static final Identifier SET_SELECTED_SLOT_ID = Identifier.of(Aerb.MOD_ID, "set_selected_slot");
     public static final Identifier SYNC_TATTOOS_ID = Identifier.of(Aerb.MOD_ID, "sync_tattoos");
+    public static final Identifier APPLY_TATTOO_ID = Identifier.of(Aerb.MOD_ID, "apply_tattoo");
 
     // Custom payload for opening spell inventory (empty payload, just a signal)
     public record OpenSpellInventoryPayload() implements CustomPayload {
@@ -141,6 +147,23 @@ public class ModNetworking {
         }
     }
 
+    // Payload for applying a tattoo (client to server)
+    public record ApplyTattooPayload(String tattooId, String position) implements CustomPayload {
+        public static final Id<ApplyTattooPayload> ID = new Id<>(APPLY_TATTOO_ID);
+        public static final PacketCodec<RegistryByteBuf, ApplyTattooPayload> CODEC = PacketCodec.of(
+            (value, buf) -> {
+                buf.writeString(value.tattooId);
+                buf.writeString(value.position);
+            },
+            buf -> new ApplyTattooPayload(buf.readString(), buf.readString())
+        );
+
+        @Override
+        public Id<? extends CustomPayload> getId() {
+            return ID;
+        }
+    }
+
     /**
      * Tell the client to change their selected hotbar slot.
      */
@@ -192,6 +215,7 @@ public class ModNetworking {
         // Register payload types
         PayloadTypeRegistry.playC2S().register(OpenSpellInventoryPayload.ID, OpenSpellInventoryPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(OpenVirtueInventoryPayload.ID, OpenVirtueInventoryPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(ApplyTattooPayload.ID, ApplyTattooPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncSkillsPayload.ID, SyncSkillsPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SetSelectedSlotPayload.ID, SetSelectedSlotPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncTattoosPayload.ID, SyncTattoosPayload.CODEC);
@@ -224,6 +248,98 @@ public class ModNetworking {
             });
         });
 
+        // Register server-side handler for applying tattoos
+        ServerPlayNetworking.registerGlobalReceiver(ApplyTattooPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                var player = context.player();
+                handleApplyTattoo(player, payload.tattooId(), payload.position());
+            });
+        });
+
         Aerb.LOGGER.info("Registered networking for " + Aerb.MOD_ID);
+    }
+
+    /**
+     * Handle tattoo application request from client.
+     */
+    private static void handleApplyTattoo(ServerPlayerEntity player, String tattooId, String positionStr) {
+        // Validate needle in hand
+        ItemStack mainHand = player.getMainHandStack();
+        if (!(mainHand.getItem() instanceof TattooNeedleItem)) {
+            player.sendMessage(Text.literal("You need to hold a tattoo needle!"), true);
+            return;
+        }
+
+        // Find the design in inventory
+        TattooDesignItem design = null;
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack.getItem() instanceof TattooDesignItem d && d.getTattooId().equals(tattooId)) {
+                design = d;
+                break;
+            }
+        }
+        if (design == null) {
+            player.sendMessage(Text.literal("You don't have that tattoo design!"), true);
+            return;
+        }
+
+        // Find ink in inventory
+        int inkSlot = -1;
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            if (player.getInventory().getStack(i).getItem() instanceof TattooInkItem) {
+                inkSlot = i;
+                break;
+            }
+        }
+        if (inkSlot < 0) {
+            player.sendMessage(Text.literal("You need tattoo ink!"), true);
+            return;
+        }
+
+        // Check Skin Magic skill
+        PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+        int skinMagicLevel = skills.getSkillLevel(PlayerSkills.SKIN_MAGIC);
+        if (skinMagicLevel < 0) {
+            player.sendMessage(Text.literal("You haven't learned Skin Magic!"), true);
+            return;
+        }
+        if (skinMagicLevel < design.getRequiredSkinMagicLevel()) {
+            player.sendMessage(Text.literal("Requires Skin Magic level " + design.getRequiredSkinMagicLevel() + "!"), true);
+            return;
+        }
+
+        // Parse position
+        BodyPosition position;
+        try {
+            position = BodyPosition.valueOf(positionStr);
+        } catch (IllegalArgumentException e) {
+            player.sendMessage(Text.literal("Invalid body position!"), true);
+            return;
+        }
+
+        // All checks passed - apply the tattoo!
+
+        // Consume ink
+        player.getInventory().getStack(inkSlot).decrement(1);
+
+        // Damage needle
+        TattooNeedleItem.damageNeedle(mainHand, player);
+
+        // Add tattoo
+        PlayerTattoos tattoos = player.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+        tattoos.addTattoo(tattooId, position);
+
+        // Award Skin Magic XP
+        XpHelper.awardXp(player, PlayerSkills.SKIN_MAGIC, 10);
+
+        // Sync to client
+        syncTattoosToClient(player);
+
+        // Success message
+        String posName = position.name().replace("_", " ").toLowerCase();
+        player.sendMessage(Text.literal("Applied " + tattooId.replace("_", " ") + " to your " + posName + "!"), true);
+
+        Aerb.LOGGER.info("{} applied tattoo {} at {}", player.getName().getString(), tattooId, position);
     }
 }

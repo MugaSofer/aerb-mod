@@ -15,6 +15,10 @@
   "item.aerb.commoners_guide_bone_magic": "Commoner's Guide to Bone Magic",
   "item.aerb.undead_spawn_egg": "Undead Spawn Egg",
   "item.aerb.lesser_umbral_undead_spawn_egg": "Lesser Umbral Undead Spawn Egg",
+  "item.aerb.tattoo_needle": "Tattoo Needle",
+  "item.aerb.tattoo_ink": "Tattoo Ink",
+  "item.aerb.fall_rune_design": "Fall Rune Design",
+  "item.aerb.icy_devil_design": "Icy Devil Design",
   "entity.aerb.undead": "Undead",
   "entity.aerb.lesser_umbral_undead": "Lesser Umbral Undead"
 }
