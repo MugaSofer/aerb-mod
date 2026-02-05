@@ -12,7 +12,7 @@ import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
 import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.PlayerTattoos;
-import mugasofer.aerb.tattoo.TattooState;
+import mugasofer.aerb.tattoo.TattooInstance;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.server.world.ServerWorld;
@@ -832,9 +832,8 @@ public class ModCommands {
     }
 
     /**
-     * Give a tattoo to a player.
-     * @param charges -1 for unlimited, 0+ for specific charges
-     * @param position where on the body to place the tattoo
+     * Give a tattoo to a player at a specific position.
+     * The 'charges' parameter is now ignored (kept for command compatibility).
      */
     private static int giveTattoo(ServerCommandSource source, ServerPlayerEntity target, String tattooId, int charges, BodyPosition position) {
         if (!TATTOOS.contains(tattooId)) {
@@ -843,19 +842,11 @@ public class ModCommands {
         }
 
         PlayerTattoos tattoos = target.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
-
-        TattooState state = new TattooState(
-            charges == -1 ? TattooState.UNLIMITED : charges,
-            0, // no cooldown
-            position
-        );
-
-        tattoos.addTattoo(tattooId, state);
+        tattoos.addTattoo(tattooId, position);
         ModNetworking.syncTattoosToClient(target);
 
-        String chargeStr = charges == -1 ? "unlimited" : String.valueOf(charges);
         String posStr = position == BodyPosition.ANY ? "" : " on " + position.name().toLowerCase();
-        source.sendFeedback(() -> Text.literal("Gave " + tattooId + " (" + chargeStr + " charges)" + posStr + " to " + target.getName().getString()), true);
+        source.sendFeedback(() -> Text.literal("Gave " + tattooId + posStr + " to " + target.getName().getString()), true);
         return 1;
     }
 
@@ -872,28 +863,26 @@ public class ModCommands {
         }
 
         source.sendFeedback(() -> Text.literal(target.getName().getString() + "'s tattoos:"), false);
-        for (var entry : allTattoos.entrySet()) {
-            String id = entry.getKey();
-            TattooState state = entry.getValue();
-            String chargeStr = state.charges() == TattooState.UNLIMITED ? "unlimited" : String.valueOf(state.charges());
-            String posStr = state.position().name().toLowerCase();
-            source.sendFeedback(() -> Text.literal("  " + id + ": " + chargeStr + " charges, " + posStr), false);
+        for (TattooInstance instance : allTattoos) {
+            String id = instance.tattooId();
+            String posStr = instance.position().name().toLowerCase();
+            source.sendFeedback(() -> Text.literal("  " + id + " (" + posStr + ")"), false);
         }
         return allTattoos.size();
     }
 
     /**
-     * Remove a tattoo from a player.
+     * Remove one instance of a tattoo from a player.
      */
     private static int takeTattoo(ServerCommandSource source, ServerPlayerEntity target, String tattooId) {
         PlayerTattoos tattoos = target.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
 
-        if (!tattoos.hasTattoo(tattooId)) {
+        TattooInstance removed = tattoos.removeFirstTattoo(tattooId);
+        if (removed == null) {
             source.sendError(Text.literal(target.getName().getString() + " doesn't have " + tattooId));
             return 0;
         }
 
-        tattoos.removeTattoo(tattooId);
         ModNetworking.syncTattoosToClient(target);
 
         source.sendFeedback(() -> Text.literal("Removed " + tattooId + " from " + target.getName().getString()), true);

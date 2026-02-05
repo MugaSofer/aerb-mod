@@ -107,9 +107,9 @@ public class FallRuneHandler {
     }
 
     private static void activateFallRune(ServerPlayerEntity player, PlayerTattoos tattoos) {
-        // Consume a charge
-        boolean consumed = tattoos.useCharge(PlayerTattoos.FALL_RUNE);
-        if (!consumed) {
+        // Remove one Fall Rune instance (consumes the tattoo)
+        TattooInstance removed = tattoos.removeFirstTattoo(PlayerTattoos.FALL_RUNE);
+        if (removed == null) {
             return; // Shouldn't happen if hasTattoo returned true
         }
 

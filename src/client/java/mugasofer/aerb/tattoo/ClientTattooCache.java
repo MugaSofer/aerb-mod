@@ -3,8 +3,9 @@ package mugasofer.aerb.tattoo;
 import mugasofer.aerb.render.TattooTextureManager;
 import net.minecraft.client.MinecraftClient;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -12,15 +13,15 @@ import java.util.Set;
  * Updated via network sync from server.
  */
 public class ClientTattooCache {
-    private static final Map<String, TattooState> tattoos = new HashMap<>();
+    private static final List<TattooInstance> tattoos = new ArrayList<>();
 
     /**
      * Update the cache with data from server.
      * Also invalidates the texture cache to regenerate tattooed skin.
      */
-    public static void update(Map<String, TattooState> newTattoos) {
+    public static void update(List<TattooInstance> newTattoos) {
         tattoos.clear();
-        tattoos.putAll(newTattoos);
+        tattoos.addAll(newTattoos);
 
         // Invalidate texture cache for the local player so their tattooed skin regenerates
         MinecraftClient client = MinecraftClient.getInstance();
@@ -30,51 +31,37 @@ public class ClientTattooCache {
     }
 
     /**
-     * Check if the player has a specific tattoo.
+     * Check if the player has at least one instance of a specific tattoo.
      */
     public static boolean hasTattoo(String tattooId) {
-        TattooState state = tattoos.get(tattooId);
-        return state != null && state.hasCharges();
+        return tattoos.stream().anyMatch(t -> t.tattooId().equals(tattooId));
     }
 
     /**
-     * Get the state of a tattoo, or null if not present.
+     * Get all instances of a specific tattoo type.
      */
-    public static TattooState getTattoo(String tattooId) {
-        return tattoos.get(tattooId);
+    public static List<TattooInstance> getTattooInstances(String tattooId) {
+        return tattoos.stream()
+                .filter(t -> t.tattooId().equals(tattooId))
+                .toList();
     }
 
     /**
-     * Get all active tattoo IDs.
+     * Get all unique tattoo IDs.
      */
     public static Set<String> getActiveTattooIds() {
-        Set<String> active = new java.util.HashSet<>();
-        for (Map.Entry<String, TattooState> entry : tattoos.entrySet()) {
-            if (entry.getValue().hasCharges()) {
-                active.add(entry.getKey());
-            }
+        Set<String> ids = new HashSet<>();
+        for (TattooInstance t : tattoos) {
+            ids.add(t.tattooId());
         }
-        return active;
+        return ids;
     }
 
     /**
-     * Get all tattoos (including depleted ones).
+     * Get all tattoo instances.
      */
-    public static Map<String, TattooState> getAllTattoos() {
-        return new HashMap<>(tattoos);
-    }
-
-    /**
-     * Get all active tattoos with their states.
-     */
-    public static Map<String, TattooState> getActiveTattoos() {
-        Map<String, TattooState> active = new HashMap<>();
-        for (Map.Entry<String, TattooState> entry : tattoos.entrySet()) {
-            if (entry.getValue().hasCharges()) {
-                active.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return active;
+    public static List<TattooInstance> getAllTattoos() {
+        return new ArrayList<>(tattoos);
     }
 
     /**

@@ -7,7 +7,7 @@ import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
 import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.PlayerTattoos;
-import mugasofer.aerb.tattoo.TattooState;
+import mugasofer.aerb.tattoo.TattooInstance;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -20,8 +20,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ModNetworking {
     // Packet IDs
@@ -111,27 +111,25 @@ public class ModNetworking {
     }
 
     // Payload for syncing tattoos from server to client
-    public record SyncTattoosPayload(Map<String, TattooState> tattoos) implements CustomPayload {
+    public record SyncTattoosPayload(List<TattooInstance> tattoos) implements CustomPayload {
         public static final Id<SyncTattoosPayload> ID = new Id<>(SYNC_TATTOOS_ID);
         public static final PacketCodec<RegistryByteBuf, SyncTattoosPayload> CODEC = PacketCodec.of(
             (value, buf) -> {
                 buf.writeInt(value.tattoos.size());
-                for (Map.Entry<String, TattooState> entry : value.tattoos.entrySet()) {
-                    buf.writeString(entry.getKey());
-                    buf.writeInt(entry.getValue().charges());
-                    buf.writeLong(entry.getValue().cooldownUntil());
-                    buf.writeString(entry.getValue().position().name());
+                for (TattooInstance instance : value.tattoos) {
+                    buf.writeString(instance.tattooId());
+                    buf.writeString(instance.position().name());
+                    buf.writeLong(instance.cooldownUntil());
                 }
             },
             buf -> {
                 int count = buf.readInt();
-                Map<String, TattooState> tattoos = new HashMap<>();
+                List<TattooInstance> tattoos = new ArrayList<>();
                 for (int i = 0; i < count; i++) {
                     String id = buf.readString();
-                    int charges = buf.readInt();
-                    long cooldown = buf.readLong();
                     BodyPosition position = BodyPosition.valueOf(buf.readString());
-                    tattoos.put(id, new TattooState(charges, cooldown, position));
+                    long cooldown = buf.readLong();
+                    tattoos.add(new TattooInstance(id, position, cooldown));
                 }
                 return new SyncTattoosPayload(tattoos);
             }

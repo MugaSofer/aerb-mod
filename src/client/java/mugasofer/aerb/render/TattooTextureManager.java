@@ -4,7 +4,7 @@ import mugasofer.aerb.Aerb;
 import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.ClientTattooCache;
 import mugasofer.aerb.tattoo.PlayerTattoos;
-import mugasofer.aerb.tattoo.TattooState;
+import mugasofer.aerb.tattoo.TattooInstance;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -78,9 +79,9 @@ public class TattooTextureManager {
             return original;
         }
 
-        // Get active tattoos with their states from client cache
-        Map<String, TattooState> activeTattoos = ClientTattooCache.getActiveTattoos();
-        if (activeTattoos.isEmpty()) {
+        // Get all tattoo instances from client cache
+        List<TattooInstance> tattoos = ClientTattooCache.getAllTattoos();
+        if (tattoos.isEmpty()) {
             // No tattoos - return original and clear any cached version
             skinCache.remove(playerId);
             return original;
@@ -88,7 +89,7 @@ public class TattooTextureManager {
 
         // Create a cache key that includes the tattoos and their positions
         // This ensures we regenerate when tattoos change or move
-        int tattoosHash = computeTattoosHash(activeTattoos);
+        int tattoosHash = computeTattoosHash(tattoos);
 
         // Check cache - use body().texturePath() to get the skin texture identifier
         CachedTattooSkin cached = skinCache.get(playerId);
@@ -100,7 +101,7 @@ public class TattooTextureManager {
 
         // Need to create/update the modified texture
         try {
-            SkinTextures modified = createModifiedSkinTextures(entry, original, activeTattoos);
+            SkinTextures modified = createModifiedSkinTextures(entry, original, tattoos);
             if (modified != null) {
                 skinCache.put(playerId, new CachedTattooSkin(originalBodyTexture, modified, tattoosHash));
                 return modified;
@@ -113,13 +114,13 @@ public class TattooTextureManager {
     }
 
     /**
-     * Compute a hash that includes tattoo IDs and their positions.
+     * Compute a hash that includes all tattoo instances and their positions.
      */
-    private static int computeTattoosHash(Map<String, TattooState> tattoos) {
+    private static int computeTattoosHash(List<TattooInstance> tattoos) {
         int hash = 0;
-        for (Map.Entry<String, TattooState> entry : tattoos.entrySet()) {
-            hash = 31 * hash + entry.getKey().hashCode();
-            hash = 31 * hash + entry.getValue().position().hashCode();
+        for (TattooInstance instance : tattoos) {
+            hash = 31 * hash + instance.tattooId().hashCode();
+            hash = 31 * hash + instance.position().hashCode();
         }
         return hash;
     }
@@ -127,7 +128,7 @@ public class TattooTextureManager {
     /**
      * Creates a new SkinTextures with tattoos composited onto the skin.
      */
-    private static SkinTextures createModifiedSkinTextures(PlayerListEntry entry, SkinTextures original, Map<String, TattooState> activeTattoos) {
+    private static SkinTextures createModifiedSkinTextures(PlayerListEntry entry, SkinTextures original, List<TattooInstance> tattoos) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getTextureManager() == null) {
             return null;
@@ -158,16 +159,12 @@ public class TattooTextureManager {
             mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
         }
 
-        // Composite all active tattoos onto the skin at their body positions
+        // Composite all tattoos onto the skin at their body positions
         NativeImage compositedSkin = baseSkin;
-        for (Map.Entry<String, TattooState> tattooEntry : activeTattoos.entrySet()) {
-            String tattooId = tattooEntry.getKey();
-            TattooState state = tattooEntry.getValue();
-            BodyPosition position = state.position();
-
-            NativeImage tattooImage = getTattooImage(tattooId);
+        for (TattooInstance instance : tattoos) {
+            NativeImage tattooImage = getTattooImage(instance.tattooId());
             if (tattooImage != null) {
-                NativeImage newComposite = compositeTattooAtPosition(compositedSkin, tattooImage, mask, position);
+                NativeImage newComposite = compositeTattooAtPosition(compositedSkin, tattooImage, mask, instance.position());
                 if (compositedSkin != baseSkin) {
                     compositedSkin.close(); // Close intermediate images
                 }
@@ -190,7 +187,7 @@ public class TattooTextureManager {
         NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> registrationId.toString(), compositedSkin);
         client.getTextureManager().registerTexture(registrationId, texture);
 
-        LOGGER.info("[TATTOO] Created modified skin texture with {} tattoos: {}", activeTattoos.size(), registrationId);
+        LOGGER.info("[TATTOO] Created modified skin texture with {} tattoos: {}", tattoos.size(), registrationId);
 
         // Return new SkinTextures with our modified texture
         // SkinTextures(body, cape, elytra, model, secure)

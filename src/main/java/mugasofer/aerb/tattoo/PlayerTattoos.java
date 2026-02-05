@@ -11,7 +11,7 @@ import java.util.*;
 
 /**
  * Stores all tattoos a player has.
- * Tattoos are identified by their Identifier (e.g., "aerb:fall_rune").
+ * Players can have multiple instances of the same tattoo type at different positions.
  */
 public class PlayerTattoos {
 
@@ -21,7 +21,7 @@ public class PlayerTattoos {
 
     public static final Codec<PlayerTattoos> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
-                    Codec.unboundedMap(Codec.STRING, TattooState.CODEC)
+                    Codec.list(TattooInstance.CODEC)
                             .fieldOf("tattoos")
                             .forGetter(pt -> pt.tattoos)
             ).apply(instance, PlayerTattoos::new)
@@ -32,120 +32,138 @@ public class PlayerTattoos {
             .initializer(PlayerTattoos::new)
             .buildAndRegister(Identifier.of(Aerb.MOD_ID, "player_tattoos"));
 
-    private final Map<String, TattooState> tattoos;
+    private final List<TattooInstance> tattoos;
 
     public PlayerTattoos() {
-        this.tattoos = new HashMap<>();
+        this.tattoos = new ArrayList<>();
     }
 
     // Constructor for deserialization
-    private PlayerTattoos(Map<String, TattooState> tattoos) {
-        this.tattoos = new HashMap<>(tattoos);
+    private PlayerTattoos(List<TattooInstance> tattoos) {
+        this.tattoos = new ArrayList<>(tattoos);
     }
 
     /**
-     * Check if the player has a specific tattoo (with charges remaining).
+     * Check if the player has at least one instance of a specific tattoo.
      */
     public boolean hasTattoo(String tattooId) {
-        TattooState state = tattoos.get(tattooId);
-        return state != null && state.hasCharges();
+        return tattoos.stream().anyMatch(t -> t.tattooId().equals(tattooId));
     }
 
     /**
-     * Get the state of a tattoo, or null if not present.
+     * Get all instances of a specific tattoo type.
      */
-    public TattooState getTattoo(String tattooId) {
-        return tattoos.get(tattooId);
+    public List<TattooInstance> getTattooInstances(String tattooId) {
+        return tattoos.stream()
+                .filter(t -> t.tattooId().equals(tattooId))
+                .toList();
     }
 
     /**
-     * Add a tattoo to the player.
-     * If they already have it, adds charges (for single/multi-use tattoos).
+     * Get the first usable instance of a tattoo (not on cooldown).
+     * Returns null if none available.
      */
-    public void addTattoo(String tattooId, TattooState state) {
-        TattooState existing = tattoos.get(tattooId);
-        if (existing != null && state.charges() != TattooState.UNLIMITED) {
-            // Stack charges if not unlimited
-            int newCharges = existing.charges() == TattooState.UNLIMITED
-                    ? TattooState.UNLIMITED
-                    : existing.charges() + state.charges();
-            tattoos.put(tattooId, new TattooState(newCharges, existing.cooldownUntil(), existing.position()));
-        } else {
-            tattoos.put(tattooId, state);
+    public TattooInstance getUsableTattoo(String tattooId, long currentTime) {
+        return tattoos.stream()
+                .filter(t -> t.tattooId().equals(tattooId) && t.canUse(currentTime))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Add a tattoo instance.
+     */
+    public void addTattoo(TattooInstance instance) {
+        tattoos.add(instance);
+    }
+
+    /**
+     * Add a tattoo at a specific position.
+     */
+    public void addTattoo(String tattooId, BodyPosition position) {
+        tattoos.add(TattooInstance.create(tattooId, position));
+    }
+
+    /**
+     * Remove a specific tattoo instance.
+     * Returns true if it was found and removed.
+     */
+    public boolean removeTattoo(TattooInstance instance) {
+        return tattoos.remove(instance);
+    }
+
+    /**
+     * Remove the first instance of a tattoo type.
+     * Returns the removed instance, or null if none found.
+     */
+    public TattooInstance removeFirstTattoo(String tattooId) {
+        for (int i = 0; i < tattoos.size(); i++) {
+            if (tattoos.get(i).tattooId().equals(tattooId)) {
+                return tattoos.remove(i);
+            }
         }
+        return null;
     }
 
     /**
-     * Add a single-use tattoo.
+     * Remove all instances of a tattoo type.
+     * Returns the number removed.
      */
-    public void addSingleUseTattoo(String tattooId) {
-        addTattoo(tattooId, TattooState.singleUse());
-    }
-
-    /**
-     * Remove a tattoo completely.
-     */
-    public void removeTattoo(String tattooId) {
-        tattoos.remove(tattooId);
-    }
-
-    /**
-     * Use a charge of a tattoo. Returns true if successful.
-     * Removes the tattoo if it runs out of charges.
-     */
-    public boolean useCharge(String tattooId) {
-        TattooState state = tattoos.get(tattooId);
-        if (state == null || !state.hasCharges()) {
-            return false;
+    public int removeAllTattoos(String tattooId) {
+        int removed = 0;
+        Iterator<TattooInstance> iter = tattoos.iterator();
+        while (iter.hasNext()) {
+            if (iter.next().tattooId().equals(tattooId)) {
+                iter.remove();
+                removed++;
+            }
         }
-
-        TattooState newState = state.useCharge();
-        if (newState.charges() == TattooState.DEPLETED) {
-            tattoos.remove(tattooId);
-        } else {
-            tattoos.put(tattooId, newState);
-        }
-        return true;
+        return removed;
     }
 
     /**
-     * Set cooldown on a tattoo.
+     * Set cooldown on a specific tattoo instance.
      */
-    public void setCooldown(String tattooId, long until) {
-        TattooState state = tattoos.get(tattooId);
-        if (state != null) {
-            tattoos.put(tattooId, state.withCooldown(until));
+    public void setCooldown(TattooInstance instance, long until) {
+        int index = tattoos.indexOf(instance);
+        if (index >= 0) {
+            tattoos.set(index, instance.withCooldown(until));
         }
     }
 
     /**
      * Move a tattoo to a new body position.
      */
-    public void moveTattoo(String tattooId, BodyPosition newPosition) {
-        TattooState state = tattoos.get(tattooId);
-        if (state != null) {
-            tattoos.put(tattooId, state.movedTo(newPosition));
+    public void moveTattoo(TattooInstance instance, BodyPosition newPosition) {
+        int index = tattoos.indexOf(instance);
+        if (index >= 0) {
+            tattoos.set(index, instance.movedTo(newPosition));
         }
     }
 
     /**
-     * Get all tattoos as a map (for syncing/display).
+     * Get all tattoo instances.
      */
-    public Map<String, TattooState> getAllTattoos() {
-        return new HashMap<>(tattoos);
+    public List<TattooInstance> getAllTattoos() {
+        return new ArrayList<>(tattoos);
     }
 
     /**
-     * Get set of all tattoo IDs the player has (with charges).
+     * Get the count of a specific tattoo type.
      */
-    public Set<String> getActiveTattooIds() {
-        Set<String> active = new HashSet<>();
-        for (Map.Entry<String, TattooState> entry : tattoos.entrySet()) {
-            if (entry.getValue().hasCharges()) {
-                active.add(entry.getKey());
-            }
+    public int countTattoos(String tattooId) {
+        return (int) tattoos.stream().filter(t -> t.tattooId().equals(tattooId)).count();
+    }
+
+    /**
+     * Get all unique tattoo IDs the player has.
+     */
+    public Set<String> getTattooIds() {
+        Set<String> ids = new HashSet<>();
+        for (TattooInstance t : tattoos) {
+            ids.add(t.tattooId());
         }
-        return active;
+        return ids;
     }
 
     /**
@@ -154,7 +172,7 @@ public class PlayerTattoos {
      */
     public void copyFrom(PlayerTattoos other) {
         this.tattoos.clear();
-        this.tattoos.putAll(other.tattoos);
+        this.tattoos.addAll(other.tattoos);
     }
 
     /**
