@@ -10,6 +10,7 @@ import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.screen.SpellSlotsScreen;
 import mugasofer.aerb.screen.VirtuesScreen;
 import mugasofer.aerb.skill.ClientSkillCache;
+import mugasofer.aerb.tattoo.ClientTattooCache;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -99,6 +100,11 @@ public class AerbClient implements ClientModInitializer {
 					player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
 				}
 			}
+		});
+
+		// Register client-side handler for tattoo sync
+		ClientPlayNetworking.registerGlobalReceiver(ModNetworking.SyncTattoosPayload.ID, (payload, context) -> {
+			ClientTattooCache.update(payload.tattoos());
 		});
 
 		// Add navigation tabs to inventory screen (left side to match other screens)

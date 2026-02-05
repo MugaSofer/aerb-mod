@@ -5,6 +5,9 @@ import mugasofer.aerb.screen.SpellSlotsScreenHandler;
 import mugasofer.aerb.screen.VirtuesScreenHandler;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.tattoo.BodyPosition;
+import mugasofer.aerb.tattoo.PlayerTattoos;
+import mugasofer.aerb.tattoo.TattooState;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -26,6 +29,7 @@ public class ModNetworking {
     public static final Identifier OPEN_VIRTUE_INVENTORY_ID = Identifier.of(Aerb.MOD_ID, "open_virtue_inventory");
     public static final Identifier SYNC_SKILLS_ID = Identifier.of(Aerb.MOD_ID, "sync_skills");
     public static final Identifier SET_SELECTED_SLOT_ID = Identifier.of(Aerb.MOD_ID, "set_selected_slot");
+    public static final Identifier SYNC_TATTOOS_ID = Identifier.of(Aerb.MOD_ID, "sync_tattoos");
 
     // Custom payload for opening spell inventory (empty payload, just a signal)
     public record OpenSpellInventoryPayload() implements CustomPayload {
@@ -106,6 +110,39 @@ public class ModNetworking {
         }
     }
 
+    // Payload for syncing tattoos from server to client
+    public record SyncTattoosPayload(Map<String, TattooState> tattoos) implements CustomPayload {
+        public static final Id<SyncTattoosPayload> ID = new Id<>(SYNC_TATTOOS_ID);
+        public static final PacketCodec<RegistryByteBuf, SyncTattoosPayload> CODEC = PacketCodec.of(
+            (value, buf) -> {
+                buf.writeInt(value.tattoos.size());
+                for (Map.Entry<String, TattooState> entry : value.tattoos.entrySet()) {
+                    buf.writeString(entry.getKey());
+                    buf.writeInt(entry.getValue().charges());
+                    buf.writeLong(entry.getValue().cooldownUntil());
+                    buf.writeString(entry.getValue().position().name());
+                }
+            },
+            buf -> {
+                int count = buf.readInt();
+                Map<String, TattooState> tattoos = new HashMap<>();
+                for (int i = 0; i < count; i++) {
+                    String id = buf.readString();
+                    int charges = buf.readInt();
+                    long cooldown = buf.readLong();
+                    BodyPosition position = BodyPosition.valueOf(buf.readString());
+                    tattoos.put(id, new TattooState(charges, cooldown, position));
+                }
+                return new SyncTattoosPayload(tattoos);
+            }
+        );
+
+        @Override
+        public Id<? extends CustomPayload> getId() {
+            return ID;
+        }
+    }
+
     /**
      * Tell the client to change their selected hotbar slot.
      */
@@ -144,12 +181,22 @@ public class ModNetworking {
         ServerPlayNetworking.send(player, payload);
     }
 
+    /**
+     * Send tattoo data to a player's client.
+     */
+    public static void syncTattoosToClient(ServerPlayerEntity player) {
+        PlayerTattoos tattoos = player.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+        SyncTattoosPayload payload = new SyncTattoosPayload(tattoos.getAllTattoos());
+        ServerPlayNetworking.send(player, payload);
+    }
+
     public static void init() {
         // Register payload types
         PayloadTypeRegistry.playC2S().register(OpenSpellInventoryPayload.ID, OpenSpellInventoryPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(OpenVirtueInventoryPayload.ID, OpenVirtueInventoryPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncSkillsPayload.ID, SyncSkillsPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SetSelectedSlotPayload.ID, SetSelectedSlotPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(SyncTattoosPayload.ID, SyncTattoosPayload.CODEC);
 
         // Register server-side handler for spell inventory
         ServerPlayNetworking.registerGlobalReceiver(OpenSpellInventoryPayload.ID, (payload, context) -> {

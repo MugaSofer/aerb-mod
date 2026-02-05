@@ -10,6 +10,8 @@ import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.tattoo.PlayerTattoos;
+import mugasofer.aerb.tattoo.TattooState;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.server.world.ServerWorld;
@@ -32,6 +34,11 @@ public class ModCommands {
     private static final Map<String, Item> SPELLS = new HashMap<>();
     // Map of virtue names to items for commands
     private static final Map<String, Item> VIRTUES = new HashMap<>();
+    // Known tattoo IDs for commands
+    private static final java.util.List<String> TATTOOS = java.util.List.of(
+        PlayerTattoos.FALL_RUNE,
+        PlayerTattoos.ICY_DEVIL
+    );
 
     static {
         SPELLS.put("aardes_touch", ModItems.AARDES_TOUCH);
@@ -284,6 +291,90 @@ public class ModCommands {
                         int corpses = IntegerArgumentType.getInteger(context, "corpses");
                         return spawnLesserUmbral(context.getSource(), corpses);
                     })
+                )
+            );
+
+            // /givetattoo <tattoo> [charges] - give yourself a tattoo (default 1 charge)
+            // /givetattoo <player> <tattoo> [charges] - give a player a tattoo
+            dispatcher.register(CommandManager.literal("givetattoo")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
+                // Self version: /givetattoo <tattoo> [charges]
+                .then(CommandManager.argument("tattoo", StringArgumentType.word())
+                    .suggests((context, builder) -> {
+                        TATTOOS.forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        ServerPlayerEntity player = source.getPlayerOrThrow();
+                        String tattoo = StringArgumentType.getString(context, "tattoo");
+                        return giveTattoo(source, player, tattoo, 1);
+                    })
+                    .then(CommandManager.argument("charges", IntegerArgumentType.integer(-1, 100))
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity player = source.getPlayerOrThrow();
+                            String tattoo = StringArgumentType.getString(context, "tattoo");
+                            int charges = IntegerArgumentType.getInteger(context, "charges");
+                            return giveTattoo(source, player, tattoo, charges);
+                        })
+                    )
+                )
+                // Target version: /givetattoo <player> <tattoo> [charges]
+                .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(CommandManager.argument("tattoo2", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            TATTOOS.forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                            String tattoo = StringArgumentType.getString(context, "tattoo2");
+                            return giveTattoo(source, target, tattoo, 1);
+                        })
+                        .then(CommandManager.argument("charges2", IntegerArgumentType.integer(-1, 100))
+                            .executes(context -> {
+                                ServerCommandSource source = context.getSource();
+                                ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                                String tattoo = StringArgumentType.getString(context, "tattoo2");
+                                int charges = IntegerArgumentType.getInteger(context, "charges2");
+                                return giveTattoo(source, target, tattoo, charges);
+                            })
+                        )
+                    )
+                )
+            );
+
+            // /taketattoo <tattoo> - remove a tattoo from yourself
+            // /taketattoo <player> <tattoo> - remove a tattoo from a player
+            dispatcher.register(CommandManager.literal("taketattoo")
+                .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
+                .then(CommandManager.argument("tattoo", StringArgumentType.word())
+                    .suggests((context, builder) -> {
+                        TATTOOS.forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        ServerPlayerEntity player = source.getPlayerOrThrow();
+                        String tattoo = StringArgumentType.getString(context, "tattoo");
+                        return takeTattoo(source, player, tattoo);
+                    })
+                )
+                .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(CommandManager.argument("tattoo2", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            TATTOOS.forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                            String tattoo = StringArgumentType.getString(context, "tattoo2");
+                            return takeTattoo(source, target, tattoo);
+                        })
+                    )
                 )
             );
         });
@@ -674,5 +765,52 @@ public class ModCommands {
 
         source.sendError(Text.literal(target.getName().getString() + " doesn't have " + virtueName));
         return 0;
+    }
+
+    /**
+     * Give a tattoo to a player.
+     * @param charges -1 for unlimited, 0+ for specific charges
+     */
+    private static int giveTattoo(ServerCommandSource source, ServerPlayerEntity target, String tattooId, int charges) {
+        if (!TATTOOS.contains(tattooId)) {
+            source.sendError(Text.literal("Unknown tattoo: " + tattooId));
+            return 0;
+        }
+
+        PlayerTattoos tattoos = target.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+
+        TattooState state;
+        if (charges == -1) {
+            state = TattooState.unlimited();
+        } else if (charges == 1) {
+            state = TattooState.singleUse();
+        } else {
+            state = TattooState.withCharges(charges);
+        }
+
+        tattoos.addTattoo(tattooId, state);
+        ModNetworking.syncTattoosToClient(target);
+
+        String chargeStr = charges == -1 ? "unlimited" : String.valueOf(charges);
+        source.sendFeedback(() -> Text.literal("Gave " + tattooId + " (" + chargeStr + " charges) to " + target.getName().getString()), true);
+        return 1;
+    }
+
+    /**
+     * Remove a tattoo from a player.
+     */
+    private static int takeTattoo(ServerCommandSource source, ServerPlayerEntity target, String tattooId) {
+        PlayerTattoos tattoos = target.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+
+        if (!tattoos.hasTattoo(tattooId)) {
+            source.sendError(Text.literal(target.getName().getString() + " doesn't have " + tattooId));
+            return 0;
+        }
+
+        tattoos.removeTattoo(tattooId);
+        ModNetworking.syncTattoosToClient(target);
+
+        source.sendFeedback(() -> Text.literal("Removed " + tattooId + " from " + target.getName().getString()), true);
+        return 1;
     }
 }

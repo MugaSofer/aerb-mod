@@ -196,6 +196,11 @@ Spells and virtues cannot be dropped - they automatically return to you.
 
 Tattoos appear directly on your character's skin. They only show on exposed skin areas - not through clothing.
 
+**Tattoos:**
+| Tattoo | Effect |
+|--------|--------|
+| Fall Rune | Single-use. Automatically activates when you're about to hit the ground at dangerous velocity, slowing your fall to a safe speed. |
+
 **Custom Skin Masks:**
 
 If you use a custom Minecraft skin, you'll need to create a matching skin mask so tattoos appear correctly on your character:
@@ -250,6 +255,17 @@ All commands support tab-completion.
 /spawnhorde <number>				- Spawns a horde of undead. Defaults to 25 undead (which should immediately begin trying to form an Umbral Undead.)
 /spawnumbral <corpses>				- Spawns a Lesser Umbral Undead. Defaults to one composed of 30 corpses; can go as high as 255. (<20 corpses will spawn a weakened but full-sized Umbral Undead.)
 ```
+
+### Tattoo Commands
+```
+/givetattoo <tattoo>                - Give yourself a tattoo (1 charge)
+/givetattoo <tattoo> <charges>      - Give yourself a tattoo with specific charges (-1 for unlimited)
+/givetattoo <player> <tattoo>       - Give a player a tattoo
+/taketattoo <tattoo>                - Remove a tattoo from yourself
+/taketattoo <player> <tattoo>       - Remove a tattoo from a player
+```
+
+**Tattoo names:** `fall_rune`, `icy_devil`
 
 ## Quick Start
 

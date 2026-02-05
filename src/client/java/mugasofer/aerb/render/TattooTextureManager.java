@@ -1,6 +1,8 @@
 package mugasofer.aerb.render;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.tattoo.ClientTattooCache;
+import mugasofer.aerb.tattoo.PlayerTattoos;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
@@ -17,6 +19,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -26,19 +29,22 @@ import java.util.UUID;
 public class TattooTextureManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("TattooTextureManager");
 
-    // Test tattoo texture
-    private static final Identifier TATTOO_TEXTURE = Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_test.png");
+    // Mapping of tattoo ID to texture path
+    private static final Map<String, Identifier> TATTOO_TEXTURES = Map.of(
+        PlayerTattoos.FALL_RUNE, Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_fall_rune.png"),
+        PlayerTattoos.ICY_DEVIL, Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_icy_devil.png")
+    );
 
     // Skin masks - define which areas are exposed skin vs clothed
     private static final Identifier MASK_STEVE = Identifier.of(Aerb.MOD_ID, "textures/entity/skin_mask_steve.png");
     private static final Identifier MASK_ALEX = Identifier.of(Aerb.MOD_ID, "textures/entity/skin_mask_alex.png");
 
     // Cache of modified skin textures per player UUID
+    // Key includes a hash of active tattoo IDs so cache invalidates when tattoos change
     private static final Map<UUID, CachedTattooSkin> skinCache = new HashMap<>();
 
-    // Cached tattoo overlay image (loaded once)
-    private static NativeImage tattooOverlay = null;
-    private static boolean tattooLoadAttempted = false;
+    // Cached tattoo overlay images (loaded on demand)
+    private static final Map<String, NativeImage> tattooImages = new HashMap<>();
 
     // Cached mask images
     private static NativeImage maskSteve = null;
@@ -50,24 +56,39 @@ public class TattooTextureManager {
      * Returns the original if no tattoos or on error.
      */
     public static SkinTextures getModifiedSkinTextures(PlayerListEntry entry, SkinTextures original) {
-        // TODO: Check if player actually has tattoos via data attachment
-        // For now, always apply test tattoo
-
+        MinecraftClient client = MinecraftClient.getInstance();
         UUID playerId = entry.getProfile().id();
+
+        // Only apply tattoos to the local player (we only sync local player's tattoos for now)
+        if (client.player == null || !client.player.getUuid().equals(playerId)) {
+            return original;
+        }
+
+        // Get active tattoos from client cache
+        Set<String> activeTattoos = ClientTattooCache.getActiveTattooIds();
+        if (activeTattoos.isEmpty()) {
+            // No tattoos - return original and clear any cached version
+            skinCache.remove(playerId);
+            return original;
+        }
+
+        // Create a cache key that includes the set of active tattoos
+        // This ensures we regenerate when tattoos change
+        int tattoosHash = activeTattoos.hashCode();
 
         // Check cache - use body().texturePath() to get the skin texture identifier
         CachedTattooSkin cached = skinCache.get(playerId);
         Identifier originalBodyTexture = original.body().texturePath();
-        if (cached != null && cached.originalTexture.equals(originalBodyTexture)) {
+        if (cached != null && cached.originalTexture.equals(originalBodyTexture) && cached.tattoosHash == tattoosHash) {
             // Cache hit - return cached modified textures
             return cached.modifiedTextures;
         }
 
         // Need to create/update the modified texture
         try {
-            SkinTextures modified = createModifiedSkinTextures(entry, original);
+            SkinTextures modified = createModifiedSkinTextures(entry, original, activeTattoos);
             if (modified != null) {
-                skinCache.put(playerId, new CachedTattooSkin(originalBodyTexture, modified));
+                skinCache.put(playerId, new CachedTattooSkin(originalBodyTexture, modified, tattoosHash));
                 return modified;
             }
         } catch (Exception e) {
@@ -80,22 +101,9 @@ public class TattooTextureManager {
     /**
      * Creates a new SkinTextures with tattoos composited onto the skin.
      */
-    private static SkinTextures createModifiedSkinTextures(PlayerListEntry entry, SkinTextures original) {
+    private static SkinTextures createModifiedSkinTextures(PlayerListEntry entry, SkinTextures original, Set<String> activeTattoos) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getTextureManager() == null) {
-            return null;
-        }
-
-        // Load the tattoo overlay if not already loaded
-        if (!tattooLoadAttempted) {
-            tattooLoadAttempted = true;
-            tattooOverlay = loadTattooOverlay();
-            if (tattooOverlay != null) {
-                LOGGER.info("[TATTOO] Loaded tattoo overlay texture");
-            }
-        }
-
-        if (tattooOverlay == null) {
             return null;
         }
 
@@ -119,11 +127,22 @@ public class TattooTextureManager {
         // Select mask based on skin model type (slim = Alex, wide = Steve)
         NativeImage mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
 
-        // Composite the tattoo onto the skin with masking
-        NativeImage compositedSkin = compositeTattoo(baseSkin, tattooOverlay, mask);
-        baseSkin.close(); // Done with the copy
+        // Composite all active tattoos onto the skin
+        NativeImage compositedSkin = baseSkin;
+        for (String tattooId : activeTattoos) {
+            NativeImage tattooImage = getTattooImage(tattooId);
+            if (tattooImage != null) {
+                NativeImage newComposite = compositeTattoo(compositedSkin, tattooImage, mask);
+                if (compositedSkin != baseSkin) {
+                    compositedSkin.close(); // Close intermediate images
+                }
+                compositedSkin = newComposite;
+            }
+        }
 
-        if (compositedSkin == null) {
+        if (compositedSkin == baseSkin) {
+            // No tattoos were actually composited
+            baseSkin.close();
             return null;
         }
 
@@ -136,7 +155,7 @@ public class TattooTextureManager {
         NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> registrationId.toString(), compositedSkin);
         client.getTextureManager().registerTexture(registrationId, texture);
 
-        LOGGER.info("[TATTOO] Created modified skin texture: {}", registrationId);
+        LOGGER.info("[TATTOO] Created modified skin texture with {} tattoos: {}", activeTattoos.size(), registrationId);
 
         // Return new SkinTextures with our modified texture
         // SkinTextures(body, cape, elytra, model, secure)
@@ -150,6 +169,50 @@ public class TattooTextureManager {
                 original.model(),
                 original.secure()
         );
+    }
+
+    /**
+     * Get a tattoo image by ID, loading and caching it if needed.
+     */
+    private static NativeImage getTattooImage(String tattooId) {
+        // Check cache first
+        NativeImage cached = tattooImages.get(tattooId);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Look up the texture path for this tattoo
+        Identifier textureId = TATTOO_TEXTURES.get(tattooId);
+        if (textureId == null) {
+            LOGGER.warn("[TATTOO] No texture defined for tattoo: {}", tattooId);
+            return null;
+        }
+
+        // Load the texture
+        NativeImage image = loadTattooTexture(textureId);
+        if (image != null) {
+            tattooImages.put(tattooId, image);
+            LOGGER.info("[TATTOO] Loaded tattoo texture: {} -> {}", tattooId, textureId);
+        }
+        return image;
+    }
+
+    /**
+     * Load a tattoo texture from resources.
+     */
+    private static NativeImage loadTattooTexture(Identifier textureId) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        try {
+            Optional<Resource> resource = client.getResourceManager().getResource(textureId);
+            if (resource.isPresent()) {
+                try (InputStream stream = resource.get().getInputStream()) {
+                    return NativeImage.read(stream);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("[TATTOO] Error loading tattoo texture {}: {}", textureId, e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -196,24 +259,6 @@ public class TattooTextureManager {
             LOGGER.error("[TATTOO] Error loading texture {}: {}", textureId, e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * Load the tattoo overlay texture.
-     */
-    private static NativeImage loadTattooOverlay() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        try {
-            Optional<Resource> resource = client.getResourceManager().getResource(TATTOO_TEXTURE);
-            if (resource.isPresent()) {
-                try (InputStream stream = resource.get().getInputStream()) {
-                    return NativeImage.read(stream);
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("[TATTOO] Error loading tattoo overlay: {}", e.getMessage());
-        }
-        return null;
     }
 
     /**
@@ -330,7 +375,8 @@ public class TattooTextureManager {
 
     /**
      * Cache entry for a player's tattooed skin.
+     * Includes tattoosHash to invalidate cache when the set of active tattoos changes.
      */
-    private record CachedTattooSkin(Identifier originalTexture, SkinTextures modifiedTextures) {
+    private record CachedTattooSkin(Identifier originalTexture, SkinTextures modifiedTextures, int tattoosHash) {
     }
 }

@@ -15,6 +15,8 @@ import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.screen.ModScreenHandlers;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
+import mugasofer.aerb.tattoo.FallRuneHandler;
+import mugasofer.aerb.tattoo.PlayerTattoos;
 import mugasofer.aerb.virtue.VirtueEffects;
 import mugasofer.aerb.virtue.VirtueInventory;
 import net.fabricmc.api.ModInitializer;
@@ -63,14 +65,17 @@ public class Aerb implements ModInitializer {
 		VirtueInventory.init();
 		VirtueEffects.init();
 		PlayerSkills.init();
+		PlayerTattoos.init();
+		FallRuneHandler.init();
 		ModScreenHandlers.init();
 		ModNetworking.init();
 		ModCommands.init();
 
-		// Sync skills to client when player joins
+		// Sync skills and tattoos to client when player joins
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.getPlayer();
 			ModNetworking.syncSkillsToClient(player);
+			ModNetworking.syncTattoosToClient(player);
 		});
 
 		// Preserve spell/virtue inventories and skills on death/respawn
@@ -93,6 +98,11 @@ public class Aerb implements ModInitializer {
 			PlayerSkills oldSkills = oldPlayer.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
 			PlayerSkills newSkills = newPlayer.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
 			newSkills.copyFrom(oldSkills);
+
+			// Copy tattoos
+			PlayerTattoos oldTattoos = oldPlayer.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+			PlayerTattoos newTattoos = newPlayer.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+			newTattoos.copyFrom(oldTattoos);
 
 			// Also preserve any spells/virtues that were in hotbar/offhand
 			for (int i = 0; i < 9; i++) {
