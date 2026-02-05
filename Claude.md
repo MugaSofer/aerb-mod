@@ -47,6 +47,33 @@ The item definition format (in `items/` folder):
 - Mixin for Entity.dropStack shows remap warning (doesn't affect functionality)
 - Drop prevention uses ENTITY_LOAD event instead (works but brief visual flash)
 
+## Tattoo System (WIP - on `tattoo-texture-compositing` branch)
+
+Tattoos are composited directly onto player skin textures via mixin on `PlayerListEntry.getSkinTextures()`.
+
+### Key Files
+- `render/TattooTextureManager.java` - composites tattoos onto skins, caches results
+- `mixin/client/AbstractClientPlayerEntityMixin.java` - intercepts skin texture lookup
+- `textures/entity/tattoo_test.png` - test tattoo overlay (64x64, same UV as skin)
+- `textures/entity/skin_mask_*.png` - masks defining exposed skin areas
+
+### Skin Masks
+Masks determine where tattoos can appear (exposed skin vs clothing):
+- **Format**: 64x64 grayscale PNG, same UV layout as Minecraft skins
+- **White (255)** = exposed skin, tattoos show here
+- **Black (0)** = clothed/covered, tattoos hidden
+- **Location**: `assets/aerb/textures/entity/skin_mask_<name>.png`
+
+Default masks provided for Steve (wide) and Alex (slim). Custom skins need custom masks - create a mask matching your skin's clothing pattern, name it `skin_mask_<something>.png`.
+
+### UV Layout Reference (64x64 skin)
+- **Head**: front x=8-16 y=8-16, sides x=0-8 and x=16-24 y=8-16
+- **Body**: front x=20-28 y=20-32, back x=32-40 y=20-32
+- **Right Arm**: x=40-56 y=16-32 (wide) or x=40-54 y=16-32 (slim)
+- **Left Arm**: x=32-48 y=48-64 (wide) or x=32-46 y=48-64 (slim)
+- **Right Leg**: x=0-16 y=16-32
+- **Left Leg**: x=16-32 y=48-64
+
 ## Next Steps / Ideas
 - Phase 4: XP system for skill progression
 - Link spell availability to skill levels
