@@ -203,14 +203,14 @@ Tattoos appear directly on your character's skin. They only show on exposed skin
 
 **Custom Skin Masks:**
 
-If you use a custom Minecraft skin, you'll need to create a matching skin mask so tattoos appear correctly on your character:
+If you use a custom Minecraft skin, you can create a matching skin mask so tattoos appear correctly on your character:
 
 1. Create a 64x64 grayscale PNG with the same UV layout as Minecraft skins
 2. Paint **white (255)** on areas that are exposed skin
 3. Paint **black (0)** on areas that are clothed/covered
-4. Save as `skin_mask_<yourname>.png` in `assets/aerb/textures/entity/`
+4. Save as `<YourMinecraftUsername>.png` in `.minecraft/config/aerb/skin_masks/`
 
-Default masks are provided for Steve and Alex. Without a custom mask, tattoos may appear through clothing or be hidden on exposed skin.
+The folder is created automatically on first run. Default masks are provided for Steve and Alex model types. Without a custom mask, tattoos may appear through clothing or be hidden on exposed skin.
 
 ## Known Issues
 

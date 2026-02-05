@@ -3,6 +3,7 @@ package mugasofer.aerb.render;
 import mugasofer.aerb.Aerb;
 import mugasofer.aerb.tattoo.ClientTattooCache;
 import mugasofer.aerb.tattoo.PlayerTattoos;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
@@ -16,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -46,10 +49,19 @@ public class TattooTextureManager {
     // Cached tattoo overlay images (loaded on demand)
     private static final Map<String, NativeImage> tattooImages = new HashMap<>();
 
-    // Cached mask images
+    // Cached mask images (default Steve/Alex)
     private static NativeImage maskSteve = null;
     private static NativeImage maskAlex = null;
-    private static boolean masksLoadAttempted = false;
+    private static boolean defaultMasksLoadAttempted = false;
+
+    // Cached custom masks per player name (loaded from config folder)
+    private static final Map<String, NativeImage> customMasks = new HashMap<>();
+    private static final Set<String> customMaskLoadAttempted = new java.util.HashSet<>();
+
+    // Path to custom skin masks folder
+    private static Path getCustomMasksFolder() {
+        return FabricLoader.getInstance().getConfigDir().resolve("aerb").resolve("skin_masks");
+    }
 
     /**
      * Get modified skin textures with tattoos applied for a player.
@@ -107,12 +119,12 @@ public class TattooTextureManager {
             return null;
         }
 
-        // Load skin masks if not already loaded
-        if (!masksLoadAttempted) {
-            masksLoadAttempted = true;
+        // Load default skin masks if not already loaded
+        if (!defaultMasksLoadAttempted) {
+            defaultMasksLoadAttempted = true;
             maskSteve = loadMask(MASK_STEVE);
             maskAlex = loadMask(MASK_ALEX);
-            LOGGER.info("[TATTOO] Loaded skin masks - Steve: {}, Alex: {}",
+            LOGGER.info("[TATTOO] Loaded default skin masks - Steve: {}, Alex: {}",
                 maskSteve != null, maskAlex != null);
         }
 
@@ -124,8 +136,13 @@ public class TattooTextureManager {
             return null;
         }
 
-        // Select mask based on skin model type (slim = Alex, wide = Steve)
-        NativeImage mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
+        // Try to load custom mask for this player, fall back to Steve/Alex
+        String playerName = entry.getProfile().name();
+        NativeImage mask = getCustomMask(playerName);
+        if (mask == null) {
+            // Fall back to default mask based on skin model type (slim = Alex, wide = Steve)
+            mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
+        }
 
         // Composite all active tattoos onto the skin
         NativeImage compositedSkin = baseSkin;
@@ -262,7 +279,7 @@ public class TattooTextureManager {
     }
 
     /**
-     * Load a skin mask texture.
+     * Load a skin mask texture from resources.
      */
     private static NativeImage loadMask(Identifier maskId) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -276,6 +293,58 @@ public class TattooTextureManager {
         } catch (Exception e) {
             LOGGER.error("[TATTOO] Error loading mask {}: {}", maskId, e.getMessage());
         }
+        return null;
+    }
+
+    /**
+     * Get a custom mask for a player from the config folder.
+     * Looks for: config/aerb/skin_masks/<playername>.png (case-insensitive)
+     * Returns null if no custom mask exists.
+     */
+    private static NativeImage getCustomMask(String playerName) {
+        String lowerName = playerName.toLowerCase();
+
+        // Check cache first
+        if (customMasks.containsKey(lowerName)) {
+            return customMasks.get(lowerName); // May be null if we tried and failed
+        }
+
+        // Only attempt to load once per player name
+        if (customMaskLoadAttempted.contains(lowerName)) {
+            return null;
+        }
+        customMaskLoadAttempted.add(lowerName);
+
+        // Try to load from config folder
+        Path masksFolder = getCustomMasksFolder();
+        if (!Files.exists(masksFolder)) {
+            // Create the folder so users know where to put masks
+            try {
+                Files.createDirectories(masksFolder);
+                LOGGER.info("[TATTOO] Created skin masks folder: {}", masksFolder);
+            } catch (Exception e) {
+                LOGGER.warn("[TATTOO] Could not create skin masks folder: {}", e.getMessage());
+            }
+            return null;
+        }
+
+        // Look for mask file (try exact name first, then lowercase)
+        Path maskPath = masksFolder.resolve(playerName + ".png");
+        if (!Files.exists(maskPath)) {
+            maskPath = masksFolder.resolve(lowerName + ".png");
+        }
+
+        if (Files.exists(maskPath)) {
+            try (InputStream stream = Files.newInputStream(maskPath)) {
+                NativeImage mask = NativeImage.read(stream);
+                customMasks.put(lowerName, mask);
+                LOGGER.info("[TATTOO] Loaded custom mask for {}: {}", playerName, maskPath);
+                return mask;
+            } catch (Exception e) {
+                LOGGER.error("[TATTOO] Error loading custom mask for {}: {}", playerName, e.getMessage());
+            }
+        }
+
         return null;
     }
 
