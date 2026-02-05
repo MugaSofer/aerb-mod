@@ -58,10 +58,23 @@ public class ClientTattooCache {
     }
 
     /**
-     * Get all tattoos.
+     * Get all tattoos (including depleted ones).
      */
     public static Map<String, TattooState> getAllTattoos() {
         return new HashMap<>(tattoos);
+    }
+
+    /**
+     * Get all active tattoos with their states.
+     */
+    public static Map<String, TattooState> getActiveTattoos() {
+        Map<String, TattooState> active = new HashMap<>();
+        for (Map.Entry<String, TattooState> entry : tattoos.entrySet()) {
+            if (entry.getValue().hasCharges()) {
+                active.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return active;
     }
 
     /**

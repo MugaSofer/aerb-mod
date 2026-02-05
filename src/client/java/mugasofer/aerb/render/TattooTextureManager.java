@@ -1,8 +1,10 @@
 package mugasofer.aerb.render;
 
 import mugasofer.aerb.Aerb;
+import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.ClientTattooCache;
 import mugasofer.aerb.tattoo.PlayerTattoos;
+import mugasofer.aerb.tattoo.TattooState;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
@@ -76,17 +78,17 @@ public class TattooTextureManager {
             return original;
         }
 
-        // Get active tattoos from client cache
-        Set<String> activeTattoos = ClientTattooCache.getActiveTattooIds();
+        // Get active tattoos with their states from client cache
+        Map<String, TattooState> activeTattoos = ClientTattooCache.getActiveTattoos();
         if (activeTattoos.isEmpty()) {
             // No tattoos - return original and clear any cached version
             skinCache.remove(playerId);
             return original;
         }
 
-        // Create a cache key that includes the set of active tattoos
-        // This ensures we regenerate when tattoos change
-        int tattoosHash = activeTattoos.hashCode();
+        // Create a cache key that includes the tattoos and their positions
+        // This ensures we regenerate when tattoos change or move
+        int tattoosHash = computeTattoosHash(activeTattoos);
 
         // Check cache - use body().texturePath() to get the skin texture identifier
         CachedTattooSkin cached = skinCache.get(playerId);
@@ -111,9 +113,21 @@ public class TattooTextureManager {
     }
 
     /**
+     * Compute a hash that includes tattoo IDs and their positions.
+     */
+    private static int computeTattoosHash(Map<String, TattooState> tattoos) {
+        int hash = 0;
+        for (Map.Entry<String, TattooState> entry : tattoos.entrySet()) {
+            hash = 31 * hash + entry.getKey().hashCode();
+            hash = 31 * hash + entry.getValue().position().hashCode();
+        }
+        return hash;
+    }
+
+    /**
      * Creates a new SkinTextures with tattoos composited onto the skin.
      */
-    private static SkinTextures createModifiedSkinTextures(PlayerListEntry entry, SkinTextures original, Set<String> activeTattoos) {
+    private static SkinTextures createModifiedSkinTextures(PlayerListEntry entry, SkinTextures original, Map<String, TattooState> activeTattoos) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getTextureManager() == null) {
             return null;
@@ -144,12 +158,16 @@ public class TattooTextureManager {
             mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
         }
 
-        // Composite all active tattoos onto the skin
+        // Composite all active tattoos onto the skin at their body positions
         NativeImage compositedSkin = baseSkin;
-        for (String tattooId : activeTattoos) {
+        for (Map.Entry<String, TattooState> tattooEntry : activeTattoos.entrySet()) {
+            String tattooId = tattooEntry.getKey();
+            TattooState state = tattooEntry.getValue();
+            BodyPosition position = state.position();
+
             NativeImage tattooImage = getTattooImage(tattooId);
             if (tattooImage != null) {
-                NativeImage newComposite = compositeTattoo(compositedSkin, tattooImage, mask);
+                NativeImage newComposite = compositeTattooAtPosition(compositedSkin, tattooImage, mask, position);
                 if (compositedSkin != baseSkin) {
                     compositedSkin.close(); // Close intermediate images
                 }
@@ -349,10 +367,80 @@ public class TattooTextureManager {
     }
 
     /**
+     * Composite a tattoo at a specific body position onto both base and outer layers.
+     * The tattoo image is scaled/placed to fit the target UV region.
+     */
+    private static NativeImage compositeTattooAtPosition(NativeImage baseSkin, NativeImage tattoo, NativeImage mask, BodyPosition position) {
+        int width = baseSkin.getWidth();
+        int height = baseSkin.getHeight();
+
+        // Create output image as copy of base
+        NativeImage result = new NativeImage(width, height, true);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                result.setColorArgb(x, y, baseSkin.getColorArgb(x, y));
+            }
+        }
+
+        // Get UV regions for this body position
+        SkinUVMap.LayeredRegion regions = SkinUVMap.getRegion(position);
+
+        // Apply tattoo to base layer region
+        applyTattooToRegion(result, tattoo, mask, regions.base());
+
+        // Apply tattoo to outer layer region
+        applyTattooToRegion(result, tattoo, mask, regions.outer());
+
+        return result;
+    }
+
+    /**
+     * Apply a tattoo image to a specific UV region on the skin.
+     * Scales the tattoo to fit the region.
+     */
+    private static void applyTattooToRegion(NativeImage skin, NativeImage tattoo, NativeImage mask, SkinUVMap.UVRegion region) {
+        int tattooW = tattoo.getWidth();
+        int tattooH = tattoo.getHeight();
+
+        for (int dy = 0; dy < region.height(); dy++) {
+            for (int dx = 0; dx < region.width(); dx++) {
+                int skinX = region.x() + dx;
+                int skinY = region.y() + dy;
+
+                // Check mask at this skin position
+                if (mask != null && skinX < mask.getWidth() && skinY < mask.getHeight()) {
+                    int maskValue = mask.getColorArgb(skinX, skinY) & 0xFF;
+                    if (maskValue < 128) {
+                        // Masked out - don't apply tattoo here
+                        continue;
+                    }
+                }
+
+                // Sample from tattoo using nearest-neighbor scaling
+                int tattooX = dx * tattooW / region.width();
+                int tattooY = dy * tattooH / region.height();
+
+                if (tattooX < tattooW && tattooY < tattooH) {
+                    int tattooColor = tattoo.getColorArgb(tattooX, tattooY);
+                    int tattooAlpha = (tattooColor >> 24) & 0xFF;
+
+                    if (tattooAlpha > 0) {
+                        int baseColor = skin.getColorArgb(skinX, skinY);
+                        int blended = alphaBlend(baseColor, tattooColor);
+                        skin.setColorArgb(skinX, skinY, blended);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Composite the tattoo overlay onto the base skin, using mask to limit to exposed areas.
      * Returns a new NativeImage with the result.
      * @param mask If non-null, white (255) = show tattoo, black (0) = hide tattoo
+     * @deprecated Use compositeTattooAtPosition for position-based placement
      */
+    @Deprecated
     private static NativeImage compositeTattoo(NativeImage baseSkin, NativeImage tattoo, NativeImage mask) {
         int width = baseSkin.getWidth();
         int height = baseSkin.getHeight();
