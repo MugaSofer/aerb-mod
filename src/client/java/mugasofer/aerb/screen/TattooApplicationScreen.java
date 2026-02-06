@@ -1,5 +1,6 @@
 package mugasofer.aerb.screen;
 
+import mugasofer.aerb.Aerb;
 import mugasofer.aerb.item.TattooDesignItem;
 import mugasofer.aerb.item.TattooInkItem;
 import mugasofer.aerb.network.ModNetworking;
@@ -45,6 +46,9 @@ public class TattooApplicationScreen extends Screen {
     private int selectedRegionIndex = -1;
     private TattooDesignItem selectedDesign = null;
     private int selectedDesignSlot = -1;
+
+    // Hover tracking
+    private int hoveredRegionIndex = -1;
 
     // Available designs from player's inventory
     private final List<DesignEntry> availableDesigns = new ArrayList<>();
@@ -164,6 +168,9 @@ public class TattooApplicationScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Calculate hovered region
+        updateHoveredRegion(mouseX, mouseY);
+
         // Dark overlay background
         context.fill(0, 0, this.width, this.height, 0xC0101010);
 
@@ -181,6 +188,9 @@ public class TattooApplicationScreen extends Screen {
         // Draw region backgrounds with skin texture
         renderRegionBackgrounds(context);
 
+        // Render tattoo preview on hovered region
+        renderTattooPreview(context);
+
         // TODO: Render existing tattoos indicators (disabled for now - they show on the actual skin anyway)
         // renderExistingTattoos(context);
 
@@ -189,6 +199,85 @@ public class TattooApplicationScreen extends Screen {
 
         // Render all widgets
         super.render(context, mouseX, mouseY, delta);
+    }
+
+    private void updateHoveredRegion(int mouseX, int mouseY) {
+        hoveredRegionIndex = -1;
+
+        // Convert to doll area coordinates
+        int localX = mouseX - dollX;
+        int localY = mouseY - dollY;
+
+        // Check if within doll area
+        if (localX >= 0 && localX < DOLL_AREA_WIDTH && localY >= 0 && localY < DOLL_AREA_HEIGHT) {
+            List<PaperDollMapper.VisualRegion> regions = PaperDollMapper.getVisualRegions();
+            for (int i = 0; i < regions.size(); i++) {
+                PaperDollMapper.VisualRegion region = regions.get(i);
+                int rx = region.visualX();
+                int ry = region.visualY();
+                int rw = region.visualWidth();
+                int rh = region.visualHeight();
+
+                if (localX >= rx && localX < rx + rw && localY >= ry && localY < ry + rh) {
+                    hoveredRegionIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void renderTattooPreview(DrawContext context) {
+        // Only show preview if a design is selected and hovering over a region
+        if (selectedDesign == null || hoveredRegionIndex < 0) {
+            return;
+        }
+
+        List<PaperDollMapper.VisualRegion> regions = PaperDollMapper.getVisualRegions();
+        if (hoveredRegionIndex >= regions.size()) {
+            return;
+        }
+
+        PaperDollMapper.VisualRegion region = regions.get(hoveredRegionIndex);
+        PaperDollMapper.BodyFace face = region.face();
+
+        // Get tattoo texture
+        Identifier tattooTexture = Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_" + selectedDesign.getTattooId() + ".png");
+
+        // Calculate tattoo size in pixels (at the region's scale)
+        int tattooGridW = selectedDesign.getGridWidth();
+        int tattooGridH = selectedDesign.getGridHeight();
+
+        // Scale factor: region visual size / face UV size
+        float scaleX = (float) region.visualWidth() / face.uvWidth();
+        float scaleY = (float) region.visualHeight() / face.uvHeight();
+
+        // Tattoo size on screen
+        int tattooW = (int) (tattooGridW * PaperDollMapper.CELL_SIZE * scaleX);
+        int tattooH = (int) (tattooGridH * PaperDollMapper.CELL_SIZE * scaleY);
+
+        // Center the tattoo in the region
+        int rx = dollX + region.visualX();
+        int ry = dollY + region.visualY();
+        int tattooX = rx + (region.visualWidth() - tattooW) / 2;
+        int tattooY = ry + (region.visualHeight() - tattooH) / 2;
+
+        // Tattoo texture size in pixels
+        int texW = tattooGridW * PaperDollMapper.CELL_SIZE;
+        int texH = tattooGridH * PaperDollMapper.CELL_SIZE;
+
+        // Draw tattoo texture preview
+        context.drawTexture(
+            RenderPipelines.GUI_TEXTURED,
+            tattooTexture,
+            tattooX, tattooY,      // Screen position
+            0, 0,                   // UV start
+            tattooW, tattooH,       // Size on screen
+            texW, texH,             // Region size in texture
+            texW, texH              // Full texture dimensions
+        );
+
+        // Draw border around preview
+        drawBorder(context, tattooX, tattooY, tattooW, tattooH, 0xFFAA00AA);
     }
 
     private void renderRegionBackgrounds(DrawContext context) {
@@ -232,8 +321,15 @@ public class TattooApplicationScreen extends Screen {
             // Draw grid overlay
             drawGridOverlay(context, rx, ry, rw, rh, face.gridWidth(), face.gridHeight());
 
-            // Draw border - green if selected, white otherwise
-            int borderColor = (i == selectedRegionIndex) ? 0xFF00FF00 : 0x88FFFFFF;
+            // Draw border - green if selected, yellow if hovered, white otherwise
+            int borderColor;
+            if (i == selectedRegionIndex) {
+                borderColor = 0xFF00FF00;  // Green for selected
+            } else if (i == hoveredRegionIndex && selectedDesign != null) {
+                borderColor = 0xFFFFFF00;  // Yellow for hovered (when design selected)
+            } else {
+                borderColor = 0x88FFFFFF;  // White for normal
+            }
             drawBorder(context, rx, ry, rw, rh, borderColor);
         }
     }
