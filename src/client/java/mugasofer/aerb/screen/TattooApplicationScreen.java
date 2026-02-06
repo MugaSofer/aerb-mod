@@ -18,32 +18,26 @@ import java.util.*;
 
 /**
  * Paper doll UI for applying tattoos.
- * Shows a body diagram with clickable regions that map to grid coordinates.
+ * Shows a body diagram with clickable regions that map to grid coordinates
+ * using the PaperDollMapper for proper UV coordinate translation.
  *
- * NOTE: This is a temporary implementation for Phase 1.
- * Phase 4 will replace this with a full grid-based paper doll UI
- * that shows the player's skin texture and supports drag & drop.
+ * NOTE: This is an intermediate implementation for Phase 3.
+ * Phase 4 will add drag-and-drop and show the actual player skin texture.
  */
 public class TattooApplicationScreen extends Screen {
-    private static final int PANEL_WIDTH = 220;
-    private static final int PANEL_HEIGHT = 200;
+    private static final int PANEL_WIDTH = 240;
+    private static final int PANEL_HEIGHT = 220;
 
-    // Paper doll dimensions (left half of panel)
-    private static final int DOLL_WIDTH = 80;
-    private static final int DOLL_HEIGHT = 150;
+    // Paper doll dimensions (left side of panel)
+    private static final int DOLL_WIDTH = 100;
+    private static final int DOLL_HEIGHT = 170;
 
     private int panelX;
     private int panelY;
+    private int dollX;
+    private int dollY;
 
-    /**
-     * Body region with visual bounds and corresponding grid coordinates.
-     */
-    private record BodyRegion(String name, int[] visualBounds, int gridX, int gridY) {}
-
-    // Clickable body regions with grid coordinate mapping
-    private final List<BodyRegion> bodyRegions = new ArrayList<>();
-
-    // Currently selected region index and design
+    // Currently selected region and design
     private int selectedRegionIndex = -1;
     private TattooDesignItem selectedDesign = null;
     private int selectedDesignSlot = -1;
@@ -55,7 +49,7 @@ public class TattooApplicationScreen extends Screen {
 
     // Buttons
     private ButtonWidget applyButton;
-    private final List<ButtonWidget> bodyButtons = new ArrayList<>();
+    private final List<ButtonWidget> regionButtons = new ArrayList<>();
     private final List<ButtonWidget> designButtons = new ArrayList<>();
 
     // Text widgets
@@ -67,35 +61,6 @@ public class TattooApplicationScreen extends Screen {
 
     public TattooApplicationScreen() {
         super(Text.literal("Tattoo Application"));
-        initBodyRegions();
-    }
-
-    private void initBodyRegions() {
-        // Define clickable rectangles for each body region
-        // Format: name, {x, y, width, height} relative to paper doll top-left, gridX, gridY
-        // Grid coordinates map to approximate UV positions on 16x16 grid
-
-        // Head/Neck (head UV is around 8,8 on 64x64 = grid 2,2)
-        bodyRegions.add(new BodyRegion("Face", new int[]{28, 5, 24, 20}, 2, 2));
-        bodyRegions.add(new BodyRegion("Neck", new int[]{32, 25, 16, 10}, 2, 4));
-
-        // Torso (body UV is around 20,20 on 64x64 = grid 5,5)
-        bodyRegions.add(new BodyRegion("Left Shoulder", new int[]{10, 35, 18, 15}, 4, 5));
-        bodyRegions.add(new BodyRegion("Right Shoulder", new int[]{52, 35, 18, 15}, 7, 5));
-        bodyRegions.add(new BodyRegion("Chest", new int[]{25, 35, 30, 25}, 5, 5));
-        bodyRegions.add(new BodyRegion("Back", new int[]{25, 60, 30, 20}, 8, 5));
-
-        // Arms (arm UV varies)
-        bodyRegions.add(new BodyRegion("Left Upper Arm", new int[]{5, 50, 15, 20}, 11, 5));
-        bodyRegions.add(new BodyRegion("Left Forearm", new int[]{0, 70, 15, 25}, 11, 7));
-        bodyRegions.add(new BodyRegion("Right Upper Arm", new int[]{60, 50, 15, 20}, 9, 5));
-        bodyRegions.add(new BodyRegion("Right Forearm", new int[]{65, 70, 15, 25}, 9, 7));
-
-        // Legs
-        bodyRegions.add(new BodyRegion("Left Thigh", new int[]{22, 85, 16, 30}, 1, 5));
-        bodyRegions.add(new BodyRegion("Left Calf", new int[]{20, 115, 16, 30}, 1, 8));
-        bodyRegions.add(new BodyRegion("Right Thigh", new int[]{42, 85, 16, 30}, 0, 5));
-        bodyRegions.add(new BodyRegion("Right Calf", new int[]{44, 115, 16, 30}, 0, 8));
     }
 
     @Override
@@ -104,30 +69,34 @@ public class TattooApplicationScreen extends Screen {
 
         panelX = (width - PANEL_WIDTH) / 2;
         panelY = (height - PANEL_HEIGHT) / 2;
+        dollX = panelX + 10;
+        dollY = panelY + 30;
 
-        int dollX = panelX + 10;
-        int dollY = panelY + 25;
-
-        // Create invisible buttons for body regions
-        bodyButtons.clear();
-        for (int i = 0; i < bodyRegions.size(); i++) {
+        // Create buttons for visual regions from PaperDollMapper
+        regionButtons.clear();
+        List<PaperDollMapper.VisualRegion> regions = PaperDollMapper.getVisualRegions();
+        for (int i = 0; i < regions.size(); i++) {
             final int index = i;
-            BodyRegion region = bodyRegions.get(i);
-            int[] rect = region.visualBounds();
-            ButtonWidget btn = ButtonWidget.builder(Text.empty(), button -> selectBodyRegion(index))
-                .dimensions(dollX + rect[0], dollY + rect[1], rect[2], rect[3])
+            PaperDollMapper.VisualRegion region = regions.get(i);
+            ButtonWidget btn = ButtonWidget.builder(Text.empty(), button -> selectRegion(index))
+                .dimensions(
+                    dollX + region.visualX(),
+                    dollY + region.visualY(),
+                    region.visualWidth(),
+                    region.visualHeight()
+                )
                 .build();
-            bodyButtons.add(btn);
+            regionButtons.add(btn);
             addDrawableChild(btn);
         }
 
-        // Scan inventory for available designs first
+        // Scan inventory for available designs
         scanForDesigns();
 
         // Create buttons for designs
         designButtons.clear();
-        int infoX = panelX + DOLL_WIDTH + 20;
-        int infoY = panelY + 25 + 35 + 12;
+        int infoX = panelX + DOLL_WIDTH + 25;
+        int infoY = panelY + 30 + 35 + 12;
         for (int i = 0; i < availableDesigns.size() && i < 5; i++) {
             final int index = i;
             ButtonWidget btn = ButtonWidget.builder(Text.empty(), button -> selectDesign(index))
@@ -139,13 +108,13 @@ public class TattooApplicationScreen extends Screen {
 
         // Apply button
         applyButton = ButtonWidget.builder(Text.literal("Apply Tattoo"), button -> applyTattoo())
-            .dimensions(panelX + PANEL_WIDTH - 80, panelY + PANEL_HEIGHT - 25, 70, 20)
+            .dimensions(panelX + PANEL_WIDTH - 85, panelY + PANEL_HEIGHT - 28, 75, 20)
             .build();
         applyButton.active = false;
         addDrawableChild(applyButton);
 
         // Text widgets for labels and values
-        int textY = panelY + 25;
+        int textY = panelY + 30;
 
         positionLabel = new TextWidget(infoX, textY, 100, 12, Text.literal("Position:"), textRenderer);
         addDrawableChild(positionLabel);
@@ -163,7 +132,7 @@ public class TattooApplicationScreen extends Screen {
             addDrawableChild(designTexts[i]);
         }
 
-        inkStatus = new TextWidget(infoX, panelY + PANEL_HEIGHT - 50, 100, 12, Text.literal("Ink: ?"), textRenderer);
+        inkStatus = new TextWidget(infoX, panelY + PANEL_HEIGHT - 55, 100, 12, Text.literal("Ink: ?"), textRenderer);
         addDrawableChild(inkStatus);
     }
 
@@ -182,7 +151,7 @@ public class TattooApplicationScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Dark overlay background (don't call renderBackground - it causes double blur)
+        // Dark overlay background
         context.fill(0, 0, this.width, this.height, 0xC0101010);
 
         // Panel background
@@ -190,33 +159,32 @@ public class TattooApplicationScreen extends Screen {
         drawBorder(context, panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, 0xFF555555);
 
         // Title
-        context.drawCenteredTextWithShadow(textRenderer, title, panelX + PANEL_WIDTH / 2, panelY + 5, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, title, panelX + PANEL_WIDTH / 2, panelY + 8, 0xFFFFFF);
 
-        // Paper doll area
-        int dollX = panelX + 10;
-        int dollY = panelY + 25;
-
-        // Draw paper doll outline (placeholder - just a rectangle for now)
+        // Paper doll area background
         context.fill(dollX, dollY, dollX + DOLL_WIDTH, dollY + DOLL_HEIGHT, 0x44AAAAAA);
         drawBorder(context, dollX, dollY, DOLL_WIDTH, DOLL_HEIGHT, 0xFF777777);
 
         // Get existing tattoos for indicator
         List<TattooInstance> existingTattoos = ClientTattooCache.getAllTattoos();
 
-        // Draw body regions
-        for (int i = 0; i < bodyRegions.size(); i++) {
-            BodyRegion region = bodyRegions.get(i);
-            int[] rect = region.visualBounds();
-            int rx = dollX + rect[0];
-            int ry = dollY + rect[1];
-            int rw = rect[2];
-            int rh = rect[3];
+        // Draw visual regions from PaperDollMapper
+        List<PaperDollMapper.VisualRegion> regions = PaperDollMapper.getVisualRegions();
+        for (int i = 0; i < regions.size(); i++) {
+            PaperDollMapper.VisualRegion region = regions.get(i);
+            int rx = dollX + region.visualX();
+            int ry = dollY + region.visualY();
+            int rw = region.visualWidth();
+            int rh = region.visualHeight();
 
-            // Check if this region has an existing tattoo (approximate by grid proximity)
-            boolean hasTattoo = existingTattoos.stream().anyMatch(t ->
-                Math.abs(t.gridX() - region.gridX()) <= 1 &&
-                Math.abs(t.gridY() - region.gridY()) <= 1
-            );
+            // Check if this region has an existing tattoo
+            PaperDollMapper.BodyFace face = region.face();
+            boolean hasTattoo = existingTattoos.stream().anyMatch(t -> {
+                PaperDollMapper.BodyFace tattooFace = PaperDollMapper.getFaceAtGrid(t.gridX(), t.gridY());
+                return tattooFace != null &&
+                    tattooFace.partName().equals(face.partName()) &&
+                    tattooFace.faceName().equals(face.faceName());
+            });
 
             // Highlight selected region (green)
             if (i == selectedRegionIndex) {
@@ -228,10 +196,21 @@ public class TattooApplicationScreen extends Screen {
                 context.fill(rx, ry, rx + rw, ry + rh, 0x44FFFFFF);
             }
             drawBorder(context, rx, ry, rw, rh, 0x88FFFFFF);
+
+            // Draw region name
+            String shortName = getShortName(region.name());
+            int textWidth = textRenderer.getWidth(shortName);
+            if (textWidth < rw - 4) {
+                context.drawTextWithShadow(textRenderer, shortName,
+                    rx + (rw - textWidth) / 2, ry + (rh - 8) / 2, 0xCCCCCC);
+            }
         }
 
         // Update text widgets with current values
-        String posName = selectedRegionIndex >= 0 ? bodyRegions.get(selectedRegionIndex).name() : "None";
+        String posName = "None";
+        if (selectedRegionIndex >= 0 && selectedRegionIndex < regions.size()) {
+            posName = regions.get(selectedRegionIndex).name();
+        }
         positionValue.setMessage(Text.literal(posName));
 
         // Update design texts
@@ -271,17 +250,20 @@ public class TattooApplicationScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
-    /**
-     * Draw a 1-pixel border around a rectangle.
-     */
+    private String getShortName(String name) {
+        return switch(name) {
+            case "Left Arm" -> "L.Arm";
+            case "Right Arm" -> "R.Arm";
+            case "Left Leg" -> "L.Leg";
+            case "Right Leg" -> "R.Leg";
+            default -> name;
+        };
+    }
+
     private void drawBorder(DrawContext context, int x, int y, int w, int h, int color) {
-        // Top
         context.fill(x, y, x + w, y + 1, color);
-        // Bottom
         context.fill(x, y + h - 1, x + w, y + h, color);
-        // Left
         context.fill(x, y, x + 1, y + h, color);
-        // Right
         context.fill(x + w - 1, y, x + w, y + h, color);
     }
 
@@ -293,17 +275,11 @@ public class TattooApplicationScreen extends Screen {
         return tattooId.replace("_", " ");
     }
 
-    /**
-     * Select a body region.
-     */
-    private void selectBodyRegion(int index) {
+    private void selectRegion(int index) {
         selectedRegionIndex = index;
         updateApplyButton();
     }
 
-    /**
-     * Select a design.
-     */
     private void selectDesign(int index) {
         if (index >= 0 && index < availableDesigns.size()) {
             DesignEntry entry = availableDesigns.get(index);
@@ -345,16 +321,44 @@ public class TattooApplicationScreen extends Screen {
     private void applyTattoo() {
         if (selectedDesign == null || selectedRegionIndex < 0) return;
 
-        BodyRegion region = bodyRegions.get(selectedRegionIndex);
+        List<PaperDollMapper.VisualRegion> regions = PaperDollMapper.getVisualRegions();
+        if (selectedRegionIndex >= regions.size()) return;
+
+        PaperDollMapper.VisualRegion region = regions.get(selectedRegionIndex);
+        PaperDollMapper.BodyFace face = region.face();
+
+        // Place tattoo at the center of the selected body face
+        int gridX = face.gridX() + face.gridWidth() / 2;
+        int gridY = face.gridY() + face.gridHeight() / 2;
+
+        // Adjust for tattoo size to center it
+        int[] tattooSize = getTattooSize(selectedDesign.getTattooId());
+        gridX -= tattooSize[0] / 2;
+        gridY -= tattooSize[1] / 2;
+
+        // Clamp to face bounds
+        gridX = Math.max(face.gridX(), Math.min(gridX, face.gridX() + face.gridWidth() - tattooSize[0]));
+        gridY = Math.max(face.gridY(), Math.min(gridY, face.gridY() + face.gridHeight() - tattooSize[1]));
 
         // Send packet to server with grid coordinates
         ClientPlayNetworking.send(new ModNetworking.ApplyTattooPayload(
             selectedDesign.getTattooId(),
-            region.gridX(),
-            region.gridY()
+            gridX,
+            gridY
         ));
 
         // Close screen
         close();
+    }
+
+    private int[] getTattooSize(String tattooId) {
+        // Get size from design item if possible
+        for (DesignEntry entry : availableDesigns) {
+            if (entry.item.getTattooId().equals(tattooId)) {
+                return new int[] { entry.item.getGridWidth(), entry.item.getGridHeight() };
+            }
+        }
+        // Default size
+        return new int[] { 2, 2 };
     }
 }

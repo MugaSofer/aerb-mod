@@ -1,8 +1,7 @@
 package mugasofer.aerb.render;
 
 import mugasofer.aerb.Aerb;
-import mugasofer.aerb.item.ModItems;
-import mugasofer.aerb.item.TattooDesignItem;
+import mugasofer.aerb.screen.PaperDollMapper;
 import mugasofer.aerb.tattoo.ClientTattooCache;
 import mugasofer.aerb.tattoo.PlayerTattoos;
 import mugasofer.aerb.tattoo.TattooInstance;
@@ -395,6 +394,15 @@ public class TattooTextureManager {
         int width = baseSkin.getWidth();
         int height = baseSkin.getHeight();
 
+        // Validate that the position is on a valid body part
+        PaperDollMapper.BodyFace face = PaperDollMapper.getFaceAtGrid(gridX, gridY);
+        if (face == null) {
+            LOGGER.warn("[TATTOO] Grid position ({}, {}) is not on a valid body part", gridX, gridY);
+        } else {
+            LOGGER.debug("[TATTOO] Placing tattoo at ({}, {}) on {} {}",
+                gridX, gridY, face.partName(), face.faceName());
+        }
+
         // Create output image as copy of base
         NativeImage result = new NativeImage(width, height, true);
         for (int y = 0; y < height; y++) {
@@ -403,7 +411,7 @@ public class TattooTextureManager {
             }
         }
 
-        // Get UV region for this grid position
+        // Get UV region for this grid position (direct mapping: grid * 4 = UV pixels)
         SkinUVMap.UVRegion region = SkinUVMap.getRegionForGrid(gridX, gridY, gridWidth, gridHeight);
 
         // Apply tattoo to the region
