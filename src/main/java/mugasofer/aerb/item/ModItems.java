@@ -166,7 +166,9 @@ public class ModItems {
                 .maxCount(1)
                 .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "fall_rune_design"))),
             PlayerTattoos.FALL_RUNE,
-            0  // Requires Skin Magic level 0
+            0,  // Requires Skin Magic level 0
+            2,  // 2 grid cells wide (8 pixels)
+            2   // 2 grid cells tall (8 pixels)
         ));
 
     public static final Item ICY_DEVIL_DESIGN = register("icy_devil_design",
@@ -175,7 +177,9 @@ public class ModItems {
                 .maxCount(1)
                 .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(Aerb.MOD_ID, "icy_devil_design"))),
             PlayerTattoos.ICY_DEVIL,
-            5  // Requires Skin Magic level 5
+            5,  // Requires Skin Magic level 5
+            3,  // 3 grid cells wide (12 pixels)
+            3   // 3 grid cells tall (12 pixels)
         ));
 
     private static Item register(String name, Item item) {

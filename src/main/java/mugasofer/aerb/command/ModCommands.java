@@ -10,7 +10,6 @@ import mugasofer.aerb.item.VirtueItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.spell.SpellInventory;
-import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.PlayerTattoos;
 import mugasofer.aerb.tattoo.TattooInstance;
 import mugasofer.aerb.virtue.VirtueInventory;
@@ -295,11 +294,11 @@ public class ModCommands {
                 )
             );
 
-            // /givetattoo <tattoo> [position] - give yourself a tattoo
-            // /givetattoo <player> <tattoo> [position] - give a player a tattoo
+            // /givetattoo <tattoo> [gridX gridY] - give yourself a tattoo
+            // /givetattoo <player> <tattoo> [gridX gridY] - give a player a tattoo
             dispatcher.register(CommandManager.literal("givetattoo")
                 .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.GAMEMASTERS)))
-                // Self version: /givetattoo <tattoo> [position]
+                // Self version: /givetattoo <tattoo> [gridX gridY]
                 .then(CommandManager.argument("tattoo", StringArgumentType.word())
                     .suggests((context, builder) -> {
                         TATTOOS.forEach(builder::suggest);
@@ -309,26 +308,22 @@ public class ModCommands {
                         ServerCommandSource source = context.getSource();
                         ServerPlayerEntity player = source.getPlayerOrThrow();
                         String tattoo = StringArgumentType.getString(context, "tattoo");
-                        return giveTattoo(source, player, tattoo, BodyPosition.ANY);
+                        return giveTattoo(source, player, tattoo, 5, 5); // Default center position
                     })
-                    .then(CommandManager.argument("position", StringArgumentType.word())
-                        .suggests((context, builder) -> {
-                            for (BodyPosition pos : BodyPosition.values()) {
-                                builder.suggest(pos.name().toLowerCase());
-                            }
-                            return builder.buildFuture();
-                        })
-                        .executes(context -> {
-                            ServerCommandSource source = context.getSource();
-                            ServerPlayerEntity player = source.getPlayerOrThrow();
-                            String tattoo = StringArgumentType.getString(context, "tattoo");
-                            String posStr = StringArgumentType.getString(context, "position");
-                            BodyPosition position = parseBodyPosition(posStr);
-                            return giveTattoo(source, player, tattoo, position);
-                        })
+                    .then(CommandManager.argument("gridX", IntegerArgumentType.integer(0, 15))
+                        .then(CommandManager.argument("gridY", IntegerArgumentType.integer(0, 15))
+                            .executes(context -> {
+                                ServerCommandSource source = context.getSource();
+                                ServerPlayerEntity player = source.getPlayerOrThrow();
+                                String tattoo = StringArgumentType.getString(context, "tattoo");
+                                int gridX = IntegerArgumentType.getInteger(context, "gridX");
+                                int gridY = IntegerArgumentType.getInteger(context, "gridY");
+                                return giveTattoo(source, player, tattoo, gridX, gridY);
+                            })
+                        )
                     )
                 )
-                // Target version: /givetattoo <player> <tattoo> [position]
+                // Target version: /givetattoo <player> <tattoo> [gridX gridY]
                 .then(CommandManager.argument("player", EntityArgumentType.player())
                     .then(CommandManager.argument("tattoo2", StringArgumentType.word())
                         .suggests((context, builder) -> {
@@ -339,23 +334,19 @@ public class ModCommands {
                             ServerCommandSource source = context.getSource();
                             ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
                             String tattoo = StringArgumentType.getString(context, "tattoo2");
-                            return giveTattoo(source, target, tattoo, BodyPosition.ANY);
+                            return giveTattoo(source, target, tattoo, 5, 5); // Default center position
                         })
-                        .then(CommandManager.argument("position2", StringArgumentType.word())
-                            .suggests((context, builder) -> {
-                                for (BodyPosition pos : BodyPosition.values()) {
-                                    builder.suggest(pos.name().toLowerCase());
-                                }
-                                return builder.buildFuture();
-                            })
-                            .executes(context -> {
-                                ServerCommandSource source = context.getSource();
-                                ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
-                                String tattoo = StringArgumentType.getString(context, "tattoo2");
-                                String posStr = StringArgumentType.getString(context, "position2");
-                                BodyPosition position = parseBodyPosition(posStr);
-                                return giveTattoo(source, target, tattoo, position);
-                            })
+                        .then(CommandManager.argument("gridX2", IntegerArgumentType.integer(0, 15))
+                            .then(CommandManager.argument("gridY2", IntegerArgumentType.integer(0, 15))
+                                .executes(context -> {
+                                    ServerCommandSource source = context.getSource();
+                                    ServerPlayerEntity target = EntityArgumentType.getPlayer(context, "player");
+                                    String tattoo = StringArgumentType.getString(context, "tattoo2");
+                                    int gridX = IntegerArgumentType.getInteger(context, "gridX2");
+                                    int gridY = IntegerArgumentType.getInteger(context, "gridY2");
+                                    return giveTattoo(source, target, tattoo, gridX, gridY);
+                                })
+                            )
                         )
                     )
                 )
@@ -801,31 +792,19 @@ public class ModCommands {
     }
 
     /**
-     * Parse a body position from a string (case-insensitive).
+     * Give a tattoo to a player at a specific grid position.
      */
-    private static BodyPosition parseBodyPosition(String str) {
-        try {
-            return BodyPosition.valueOf(str.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return BodyPosition.ANY;
-        }
-    }
-
-    /**
-     * Give a tattoo to a player at a specific position.
-     */
-    private static int giveTattoo(ServerCommandSource source, ServerPlayerEntity target, String tattooId, BodyPosition position) {
+    private static int giveTattoo(ServerCommandSource source, ServerPlayerEntity target, String tattooId, int gridX, int gridY) {
         if (!TATTOOS.contains(tattooId)) {
             source.sendError(Text.literal("Unknown tattoo: " + tattooId));
             return 0;
         }
 
         PlayerTattoos tattoos = target.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
-        tattoos.addTattoo(tattooId, position);
+        tattoos.addTattoo(tattooId, gridX, gridY);
         ModNetworking.syncTattoosToClient(target);
 
-        String posStr = position == BodyPosition.ANY ? "" : " on " + position.name().toLowerCase();
-        source.sendFeedback(() -> Text.literal("Gave " + tattooId + posStr + " to " + target.getName().getString()), true);
+        source.sendFeedback(() -> Text.literal("Gave " + tattooId + " at (" + gridX + ", " + gridY + ") to " + target.getName().getString()), true);
         return 1;
     }
 
@@ -844,8 +823,9 @@ public class ModCommands {
         source.sendFeedback(() -> Text.literal(target.getName().getString() + "'s tattoos:"), false);
         for (TattooInstance instance : allTattoos) {
             String id = instance.tattooId();
-            String posStr = instance.position().name().toLowerCase();
-            source.sendFeedback(() -> Text.literal("  " + id + " (" + posStr + ")"), false);
+            int gx = instance.gridX();
+            int gy = instance.gridY();
+            source.sendFeedback(() -> Text.literal("  " + id + " at (" + gx + ", " + gy + ")"), false);
         }
         return allTattoos.size();
     }

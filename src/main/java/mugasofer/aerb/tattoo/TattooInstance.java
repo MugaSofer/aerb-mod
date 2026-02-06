@@ -8,28 +8,30 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * Players can have multiple instances of the same tattoo type at different positions.
  *
  * @param tattooId The type of tattoo (e.g., "fall_rune", "icy_devil")
- * @param position Where on the body this tattoo is located
+ * @param gridX Grid X coordinate (0-15, where each cell is 4x4 skin pixels)
+ * @param gridY Grid Y coordinate (0-15, where each cell is 4x4 skin pixels)
  * @param cooldownUntil World time when cooldown expires (0 = no cooldown)
  */
 public record TattooInstance(
         String tattooId,
-        BodyPosition position,
+        int gridX,
+        int gridY,
         long cooldownUntil
 ) {
     public static final Codec<TattooInstance> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Codec.STRING.fieldOf("tattoo_id").forGetter(TattooInstance::tattooId),
-                    Codec.STRING.fieldOf("position").forGetter(ti -> ti.position.name()),
+                    Codec.INT.fieldOf("grid_x").forGetter(TattooInstance::gridX),
+                    Codec.INT.fieldOf("grid_y").forGetter(TattooInstance::gridY),
                     Codec.LONG.fieldOf("cooldown_until").forGetter(TattooInstance::cooldownUntil)
-            ).apply(instance, (id, posName, cooldown) ->
-                    new TattooInstance(id, BodyPosition.valueOf(posName), cooldown))
+            ).apply(instance, TattooInstance::new)
     );
 
     /**
      * Create a new tattoo instance with no cooldown.
      */
-    public static TattooInstance create(String tattooId, BodyPosition position) {
-        return new TattooInstance(tattooId, position, 0);
+    public static TattooInstance create(String tattooId, int gridX, int gridY) {
+        return new TattooInstance(tattooId, gridX, gridY, 0);
     }
 
     /**
@@ -50,13 +52,13 @@ public record TattooInstance(
      * Create a new instance with cooldown set.
      */
     public TattooInstance withCooldown(long until) {
-        return new TattooInstance(tattooId, position, until);
+        return new TattooInstance(tattooId, gridX, gridY, until);
     }
 
     /**
      * Create a new instance at a different position.
      */
-    public TattooInstance movedTo(BodyPosition newPosition) {
-        return new TattooInstance(tattooId, newPosition, cooldownUntil);
+    public TattooInstance movedTo(int newGridX, int newGridY) {
+        return new TattooInstance(tattooId, newGridX, newGridY, cooldownUntil);
     }
 }

@@ -1,11 +1,9 @@
 package mugasofer.aerb.screen;
 
-import mugasofer.aerb.Aerb;
 import mugasofer.aerb.item.TattooDesignItem;
 import mugasofer.aerb.item.TattooInkItem;
 import mugasofer.aerb.network.ModNetworking;
 import mugasofer.aerb.skill.ClientSkillCache;
-import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.ClientTattooCache;
 import mugasofer.aerb.tattoo.TattooInstance;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -20,7 +18,11 @@ import java.util.*;
 
 /**
  * Paper doll UI for applying tattoos.
- * Shows a body diagram with clickable regions for each body position.
+ * Shows a body diagram with clickable regions that map to grid coordinates.
+ *
+ * NOTE: This is a temporary implementation for Phase 1.
+ * Phase 4 will replace this with a full grid-based paper doll UI
+ * that shows the player's skin texture and supports drag & drop.
  */
 public class TattooApplicationScreen extends Screen {
     private static final int PANEL_WIDTH = 220;
@@ -33,11 +35,16 @@ public class TattooApplicationScreen extends Screen {
     private int panelX;
     private int panelY;
 
-    // Clickable body regions (relative to paper doll origin)
-    private final Map<BodyPosition, int[]> bodyRegions = new LinkedHashMap<>();
+    /**
+     * Body region with visual bounds and corresponding grid coordinates.
+     */
+    private record BodyRegion(String name, int[] visualBounds, int gridX, int gridY) {}
 
-    // Currently selected position and design
-    private BodyPosition selectedPosition = null;
+    // Clickable body regions with grid coordinate mapping
+    private final List<BodyRegion> bodyRegions = new ArrayList<>();
+
+    // Currently selected region index and design
+    private int selectedRegionIndex = -1;
     private TattooDesignItem selectedDesign = null;
     private int selectedDesignSlot = -1;
 
@@ -64,30 +71,31 @@ public class TattooApplicationScreen extends Screen {
     }
 
     private void initBodyRegions() {
-        // Define clickable rectangles for each body position
-        // Format: {x, y, width, height} relative to paper doll top-left
+        // Define clickable rectangles for each body region
+        // Format: name, {x, y, width, height} relative to paper doll top-left, gridX, gridY
+        // Grid coordinates map to approximate UV positions on 16x16 grid
 
-        // Head/Neck
-        bodyRegions.put(BodyPosition.FACE, new int[]{28, 5, 24, 20});
-        bodyRegions.put(BodyPosition.NECK, new int[]{32, 25, 16, 10});
+        // Head/Neck (head UV is around 8,8 on 64x64 = grid 2,2)
+        bodyRegions.add(new BodyRegion("Face", new int[]{28, 5, 24, 20}, 2, 2));
+        bodyRegions.add(new BodyRegion("Neck", new int[]{32, 25, 16, 10}, 2, 4));
 
-        // Torso
-        bodyRegions.put(BodyPosition.LEFT_SHOULDER, new int[]{10, 35, 18, 15});
-        bodyRegions.put(BodyPosition.RIGHT_SHOULDER, new int[]{52, 35, 18, 15});
-        bodyRegions.put(BodyPosition.CHEST, new int[]{25, 35, 30, 25});
-        bodyRegions.put(BodyPosition.BACK, new int[]{25, 60, 30, 20});
+        // Torso (body UV is around 20,20 on 64x64 = grid 5,5)
+        bodyRegions.add(new BodyRegion("Left Shoulder", new int[]{10, 35, 18, 15}, 4, 5));
+        bodyRegions.add(new BodyRegion("Right Shoulder", new int[]{52, 35, 18, 15}, 7, 5));
+        bodyRegions.add(new BodyRegion("Chest", new int[]{25, 35, 30, 25}, 5, 5));
+        bodyRegions.add(new BodyRegion("Back", new int[]{25, 60, 30, 20}, 8, 5));
 
-        // Arms
-        bodyRegions.put(BodyPosition.LEFT_UPPER_ARM, new int[]{5, 50, 15, 20});
-        bodyRegions.put(BodyPosition.LEFT_FOREARM, new int[]{0, 70, 15, 25});
-        bodyRegions.put(BodyPosition.RIGHT_UPPER_ARM, new int[]{60, 50, 15, 20});
-        bodyRegions.put(BodyPosition.RIGHT_FOREARM, new int[]{65, 70, 15, 25});
+        // Arms (arm UV varies)
+        bodyRegions.add(new BodyRegion("Left Upper Arm", new int[]{5, 50, 15, 20}, 11, 5));
+        bodyRegions.add(new BodyRegion("Left Forearm", new int[]{0, 70, 15, 25}, 11, 7));
+        bodyRegions.add(new BodyRegion("Right Upper Arm", new int[]{60, 50, 15, 20}, 9, 5));
+        bodyRegions.add(new BodyRegion("Right Forearm", new int[]{65, 70, 15, 25}, 9, 7));
 
         // Legs
-        bodyRegions.put(BodyPosition.LEFT_THIGH, new int[]{22, 85, 16, 30});
-        bodyRegions.put(BodyPosition.LEFT_CALF, new int[]{20, 115, 16, 30});
-        bodyRegions.put(BodyPosition.RIGHT_THIGH, new int[]{42, 85, 16, 30});
-        bodyRegions.put(BodyPosition.RIGHT_CALF, new int[]{44, 115, 16, 30});
+        bodyRegions.add(new BodyRegion("Left Thigh", new int[]{22, 85, 16, 30}, 1, 5));
+        bodyRegions.add(new BodyRegion("Left Calf", new int[]{20, 115, 16, 30}, 1, 8));
+        bodyRegions.add(new BodyRegion("Right Thigh", new int[]{42, 85, 16, 30}, 0, 5));
+        bodyRegions.add(new BodyRegion("Right Calf", new int[]{44, 115, 16, 30}, 0, 8));
     }
 
     @Override
@@ -102,10 +110,11 @@ public class TattooApplicationScreen extends Screen {
 
         // Create invisible buttons for body regions
         bodyButtons.clear();
-        for (var entry : bodyRegions.entrySet()) {
-            BodyPosition pos = entry.getKey();
-            int[] rect = entry.getValue();
-            ButtonWidget btn = ButtonWidget.builder(Text.empty(), button -> selectBodyPosition(pos))
+        for (int i = 0; i < bodyRegions.size(); i++) {
+            final int index = i;
+            BodyRegion region = bodyRegions.get(i);
+            int[] rect = region.visualBounds();
+            ButtonWidget btn = ButtonWidget.builder(Text.empty(), button -> selectBodyRegion(index))
                 .dimensions(dollX + rect[0], dollY + rect[1], rect[2], rect[3])
                 .build();
             bodyButtons.add(btn);
@@ -195,19 +204,22 @@ public class TattooApplicationScreen extends Screen {
         List<TattooInstance> existingTattoos = ClientTattooCache.getAllTattoos();
 
         // Draw body regions
-        for (var entry : bodyRegions.entrySet()) {
-            BodyPosition pos = entry.getKey();
-            int[] rect = entry.getValue();
+        for (int i = 0; i < bodyRegions.size(); i++) {
+            BodyRegion region = bodyRegions.get(i);
+            int[] rect = region.visualBounds();
             int rx = dollX + rect[0];
             int ry = dollY + rect[1];
             int rw = rect[2];
             int rh = rect[3];
 
-            // Check if this position has an existing tattoo
-            boolean hasTattoo = existingTattoos.stream().anyMatch(t -> t.position() == pos);
+            // Check if this region has an existing tattoo (approximate by grid proximity)
+            boolean hasTattoo = existingTattoos.stream().anyMatch(t ->
+                Math.abs(t.gridX() - region.gridX()) <= 1 &&
+                Math.abs(t.gridY() - region.gridY()) <= 1
+            );
 
             // Highlight selected region (green)
-            if (pos == selectedPosition) {
+            if (i == selectedRegionIndex) {
                 context.fill(rx, ry, rx + rw, ry + rh, 0x6600FF00);
             } else if (hasTattoo) {
                 // Existing tattoo indicator (purple/magenta)
@@ -219,7 +231,7 @@ public class TattooApplicationScreen extends Screen {
         }
 
         // Update text widgets with current values
-        String posName = selectedPosition != null ? formatPositionName(selectedPosition) : "None";
+        String posName = selectedRegionIndex >= 0 ? bodyRegions.get(selectedRegionIndex).name() : "None";
         positionValue.setMessage(Text.literal(posName));
 
         // Update design texts
@@ -277,19 +289,15 @@ public class TattooApplicationScreen extends Screen {
         return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
     }
 
-    private String formatPositionName(BodyPosition pos) {
-        return pos.name().replace("_", " ").toLowerCase();
-    }
-
     private String formatTattooName(String tattooId) {
         return tattooId.replace("_", " ");
     }
 
     /**
-     * Select a body position.
+     * Select a body region.
      */
-    private void selectBodyPosition(BodyPosition pos) {
-        selectedPosition = pos;
+    private void selectBodyRegion(int index) {
+        selectedRegionIndex = index;
         updateApplyButton();
     }
 
@@ -310,7 +318,7 @@ public class TattooApplicationScreen extends Screen {
     }
 
     private void updateApplyButton() {
-        boolean canApply = selectedPosition != null &&
+        boolean canApply = selectedRegionIndex >= 0 &&
                           selectedDesign != null &&
                           hasInkInInventory() &&
                           hasNeedleInHand();
@@ -335,12 +343,15 @@ public class TattooApplicationScreen extends Screen {
     }
 
     private void applyTattoo() {
-        if (selectedDesign == null || selectedPosition == null) return;
+        if (selectedDesign == null || selectedRegionIndex < 0) return;
 
-        // Send packet to server
+        BodyRegion region = bodyRegions.get(selectedRegionIndex);
+
+        // Send packet to server with grid coordinates
         ClientPlayNetworking.send(new ModNetworking.ApplyTattooPayload(
             selectedDesign.getTattooId(),
-            selectedPosition.name()
+            region.gridX(),
+            region.gridY()
         ));
 
         // Close screen

@@ -9,7 +9,6 @@ import mugasofer.aerb.screen.VirtuesScreenHandler;
 import mugasofer.aerb.skill.PlayerSkills;
 import mugasofer.aerb.skill.XpHelper;
 import mugasofer.aerb.spell.SpellInventory;
-import mugasofer.aerb.tattoo.BodyPosition;
 import mugasofer.aerb.tattoo.PlayerTattoos;
 import mugasofer.aerb.tattoo.TattooInstance;
 import mugasofer.aerb.virtue.VirtueInventory;
@@ -124,7 +123,8 @@ public class ModNetworking {
                 buf.writeInt(value.tattoos.size());
                 for (TattooInstance instance : value.tattoos) {
                     buf.writeString(instance.tattooId());
-                    buf.writeString(instance.position().name());
+                    buf.writeInt(instance.gridX());
+                    buf.writeInt(instance.gridY());
                     buf.writeLong(instance.cooldownUntil());
                 }
             },
@@ -133,9 +133,10 @@ public class ModNetworking {
                 List<TattooInstance> tattoos = new ArrayList<>();
                 for (int i = 0; i < count; i++) {
                     String id = buf.readString();
-                    BodyPosition position = BodyPosition.valueOf(buf.readString());
+                    int gridX = buf.readInt();
+                    int gridY = buf.readInt();
                     long cooldown = buf.readLong();
-                    tattoos.add(new TattooInstance(id, position, cooldown));
+                    tattoos.add(new TattooInstance(id, gridX, gridY, cooldown));
                 }
                 return new SyncTattoosPayload(tattoos);
             }
@@ -148,14 +149,15 @@ public class ModNetworking {
     }
 
     // Payload for applying a tattoo (client to server)
-    public record ApplyTattooPayload(String tattooId, String position) implements CustomPayload {
+    public record ApplyTattooPayload(String tattooId, int gridX, int gridY) implements CustomPayload {
         public static final Id<ApplyTattooPayload> ID = new Id<>(APPLY_TATTOO_ID);
         public static final PacketCodec<RegistryByteBuf, ApplyTattooPayload> CODEC = PacketCodec.of(
             (value, buf) -> {
                 buf.writeString(value.tattooId);
-                buf.writeString(value.position);
+                buf.writeInt(value.gridX);
+                buf.writeInt(value.gridY);
             },
-            buf -> new ApplyTattooPayload(buf.readString(), buf.readString())
+            buf -> new ApplyTattooPayload(buf.readString(), buf.readInt(), buf.readInt())
         );
 
         @Override
@@ -252,7 +254,7 @@ public class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(ApplyTattooPayload.ID, (payload, context) -> {
             context.server().execute(() -> {
                 var player = context.player();
-                handleApplyTattoo(player, payload.tattooId(), payload.position());
+                handleApplyTattoo(player, payload.tattooId(), payload.gridX(), payload.gridY());
             });
         });
 
@@ -262,7 +264,13 @@ public class ModNetworking {
     /**
      * Handle tattoo application request from client.
      */
-    private static void handleApplyTattoo(ServerPlayerEntity player, String tattooId, String positionStr) {
+    private static void handleApplyTattoo(ServerPlayerEntity player, String tattooId, int gridX, int gridY) {
+        // Validate grid coordinates
+        if (gridX < 0 || gridX > 15 || gridY < 0 || gridY > 15) {
+            player.sendMessage(Text.literal("Invalid grid position!"), true);
+            return;
+        }
+
         // Validate needle in hand
         ItemStack mainHand = player.getMainHandStack();
         if (!(mainHand.getItem() instanceof TattooNeedleItem)) {
@@ -309,15 +317,6 @@ public class ModNetworking {
             return;
         }
 
-        // Parse position
-        BodyPosition position;
-        try {
-            position = BodyPosition.valueOf(positionStr);
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.literal("Invalid body position!"), true);
-            return;
-        }
-
         // All checks passed - apply the tattoo!
 
         // Consume ink
@@ -328,7 +327,7 @@ public class ModNetworking {
 
         // Add tattoo
         PlayerTattoos tattoos = player.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
-        tattoos.addTattoo(tattooId, position);
+        tattoos.addTattoo(tattooId, gridX, gridY);
 
         // Award Skin Magic XP
         XpHelper.awardXp(player, PlayerSkills.SKIN_MAGIC, 10);
@@ -337,9 +336,8 @@ public class ModNetworking {
         syncTattoosToClient(player);
 
         // Success message
-        String posName = position.name().replace("_", " ").toLowerCase();
-        player.sendMessage(Text.literal("Applied " + tattooId.replace("_", " ") + " to your " + posName + "!"), true);
+        player.sendMessage(Text.literal("Applied " + tattooId.replace("_", " ") + " at (" + gridX + ", " + gridY + ")!"), true);
 
-        Aerb.LOGGER.info("{} applied tattoo {} at {}", player.getName().getString(), tattooId, position);
+        Aerb.LOGGER.info("{} applied tattoo {} at ({}, {})", player.getName().getString(), tattooId, gridX, gridY);
     }
 }

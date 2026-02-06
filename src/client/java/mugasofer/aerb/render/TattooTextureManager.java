@@ -1,7 +1,8 @@
 package mugasofer.aerb.render;
 
 import mugasofer.aerb.Aerb;
-import mugasofer.aerb.tattoo.BodyPosition;
+import mugasofer.aerb.item.ModItems;
+import mugasofer.aerb.item.TattooDesignItem;
 import mugasofer.aerb.tattoo.ClientTattooCache;
 import mugasofer.aerb.tattoo.PlayerTattoos;
 import mugasofer.aerb.tattoo.TattooInstance;
@@ -39,6 +40,13 @@ public class TattooTextureManager {
     private static final Map<String, Identifier> TATTOO_TEXTURES = Map.of(
         PlayerTattoos.FALL_RUNE, Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_fall_rune.png"),
         PlayerTattoos.ICY_DEVIL, Identifier.of(Aerb.MOD_ID, "textures/entity/tattoo_icy_devil.png")
+    );
+
+    // Mapping of tattoo ID to grid size (width, height in grid cells)
+    // This should match the sizes defined in ModItems
+    private static final Map<String, int[]> TATTOO_SIZES = Map.of(
+        PlayerTattoos.FALL_RUNE, new int[]{2, 2},   // 2x2 grid cells = 8x8 pixels
+        PlayerTattoos.ICY_DEVIL, new int[]{3, 3}    // 3x3 grid cells = 12x12 pixels
     );
 
     // Skin masks - define which areas are exposed skin vs clothed
@@ -120,7 +128,8 @@ public class TattooTextureManager {
         int hash = 0;
         for (TattooInstance instance : tattoos) {
             hash = 31 * hash + instance.tattooId().hashCode();
-            hash = 31 * hash + instance.position().hashCode();
+            hash = 31 * hash + instance.gridX();
+            hash = 31 * hash + instance.gridY();
         }
         return hash;
     }
@@ -159,12 +168,17 @@ public class TattooTextureManager {
             mask = (original.model() == PlayerSkinType.SLIM) ? maskAlex : maskSteve;
         }
 
-        // Composite all tattoos onto the skin at their body positions
+        // Composite all tattoos onto the skin at their grid positions
         NativeImage compositedSkin = baseSkin;
         for (TattooInstance instance : tattoos) {
             NativeImage tattooImage = getTattooImage(instance.tattooId());
             if (tattooImage != null) {
-                NativeImage newComposite = compositeTattooAtPosition(compositedSkin, tattooImage, mask, instance.position());
+                int[] size = TATTOO_SIZES.getOrDefault(instance.tattooId(), new int[]{2, 2});
+                NativeImage newComposite = compositeTattooAtGridPosition(
+                    compositedSkin, tattooImage, mask,
+                    instance.gridX(), instance.gridY(),
+                    size[0], size[1]
+                );
                 if (compositedSkin != baseSkin) {
                     compositedSkin.close(); // Close intermediate images
                 }
@@ -364,10 +378,20 @@ public class TattooTextureManager {
     }
 
     /**
-     * Composite a tattoo at a specific body position onto both base and outer layers.
+     * Composite a tattoo at a specific grid position.
      * The tattoo image is scaled/placed to fit the target UV region.
+     *
+     * @param baseSkin Base skin image to composite onto
+     * @param tattoo Tattoo image to apply
+     * @param mask Skin mask (white = exposed skin, black = clothed)
+     * @param gridX Grid X position (0-15)
+     * @param gridY Grid Y position (0-15)
+     * @param gridWidth Tattoo width in grid cells
+     * @param gridHeight Tattoo height in grid cells
      */
-    private static NativeImage compositeTattooAtPosition(NativeImage baseSkin, NativeImage tattoo, NativeImage mask, BodyPosition position) {
+    private static NativeImage compositeTattooAtGridPosition(
+            NativeImage baseSkin, NativeImage tattoo, NativeImage mask,
+            int gridX, int gridY, int gridWidth, int gridHeight) {
         int width = baseSkin.getWidth();
         int height = baseSkin.getHeight();
 
@@ -379,14 +403,11 @@ public class TattooTextureManager {
             }
         }
 
-        // Get UV regions for this body position
-        SkinUVMap.LayeredRegion regions = SkinUVMap.getRegion(position);
+        // Get UV region for this grid position
+        SkinUVMap.UVRegion region = SkinUVMap.getRegionForGrid(gridX, gridY, gridWidth, gridHeight);
 
-        // Apply tattoo to base layer region
-        applyTattooToRegion(result, tattoo, mask, regions.base());
-
-        // Apply tattoo to outer layer region
-        applyTattooToRegion(result, tattoo, mask, regions.outer());
+        // Apply tattoo to the region
+        applyTattooToRegion(result, tattoo, mask, region);
 
         return result;
     }

@@ -10,11 +10,15 @@ import net.minecraft.item.Item;
 public class TattooDesignItem extends Item implements DescribedItem {
     private final String tattooId;
     private final int requiredSkinMagicLevel;
+    private final int gridWidth;
+    private final int gridHeight;
 
-    public TattooDesignItem(Settings settings, String tattooId, int requiredSkinMagicLevel) {
+    public TattooDesignItem(Settings settings, String tattooId, int requiredSkinMagicLevel, int gridWidth, int gridHeight) {
         super(settings);
         this.tattooId = tattooId;
         this.requiredSkinMagicLevel = requiredSkinMagicLevel;
+        this.gridWidth = gridWidth;
+        this.gridHeight = gridHeight;
     }
 
     /**
@@ -29,5 +33,21 @@ public class TattooDesignItem extends Item implements DescribedItem {
      */
     public int getRequiredSkinMagicLevel() {
         return requiredSkinMagicLevel;
+    }
+
+    /**
+     * Get the width of this tattoo in grid cells (1-4).
+     * Each cell corresponds to 4x4 skin pixels.
+     */
+    public int getGridWidth() {
+        return gridWidth;
+    }
+
+    /**
+     * Get the height of this tattoo in grid cells (1-4).
+     * Each cell corresponds to 4x4 skin pixels.
+     */
+    public int getGridHeight() {
+        return gridHeight;
     }
 }

@@ -19,9 +19,64 @@ public class PlayerTattoos {
     public static final String FALL_RUNE = "fall_rune";
     public static final String ICY_DEVIL = "icy_devil";
 
+    /**
+     * Migration mapping from old BodyPosition names to grid coordinates.
+     * These are approximate center positions for each body part on the skin UV.
+     */
+    private static final Map<String, int[]> LEGACY_POSITION_TO_GRID = new HashMap<>();
+    static {
+        // Head/Neck area (UV: 0-32 x, 0-16 y for head)
+        LEGACY_POSITION_TO_GRID.put("FACE", new int[]{2, 2});
+        LEGACY_POSITION_TO_GRID.put("NECK", new int[]{2, 4});
+
+        // Torso area (UV: 20-28 x, 20-32 y for body front)
+        LEGACY_POSITION_TO_GRID.put("CHEST", new int[]{5, 5});
+        LEGACY_POSITION_TO_GRID.put("BACK", new int[]{8, 5});
+        LEGACY_POSITION_TO_GRID.put("LEFT_SHOULDER", new int[]{4, 5});
+        LEGACY_POSITION_TO_GRID.put("RIGHT_SHOULDER", new int[]{7, 5});
+
+        // Arms (UV: varies, arms are 4 pixels wide)
+        LEGACY_POSITION_TO_GRID.put("LEFT_UPPER_ARM", new int[]{11, 5});
+        LEGACY_POSITION_TO_GRID.put("LEFT_FOREARM", new int[]{11, 7});
+        LEGACY_POSITION_TO_GRID.put("RIGHT_UPPER_ARM", new int[]{9, 5});
+        LEGACY_POSITION_TO_GRID.put("RIGHT_FOREARM", new int[]{9, 7});
+
+        // Legs (UV: 0-16 x, 16-32 y for legs)
+        LEGACY_POSITION_TO_GRID.put("LEFT_THIGH", new int[]{1, 5});
+        LEGACY_POSITION_TO_GRID.put("LEFT_CALF", new int[]{1, 8});
+        LEGACY_POSITION_TO_GRID.put("RIGHT_THIGH", new int[]{0, 5});
+        LEGACY_POSITION_TO_GRID.put("RIGHT_CALF", new int[]{0, 8});
+    }
+
+    /**
+     * Legacy codec for reading old format (position string instead of grid coordinates).
+     */
+    private static final Codec<TattooInstance> LEGACY_TATTOO_CODEC = RecordCodecBuilder.create(instance ->
+        instance.group(
+            Codec.STRING.fieldOf("tattoo_id").forGetter(TattooInstance::tattooId),
+            Codec.STRING.fieldOf("position").forGetter(ti -> "CHEST"),
+            Codec.LONG.fieldOf("cooldown_until").forGetter(TattooInstance::cooldownUntil)
+        ).apply(instance, (id, posName, cooldown) -> {
+            int[] coords = LEGACY_POSITION_TO_GRID.getOrDefault(posName, new int[]{5, 5});
+            return new TattooInstance(id, coords[0], coords[1], cooldown);
+        })
+    );
+
+    /**
+     * Codec that handles both new format (grid_x, grid_y) and legacy format (position string).
+     * Uses Codec.either() to try new format first, then fall back to legacy.
+     */
+    private static final Codec<TattooInstance> MIGRATING_TATTOO_CODEC = Codec.either(
+        TattooInstance.CODEC,
+        LEGACY_TATTOO_CODEC
+    ).xmap(
+        either -> either.map(t -> t, t -> t),  // Both sides produce TattooInstance
+        instance -> com.mojang.datafixers.util.Either.left(instance)  // Always encode as new format
+    );
+
     public static final Codec<PlayerTattoos> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
-                    Codec.list(TattooInstance.CODEC)
+                    Codec.list(MIGRATING_TATTOO_CODEC)
                             .fieldOf("tattoos")
                             .forGetter(pt -> pt.tattoos)
             ).apply(instance, PlayerTattoos::new)
@@ -78,10 +133,10 @@ public class PlayerTattoos {
     }
 
     /**
-     * Add a tattoo at a specific position.
+     * Add a tattoo at a specific grid position.
      */
-    public void addTattoo(String tattooId, BodyPosition position) {
-        tattoos.add(TattooInstance.create(tattooId, position));
+    public void addTattoo(String tattooId, int gridX, int gridY) {
+        tattoos.add(TattooInstance.create(tattooId, gridX, gridY));
     }
 
     /**
@@ -132,12 +187,12 @@ public class PlayerTattoos {
     }
 
     /**
-     * Move a tattoo to a new body position.
+     * Move a tattoo to a new grid position.
      */
-    public void moveTattoo(TattooInstance instance, BodyPosition newPosition) {
+    public void moveTattoo(TattooInstance instance, int newGridX, int newGridY) {
         int index = tattoos.indexOf(instance);
         if (index >= 0) {
-            tattoos.set(index, instance.movedTo(newPosition));
+            tattoos.set(index, instance.movedTo(newGridX, newGridY));
         }
     }
 
