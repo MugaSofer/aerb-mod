@@ -16,6 +16,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.Click;
 
 import java.util.*;
 
@@ -422,6 +423,40 @@ public class TattooApplicationScreen extends Screen {
             }
         }
         return new int[] { 2, 2 };
+    }
+
+    @Override
+    public boolean mouseClicked(Click click, boolean doubled) {
+        // Only handle left clicks
+        if (click.button() != 0) {
+            return super.mouseClicked(click, doubled);
+        }
+
+        // Convert to doll area coordinates
+        int localX = (int) click.x() - dollX;
+        int localY = (int) click.y() - dollY;
+
+        // Check if click is within doll area
+        if (localX >= 0 && localX < DOLL_AREA_WIDTH && localY >= 0 && localY < DOLL_AREA_HEIGHT) {
+            // Check each visual region
+            List<PaperDollMapper.VisualRegion> regions = PaperDollMapper.getVisualRegions();
+            for (int i = 0; i < regions.size(); i++) {
+                PaperDollMapper.VisualRegion region = regions.get(i);
+                int rx = region.visualX();
+                int ry = region.visualY();
+                int rw = region.visualWidth();
+                int rh = region.visualHeight();
+
+                if (localX >= rx && localX < rx + rw && localY >= ry && localY < ry + rh) {
+                    // Clicked on this region
+                    selectRegion(i);
+                    return true;
+                }
+            }
+        }
+
+        // Let widgets handle the click if not on a region
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
