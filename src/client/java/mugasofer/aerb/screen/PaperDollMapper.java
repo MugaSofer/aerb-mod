@@ -188,6 +188,9 @@ public class PaperDollMapper {
      *     [RIGHT LEG]    [  3x      ]     [LEFT LEG]
      *                    [LEG BACKS ]
      */
+    // Doll area dimensions (should match TattooApplicationScreen)
+    private static final int DOLL_AREA_HEIGHT = 180;
+
     private static void initVisualRegions() {
         int mainScale = 3;
         int sideScale = 2;
@@ -195,19 +198,24 @@ public class PaperDollMapper {
 
         // Center position for main paper doll
         int centerX = 110;
-        int startY = 8;
 
         // ========== CENTER PAPER DOLL (3x scale) ==========
+        // Calculate total height for vertical centering
+        int headH3 = 8 * mainScale;  // 24
+        int bodyH3 = 12 * mainScale; // 36
+        int legH3 = 12 * mainScale;  // 36
+        int totalPaperDollHeight = headH3 + gap + bodyH3 + gap + legH3; // 100
+
+        // Center the paper doll vertically in the doll area
+        int headY = (DOLL_AREA_HEIGHT - totalPaperDollHeight) / 2;
+
         // Head front
         int headW3 = 8 * mainScale;  // 24
-        int headH3 = 8 * mainScale;  // 24
         int headX = centerX - headW3 / 2;
-        int headY = startY + 22; // Below HEAD cluster
         VISUAL_REGIONS.add(new VisualRegion("Face", headX, headY, headW3, headH3, getFace("head", "front")));
 
         // Body front
         int bodyW3 = 8 * mainScale;  // 24
-        int bodyH3 = 12 * mainScale; // 36
         int bodyX = centerX - bodyW3 / 2;
         int bodyY = headY + headH3 + gap;
         VISUAL_REGIONS.add(new VisualRegion("Chest", bodyX, bodyY, bodyW3, bodyH3, getFace("body", "front")));
@@ -220,7 +228,6 @@ public class PaperDollMapper {
 
         // Legs (3x) - below body
         int legW3 = 4 * mainScale;  // 12
-        int legH3 = 12 * mainScale; // 36
         int legY = bodyY + bodyH3 + gap;
         VISUAL_REGIONS.add(new VisualRegion("R.Leg", centerX - legW3, legY, legW3, legH3, getFace("right_leg", "front")));
         VISUAL_REGIONS.add(new VisualRegion("L.Leg", centerX, legY, legW3, legH3, getFace("left_leg", "front")));
@@ -230,7 +237,7 @@ public class PaperDollMapper {
         int headH2 = 8 * sideScale;  // 16
         int headHalfH2 = 4 * sideScale; // 8 (for split bottom)
         int headClusterX = centerX - (headW2 * 3 + gap * 2) / 2; // Center 3 heads
-        int headClusterY = startY;
+        int headClusterY = headY - headH2 - gap - 4; // Above the paper doll head
 
         // Row: back, left, right, top, chin (front half of bottom)
         VISUAL_REGIONS.add(new VisualRegion("Head Back", headClusterX, headClusterY, headW2, headH2, getFace("head", "back")));
@@ -262,11 +269,11 @@ public class PaperDollMapper {
         VISUAL_REGIONS.add(new VisualRegion("Body L", torsoX + bodyW2 + gap, torsoY, bodySideW2, bodyH2, getFace("body", "left")));
         VISUAL_REGIONS.add(new VisualRegion("Body R", torsoX + bodyW2 + gap + bodySideW2 + gap, torsoY, bodySideW2, bodyH2, getFace("body", "right")));
 
-        // ========== ARM CLUSTERS (both at same Y level) ==========
+        // ========== ARM CLUSTERS (both vertically centered) ==========
         int armW2 = 4 * sideScale;   // 8
         int armH2 = 12 * sideScale;  // 24
         int armTopH2 = 4 * sideScale; // 8
-        int armClusterY = bodyY;  // Both arm clusters at this Y
+        int armClusterY = (DOLL_AREA_HEIGHT - armH2) / 2;  // Vertically centered
 
         // RIGHT ARM CLUSTER (left side, 2x)
         int rArmX = 5;
@@ -294,11 +301,11 @@ public class PaperDollMapper {
         VISUAL_REGIONS.add(new VisualRegion("L.Shoulder", lArmSmallX, armClusterY, armW2, armTopH2, getFace("left_arm", "top")));
         VISUAL_REGIONS.add(new VisualRegion("L.Hand", lArmSmallX, armClusterY + armTopH2 + gap, armW2, armTopH2, getFace("left_arm", "bottom")));
 
-        // ========== LEG CLUSTERS (both at bottom) ==========
+        // ========== LEG CLUSTERS (top aligned with bottom of paper doll legs) ==========
         int legW2 = 4 * sideScale;   // 8
         int legH2 = 12 * sideScale;  // 24
         int legBottomH2 = 4 * sideScale; // 8
-        int legClusterY = armClusterY + armH2 + gap + 8;  // Fixed position below arms
+        int legClusterY = legY + legH3;  // Top of clusters at bottom of paper doll legs
         int lLegX = torsoX;
 
         // ========== RIGHT LEG CLUSTER (bottom left, 2x) ==========
