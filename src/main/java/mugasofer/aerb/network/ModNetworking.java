@@ -35,6 +35,7 @@ public class ModNetworking {
     public static final Identifier SET_SELECTED_SLOT_ID = Identifier.of(Aerb.MOD_ID, "set_selected_slot");
     public static final Identifier SYNC_TATTOOS_ID = Identifier.of(Aerb.MOD_ID, "sync_tattoos");
     public static final Identifier APPLY_TATTOO_ID = Identifier.of(Aerb.MOD_ID, "apply_tattoo");
+    public static final Identifier MOVE_TATTOO_ID = Identifier.of(Aerb.MOD_ID, "move_tattoo");
 
     // Custom payload for opening spell inventory (empty payload, just a signal)
     public record OpenSpellInventoryPayload() implements CustomPayload {
@@ -166,6 +167,26 @@ public class ModNetworking {
         }
     }
 
+    // Payload for moving an existing tattoo to a new position (client to server)
+    public record MoveTattooPayload(String tattooId, int oldGridX, int oldGridY, int newGridX, int newGridY) implements CustomPayload {
+        public static final Id<MoveTattooPayload> ID = new Id<>(MOVE_TATTOO_ID);
+        public static final PacketCodec<RegistryByteBuf, MoveTattooPayload> CODEC = PacketCodec.of(
+            (value, buf) -> {
+                buf.writeString(value.tattooId);
+                buf.writeInt(value.oldGridX);
+                buf.writeInt(value.oldGridY);
+                buf.writeInt(value.newGridX);
+                buf.writeInt(value.newGridY);
+            },
+            buf -> new MoveTattooPayload(buf.readString(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt())
+        );
+
+        @Override
+        public Id<? extends CustomPayload> getId() {
+            return ID;
+        }
+    }
+
     /**
      * Tell the client to change their selected hotbar slot.
      */
@@ -218,6 +239,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playC2S().register(OpenSpellInventoryPayload.ID, OpenSpellInventoryPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(OpenVirtueInventoryPayload.ID, OpenVirtueInventoryPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(ApplyTattooPayload.ID, ApplyTattooPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(MoveTattooPayload.ID, MoveTattooPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncSkillsPayload.ID, SyncSkillsPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SetSelectedSlotPayload.ID, SetSelectedSlotPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncTattoosPayload.ID, SyncTattoosPayload.CODEC);
@@ -255,6 +277,14 @@ public class ModNetworking {
             context.server().execute(() -> {
                 var player = context.player();
                 handleApplyTattoo(player, payload.tattooId(), payload.gridX(), payload.gridY());
+            });
+        });
+
+        // Register server-side handler for moving tattoos
+        ServerPlayNetworking.registerGlobalReceiver(MoveTattooPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                var player = context.player();
+                handleMoveTattoo(player, payload.tattooId(), payload.oldGridX(), payload.oldGridY(), payload.newGridX(), payload.newGridY());
             });
         });
 
@@ -339,5 +369,54 @@ public class ModNetworking {
         player.sendMessage(Text.literal("Applied " + tattooId.replace("_", " ") + " at (" + gridX + ", " + gridY + ")!"), true);
 
         Aerb.LOGGER.info("{} applied tattoo {} at ({}, {})", player.getName().getString(), tattooId, gridX, gridY);
+    }
+
+    /**
+     * Handle tattoo move request from client.
+     * Requires Skin Magic 0+ to reposition tattoos.
+     */
+    private static void handleMoveTattoo(ServerPlayerEntity player, String tattooId, int oldGridX, int oldGridY, int newGridX, int newGridY) {
+        // Validate new grid coordinates
+        if (newGridX < 0 || newGridX > 15 || newGridY < 0 || newGridY > 15) {
+            player.sendMessage(Text.literal("Invalid grid position!"), true);
+            return;
+        }
+
+        // Check Skin Magic skill (need level 0+ to move tattoos)
+        PlayerSkills skills = player.getAttachedOrCreate(PlayerSkills.ATTACHMENT);
+        int skinMagicLevel = skills.getSkillLevel(PlayerSkills.SKIN_MAGIC);
+        if (skinMagicLevel < 0) {
+            player.sendMessage(Text.literal("You need Skin Magic to reposition tattoos!"), true);
+            return;
+        }
+
+        // Find the tattoo at the old position
+        PlayerTattoos tattoos = player.getAttachedOrCreate(PlayerTattoos.ATTACHMENT);
+        TattooInstance toMove = null;
+        for (TattooInstance instance : tattoos.getAllTattoos()) {
+            if (instance.tattooId().equals(tattooId) && instance.gridX() == oldGridX && instance.gridY() == oldGridY) {
+                toMove = instance;
+                break;
+            }
+        }
+
+        if (toMove == null) {
+            player.sendMessage(Text.literal("Tattoo not found at that position!"), true);
+            return;
+        }
+
+        // Move the tattoo
+        tattoos.moveTattoo(toMove, newGridX, newGridY);
+
+        // Award a small amount of Skin Magic XP for repositioning
+        XpHelper.awardXp(player, PlayerSkills.SKIN_MAGIC, 2);
+
+        // Sync to client
+        syncTattoosToClient(player);
+
+        // Success message
+        player.sendMessage(Text.literal("Moved " + tattooId.replace("_", " ") + " to (" + newGridX + ", " + newGridY + ")!"), true);
+
+        Aerb.LOGGER.info("{} moved tattoo {} from ({}, {}) to ({}, {})", player.getName().getString(), tattooId, oldGridX, oldGridY, newGridX, newGridY);
     }
 }

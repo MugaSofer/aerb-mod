@@ -129,37 +129,47 @@ public class PaperDollMapper {
         addFace("head", "right", 0, 8, 8, 8);
         addFace("head", "left", 16, 8, 8, 8);
         addFace("head", "top", 8, 0, 8, 8);
-        addFace("head", "bottom", 16, 0, 8, 8);
+        addFace("head", "bottom", 16, 0, 8, 8);    // Full bottom (for compatibility)
+        // Split head bottom: front half (chin) and back half (connects to neck)
+        addFace("head", "bottom_front", 16, 0, 8, 4);  // Chin - front half
+        addFace("head", "bottom_back", 16, 4, 8, 4);   // Back of jaw - connects to body top
 
         // BODY
         addFace("body", "front", 20, 20, 8, 12);   // Chest
         addFace("body", "back", 32, 20, 8, 12);
         addFace("body", "right", 16, 20, 4, 12);
         addFace("body", "left", 28, 20, 4, 12);
+        addFace("body", "top", 20, 16, 8, 4);      // Neck/collar area
 
         // RIGHT ARM
         addFace("right_arm", "front", 44, 20, 4, 12);
         addFace("right_arm", "back", 52, 20, 4, 12);
         addFace("right_arm", "outer", 40, 20, 4, 12);
         addFace("right_arm", "inner", 48, 20, 4, 12);
+        addFace("right_arm", "top", 44, 16, 4, 4);    // Shoulder
+        addFace("right_arm", "bottom", 48, 16, 4, 4); // Hand
 
         // LEFT ARM
         addFace("left_arm", "front", 36, 52, 4, 12);
         addFace("left_arm", "back", 44, 52, 4, 12);
         addFace("left_arm", "inner", 32, 52, 4, 12);
         addFace("left_arm", "outer", 40, 52, 4, 12);
+        addFace("left_arm", "top", 36, 48, 4, 4);     // Shoulder
+        addFace("left_arm", "bottom", 40, 48, 4, 4);  // Hand
 
         // RIGHT LEG
         addFace("right_leg", "front", 4, 20, 4, 12);
         addFace("right_leg", "back", 12, 20, 4, 12);
         addFace("right_leg", "outer", 0, 20, 4, 12);
         addFace("right_leg", "inner", 8, 20, 4, 12);
+        addFace("right_leg", "bottom", 8, 16, 4, 4);  // Sole
 
         // LEFT LEG
         addFace("left_leg", "front", 20, 52, 4, 12);
         addFace("left_leg", "back", 28, 52, 4, 12);
         addFace("left_leg", "inner", 16, 52, 4, 12);
         addFace("left_leg", "outer", 24, 52, 4, 12);
+        addFace("left_leg", "bottom", 24, 48, 4, 4);  // Sole
     }
 
     private static void addFace(String part, String face, int uvX, int uvY, int w, int h) {
@@ -170,58 +180,148 @@ public class PaperDollMapper {
 
     /**
      * Initialize visual regions for paper doll display.
-     * This defines how body parts are arranged on the UI.
+     * Layout: Center paper doll at 3x scale, surrounding detail clusters at 2x scale.
      *
-     * Layout (approximately 80x150 pixels):
-     *          [HEAD]           <- centered at top
-     *     [LA] [BODY] [RA]      <- arms beside body
-     *          [LL][RL]         <- legs below body
+     *                    [HEAD cluster]
+     *         [NECK]     [  FRONT   ]     [TORSO]
+     *     [RIGHT ARM]    [  VIEW    ]     [LEFT ARM]
+     *     [RIGHT LEG]    [  3x      ]     [LEFT LEG]
+     *                    [LEG BACKS ]
      */
     private static void initVisualRegions() {
-        // Scale factor from UV to visual (makes it easier to see)
-        int scale = 3;
+        int mainScale = 3;
+        int sideScale = 2;
+        int gap = 2;
 
-        // Center X for the body column
-        int centerX = 40;
+        // Center position for main paper doll
+        int centerX = 110;
+        int startY = 8;
 
-        // HEAD - show front face, centered at top
-        BodyFace headFront = getFace("head", "front");
-        int headW = headFront.uvWidth() * scale;
-        int headH = headFront.uvHeight() * scale;
-        VISUAL_REGIONS.add(new VisualRegion("Face", centerX - headW/2, 5, headW, headH, headFront));
+        // ========== CENTER PAPER DOLL (3x scale) ==========
+        // Head front
+        int headW3 = 8 * mainScale;  // 24
+        int headH3 = 8 * mainScale;  // 24
+        int headX = centerX - headW3 / 2;
+        int headY = startY + 22; // Below HEAD cluster
+        VISUAL_REGIONS.add(new VisualRegion("Face", headX, headY, headW3, headH3, getFace("head", "front")));
 
-        // BODY - show front face below head
-        BodyFace bodyFront = getFace("body", "front");
-        int bodyW = bodyFront.uvWidth() * scale;
-        int bodyH = bodyFront.uvHeight() * scale;
-        int bodyY = 5 + headH + 2;
-        VISUAL_REGIONS.add(new VisualRegion("Chest", centerX - bodyW/2, bodyY, bodyW, bodyH, bodyFront));
+        // Body front
+        int bodyW3 = 8 * mainScale;  // 24
+        int bodyH3 = 12 * mainScale; // 36
+        int bodyX = centerX - bodyW3 / 2;
+        int bodyY = headY + headH3 + gap;
+        VISUAL_REGIONS.add(new VisualRegion("Chest", bodyX, bodyY, bodyW3, bodyH3, getFace("body", "front")));
 
-        // BODY BACK - show back face (offset slightly or toggled)
-        BodyFace bodyBack = getFace("body", "back");
-        // For now, don't show back in main view - could be a toggle
+        // Arms (3x) - flanking body
+        int armW3 = 4 * mainScale;  // 12
+        int armH3 = 12 * mainScale; // 36
+        VISUAL_REGIONS.add(new VisualRegion("R.Arm", bodyX - armW3 - 1, bodyY, armW3, armH3, getFace("right_arm", "front")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Arm", bodyX + bodyW3 + 1, bodyY, armW3, armH3, getFace("left_arm", "front")));
 
-        // LEFT ARM - to the left of body
-        BodyFace leftArmOuter = getFace("left_arm", "outer");
-        int armW = leftArmOuter.uvWidth() * scale;
-        int armH = leftArmOuter.uvHeight() * scale;
-        int armY = bodyY;
-        VISUAL_REGIONS.add(new VisualRegion("Left Arm", centerX - bodyW/2 - armW - 2, armY, armW, armH, leftArmOuter));
+        // Legs (3x) - below body
+        int legW3 = 4 * mainScale;  // 12
+        int legH3 = 12 * mainScale; // 36
+        int legY = bodyY + bodyH3 + gap;
+        VISUAL_REGIONS.add(new VisualRegion("R.Leg", centerX - legW3, legY, legW3, legH3, getFace("right_leg", "front")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Leg", centerX, legY, legW3, legH3, getFace("left_leg", "front")));
 
-        // RIGHT ARM - to the right of body
-        BodyFace rightArmOuter = getFace("right_arm", "outer");
-        VISUAL_REGIONS.add(new VisualRegion("Right Arm", centerX + bodyW/2 + 2, armY, armW, armH, rightArmOuter));
+        // ========== HEAD CLUSTER (top center, 2x) ==========
+        int headW2 = 8 * sideScale;  // 16
+        int headH2 = 8 * sideScale;  // 16
+        int headHalfH2 = 4 * sideScale; // 8 (for split bottom)
+        int headClusterX = centerX - (headW2 * 3 + gap * 2) / 2; // Center 3 heads
+        int headClusterY = startY;
 
-        // LEFT LEG - below body, left side
-        BodyFace leftLegFront = getFace("left_leg", "front");
-        int legW = leftLegFront.uvWidth() * scale;
-        int legH = leftLegFront.uvHeight() * scale;
-        int legY = bodyY + bodyH + 2;
-        VISUAL_REGIONS.add(new VisualRegion("Left Leg", centerX - legW, legY, legW, legH, leftLegFront));
+        // Row: back, left, right, top, chin (front half of bottom)
+        VISUAL_REGIONS.add(new VisualRegion("Head Back", headClusterX, headClusterY, headW2, headH2, getFace("head", "back")));
+        VISUAL_REGIONS.add(new VisualRegion("Head Left", headClusterX + headW2 + gap, headClusterY, headW2, headH2, getFace("head", "left")));
+        VISUAL_REGIONS.add(new VisualRegion("Head Right", headClusterX + (headW2 + gap) * 2, headClusterY, headW2, headH2, getFace("head", "right")));
+        VISUAL_REGIONS.add(new VisualRegion("Head Top", headClusterX + (headW2 + gap) * 3, headClusterY, headW2, headH2, getFace("head", "top")));
+        VISUAL_REGIONS.add(new VisualRegion("Chin", headClusterX + (headW2 + gap) * 4, headClusterY, headW2, headHalfH2, getFace("head", "bottom_front")));
 
-        // RIGHT LEG - below body, right side
-        BodyFace rightLegFront = getFace("right_leg", "front");
-        VISUAL_REGIONS.add(new VisualRegion("Right Leg", centerX, legY, legW, legH, rightLegFront));
+        // ========== NECK CLUSTER (left of center head, 2x) ==========
+        // Back half of head bottom + body top (conceptually the "neck" connection)
+        int bodyTopW2 = 8 * sideScale;  // 16
+        int bodyTopH2 = 4 * sideScale;  // 8
+        int neckX = headX - bodyTopW2 - 20;
+        int neckY = headY;
+        // Back of jaw (back half of head bottom) - connects to body top
+        VISUAL_REGIONS.add(new VisualRegion("Jaw Back", neckX, neckY, headW2, headHalfH2, getFace("head", "bottom_back")));
+        // Body top below it
+        VISUAL_REGIONS.add(new VisualRegion("Neck Top", neckX, neckY + headHalfH2 + gap, bodyTopW2, bodyTopH2, getFace("body", "top")));
+
+        // ========== TORSO CLUSTER (right of center, 2x) ==========
+        int bodyW2 = 8 * sideScale;   // 16
+        int bodyH2 = 12 * sideScale;  // 24
+        int bodySideW2 = 4 * sideScale; // 8
+        int torsoX = bodyX + bodyW3 + armW3 + 15;
+        int torsoY = headY;  // Align with head/neck level
+
+        // Back and sides
+        VISUAL_REGIONS.add(new VisualRegion("Back", torsoX, torsoY, bodyW2, bodyH2, getFace("body", "back")));
+        VISUAL_REGIONS.add(new VisualRegion("Body L", torsoX + bodyW2 + gap, torsoY, bodySideW2, bodyH2, getFace("body", "left")));
+        VISUAL_REGIONS.add(new VisualRegion("Body R", torsoX + bodyW2 + gap + bodySideW2 + gap, torsoY, bodySideW2, bodyH2, getFace("body", "right")));
+
+        // ========== ARM CLUSTERS (both at same Y level) ==========
+        int armW2 = 4 * sideScale;   // 8
+        int armH2 = 12 * sideScale;  // 24
+        int armTopH2 = 4 * sideScale; // 8
+        int armClusterY = bodyY;  // Both arm clusters at this Y
+
+        // RIGHT ARM CLUSTER (left side, 2x)
+        int rArmX = 5;
+
+        // Outer, inner, back (3 tall faces)
+        VISUAL_REGIONS.add(new VisualRegion("R.Arm Out", rArmX, armClusterY, armW2, armH2, getFace("right_arm", "outer")));
+        VISUAL_REGIONS.add(new VisualRegion("R.Arm In", rArmX + armW2 + gap, armClusterY, armW2, armH2, getFace("right_arm", "inner")));
+        VISUAL_REGIONS.add(new VisualRegion("R.Arm Bk", rArmX + (armW2 + gap) * 2, armClusterY, armW2, armH2, getFace("right_arm", "back")));
+
+        // Shoulder and hand (stacked)
+        int rArmSmallX = rArmX + (armW2 + gap) * 3 + gap;
+        VISUAL_REGIONS.add(new VisualRegion("R.Shoulder", rArmSmallX, armClusterY, armW2, armTopH2, getFace("right_arm", "top")));
+        VISUAL_REGIONS.add(new VisualRegion("R.Hand", rArmSmallX, armClusterY + armTopH2 + gap, armW2, armTopH2, getFace("right_arm", "bottom")));
+
+        // LEFT ARM CLUSTER (right side, 2x)
+        int lArmX = torsoX;
+
+        // Outer, inner, back
+        VISUAL_REGIONS.add(new VisualRegion("L.Arm Out", lArmX, armClusterY, armW2, armH2, getFace("left_arm", "outer")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Arm In", lArmX + armW2 + gap, armClusterY, armW2, armH2, getFace("left_arm", "inner")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Arm Bk", lArmX + (armW2 + gap) * 2, armClusterY, armW2, armH2, getFace("left_arm", "back")));
+
+        // Shoulder and hand
+        int lArmSmallX = lArmX + (armW2 + gap) * 3 + gap;
+        VISUAL_REGIONS.add(new VisualRegion("L.Shoulder", lArmSmallX, armClusterY, armW2, armTopH2, getFace("left_arm", "top")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Hand", lArmSmallX, armClusterY + armTopH2 + gap, armW2, armTopH2, getFace("left_arm", "bottom")));
+
+        // ========== LEG CLUSTERS (both at bottom) ==========
+        int legW2 = 4 * sideScale;   // 8
+        int legH2 = 12 * sideScale;  // 24
+        int legBottomH2 = 4 * sideScale; // 8
+        int legClusterY = armClusterY + armH2 + gap + 8;  // Fixed position below arms
+        int lLegX = torsoX;
+
+        // ========== RIGHT LEG CLUSTER (bottom left, 2x) ==========
+        int rLegX = 5;
+
+        // Sole (small square first)
+        VISUAL_REGIONS.add(new VisualRegion("R.Sole", rLegX, legClusterY, legW2, legBottomH2, getFace("right_leg", "bottom")));
+
+        // Outer, inner, back
+        int rLegFacesX = rLegX + legW2 + gap + 4;
+        VISUAL_REGIONS.add(new VisualRegion("R.Leg Out", rLegFacesX, legClusterY, legW2, legH2, getFace("right_leg", "outer")));
+        VISUAL_REGIONS.add(new VisualRegion("R.Leg In", rLegFacesX + legW2 + gap, legClusterY, legW2, legH2, getFace("right_leg", "inner")));
+        VISUAL_REGIONS.add(new VisualRegion("R.Leg Bk", rLegFacesX + (legW2 + gap) * 2, legClusterY, legW2, legH2, getFace("right_leg", "back")));
+
+        // ========== LEFT LEG CLUSTER (bottom right, 2x) ==========
+        // Outer, inner, back
+        VISUAL_REGIONS.add(new VisualRegion("L.Leg Out", lLegX, legClusterY, legW2, legH2, getFace("left_leg", "outer")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Leg In", lLegX + legW2 + gap, legClusterY, legW2, legH2, getFace("left_leg", "inner")));
+        VISUAL_REGIONS.add(new VisualRegion("L.Leg Bk", lLegX + (legW2 + gap) * 2, legClusterY, legW2, legH2, getFace("left_leg", "back")));
+
+        // Sole
+        int lLegSmallX = lLegX + (legW2 + gap) * 3 + gap;
+        VISUAL_REGIONS.add(new VisualRegion("L.Sole", lLegSmallX, legClusterY, legW2, legBottomH2, getFace("left_leg", "bottom")));
     }
 
     /**
