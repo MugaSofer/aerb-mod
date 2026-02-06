@@ -189,6 +189,7 @@ public class PaperDollMapper {
      *                    [LEG BACKS ]
      */
     // Doll area dimensions (should match TattooApplicationScreen)
+    private static final int DOLL_AREA_WIDTH = 220;
     private static final int DOLL_AREA_HEIGHT = 180;
 
     private static void initVisualRegions() {
@@ -197,7 +198,7 @@ public class PaperDollMapper {
         int gap = 2;
 
         // Center position for main paper doll
-        int centerX = 110;
+        int centerX = DOLL_AREA_WIDTH / 2;  // 110
 
         // ========== CENTER PAPER DOLL (3x scale) ==========
         // Calculate total height for vertical centering
@@ -231,6 +232,12 @@ public class PaperDollMapper {
         int legY = bodyY + bodyH3 + gap;
         VISUAL_REGIONS.add(new VisualRegion("R.Leg", centerX - legW3, legY, legW3, legH3, getFace("right_leg", "front")));
         VISUAL_REGIONS.add(new VisualRegion("L.Leg", centerX, legY, legW3, legH3, getFace("left_leg", "front")));
+
+        // Calculate space on left and right of paper doll for centering clusters
+        int paperDollLeftEdge = bodyX - armW3 - 1;  // Left edge of right arm
+        int paperDollRightEdge = bodyX + bodyW3 + 1 + armW3;  // Right edge of left arm
+        int leftSpace = paperDollLeftEdge;  // Space from 0 to paper doll
+        int rightSpace = DOLL_AREA_WIDTH - paperDollRightEdge;  // Space from paper doll to edge
 
         // ========== HEAD CLUSTER (top center, 2x) ==========
         int headW2 = 8 * sideScale;  // 16
@@ -275,8 +282,11 @@ public class PaperDollMapper {
         int armTopH2 = 4 * sideScale; // 8
         int armClusterY = (DOLL_AREA_HEIGHT - armH2) / 2;  // Vertically centered
 
-        // RIGHT ARM CLUSTER (left side, 2x)
-        int rArmX = 5;
+        // Arm cluster width: 3 tall faces + gap + shoulder/hand column
+        int armClusterWidth = (armW2 + gap) * 3 + gap + armW2;  // 40
+
+        // RIGHT ARM CLUSTER (left side, 2x) - centered in left space
+        int rArmX = (leftSpace - armClusterWidth) / 2;
 
         // Outer, inner, back (3 tall faces)
         VISUAL_REGIONS.add(new VisualRegion("R.Arm Out", rArmX, armClusterY, armW2, armH2, getFace("right_arm", "outer")));
@@ -288,8 +298,8 @@ public class PaperDollMapper {
         VISUAL_REGIONS.add(new VisualRegion("R.Shoulder", rArmSmallX, armClusterY, armW2, armTopH2, getFace("right_arm", "top")));
         VISUAL_REGIONS.add(new VisualRegion("R.Hand", rArmSmallX, armClusterY + armTopH2 + gap, armW2, armTopH2, getFace("right_arm", "bottom")));
 
-        // LEFT ARM CLUSTER (right side, 2x)
-        int lArmX = torsoX;
+        // LEFT ARM CLUSTER (right side, 2x) - centered in right space
+        int lArmX = paperDollRightEdge + (rightSpace - armClusterWidth) / 2;
 
         // Outer, inner, back
         VISUAL_REGIONS.add(new VisualRegion("L.Arm Out", lArmX, armClusterY, armW2, armH2, getFace("left_arm", "outer")));
@@ -306,10 +316,12 @@ public class PaperDollMapper {
         int legH2 = 12 * sideScale;  // 24
         int legBottomH2 = 4 * sideScale; // 8
         int legClusterY = legY + legH3;  // Top of clusters at bottom of paper doll legs
-        int lLegX = torsoX;
 
-        // ========== RIGHT LEG CLUSTER (bottom left, 2x) ==========
-        int rLegX = 5;
+        // Leg cluster width: sole + gap + 3 tall faces
+        int legClusterWidth = legW2 + gap + 4 + (legW2 + gap) * 2 + legW2;  // ~42
+
+        // ========== RIGHT LEG CLUSTER (bottom left, 2x) - centered in left space ==========
+        int rLegX = (leftSpace - legClusterWidth) / 2;
 
         // Sole (small square first)
         VISUAL_REGIONS.add(new VisualRegion("R.Sole", rLegX, legClusterY, legW2, legBottomH2, getFace("right_leg", "bottom")));
@@ -320,7 +332,9 @@ public class PaperDollMapper {
         VISUAL_REGIONS.add(new VisualRegion("R.Leg In", rLegFacesX + legW2 + gap, legClusterY, legW2, legH2, getFace("right_leg", "inner")));
         VISUAL_REGIONS.add(new VisualRegion("R.Leg Bk", rLegFacesX + (legW2 + gap) * 2, legClusterY, legW2, legH2, getFace("right_leg", "back")));
 
-        // ========== LEFT LEG CLUSTER (bottom right, 2x) ==========
+        // ========== LEFT LEG CLUSTER (bottom right, 2x) - centered in right space ==========
+        int lLegX = paperDollRightEdge + (rightSpace - legClusterWidth) / 2;
+
         // Outer, inner, back
         VISUAL_REGIONS.add(new VisualRegion("L.Leg Out", lLegX, legClusterY, legW2, legH2, getFace("left_leg", "outer")));
         VISUAL_REGIONS.add(new VisualRegion("L.Leg In", lLegX + legW2 + gap, legClusterY, legW2, legH2, getFace("left_leg", "inner")));
