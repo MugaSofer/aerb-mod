@@ -75,18 +75,45 @@ Default masks provided for Steve (wide) and Alex (slim). Custom skins need custo
 - **Left Leg**: x=16-32 y=48-64
 
 ## Origins Integration (Soft Dependency)
-Origins mod provides race selection at world creation. AERB adds 6 Aerb species as a pure datapack (no Java code).
+Origins mod provides race selection at world creation. AERB adds 15 Aerb species as a pure datapack (no Java code).
 - **Files**: `data/aerb/origins/`, `data/aerb/powers/`, `data/origins/origin_layers/origin.json`
-- **Races**: Human, Dwarf, Elf, Orc, Halfling, Gnome
+- **Compatibility**: Origins 1.13.0-pre.1 (Minecraft 1.21.1 only - waiting for Origins to update to 1.21.11)
 - **Wiki reference**: `docs/aerb_mortal_species.md` (local copy of https://wiki.alexanderwales.com/wiki/Mortal_Species)
 - Size scaling (dwarf/halfling/gnome) deferred until Pehkui + Tinkerers' Statures integration
-- Elf carnivore diet uses `origins:prevent_item_use` with `origins:meat` tag - may need syntax testing
+
+### Races
+| Race | Impact | Key Mechanics |
+|------|--------|---------------|
+| Human | 0 | Culturally Adaptable (descriptive) |
+| Dwarf | 1 | Night vision, +25% mining speed, edible mushrooms/moss |
+| Elf | 2 | +1 attack/+10% speed, obligate carnivore, -10% damage taken, psychologically rigid |
+| Orc | 1 | +2 attack/+5% speed, eats organics (bones/leather/rotten flesh), hunger immunity |
+| Halfling | 0 | -4 max health, -25% hunger drain |
+| Gnome | 1 | -4 max health, +15% XP gain, neurodivergent (descriptive) |
+| Aboria | 1 | +2 attack, eats wood/sticks/saplings |
+| Crantek | 1 | Fed by sunlight, -20% speed near ice/snow |
+| Criios | 3 | Takes damage without nearby ice, freeze immune, +50% fire damage, spawns with packed ice |
+| Dark Elf | 2 | Night vision, +1 attack/+10% speed, debuffed in bright light, poison immune |
+| Ell | 2 | -75% hunger/food/healing, immune to all potion effects |
+| Ghill | 1 | +30% sprint speed, invisible when sneaking in vegetation |
+| Goblin | 1 | -4 max health, +20% XP gain, +10% speed near bookshelves/-10% without |
+| Kle'tan | 1 | Night vision, +20% mining speed, debuffed under open sky |
+| Penumbral | 2 | Night vision, fed by darkness, takes damage in sunlight |
+
+### Origins Format Notes (1.13.0-pre.1)
+- Icons use `{"id": "minecraft:item"}` not `{"item": "..."}` or strings
+- Item stacks use `{"id": "minecraft:item", "amount": N}`
+- `origins:attribute` modifiers use vanilla format: `id`, `attribute`, `amount`, `operation` (add_value, add_multiplied_base)
+- `origins:modify_*` modifiers use apoli format: `operation` (apoli:multiply_base_additive, apoli:multiply_total_additive, etc.), `amount`
+- Food components use `nutrition` not `hunger`
+- Feed actions use `nutrition` not `food`
+- `origins:multiple` bundles sub-powers into one visible power
 
 ## Next Steps / Ideas
 - Phase 4: XP system for skill progression
 - Link spell availability to skill levels
 - More spells
-- More Origins races (Renacim, Penumbral, Animalia, etc.)
+- More Origins races (Renacim, Animalia, etc.)
 - Pehkui integration for size-varying races
 
 ## Stat Formulas
