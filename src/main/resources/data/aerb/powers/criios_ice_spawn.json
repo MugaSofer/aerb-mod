@@ -1,0 +1,19 @@
+{
+    "type": "origins:action_on_callback",
+    "name": "Frigid Start",
+    "description": "Spawns with packed ice for survival.",
+    "entity_action_chosen": {
+        "type": "origins:give",
+        "stack": {
+            "id": "minecraft:packed_ice",
+            "amount": 4
+        }
+    },
+    "entity_action_respawned": {
+        "type": "origins:give",
+        "stack": {
+            "id": "minecraft:packed_ice",
+            "amount": 4
+        }
+    }
+}

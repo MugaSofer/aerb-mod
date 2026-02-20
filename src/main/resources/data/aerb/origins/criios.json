@@ -2,7 +2,8 @@
     "powers": [
         "aerb:criios_heat_damage",
         "aerb:criios_cold_immunity",
-        "aerb:criios_fire_weakness"
+        "aerb:criios_fire_weakness",
+        "aerb:criios_ice_spawn"
     ],
     "icon": {"id": "minecraft:packed_ice"},
     "order": 8,
