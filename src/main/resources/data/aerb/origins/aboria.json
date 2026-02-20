@@ -1,0 +1,11 @@
+{
+    "powers": [
+        "aerb:aboria_strength",
+        "aerb:aboria_wood_eater"
+    ],
+    "icon": {"id": "minecraft:oak_log"},
+    "order": 6,
+    "impact": 1,
+    "name": "Aboria",
+    "description": "Large, muscular humanoids with sharp claws and wood-processing digestive systems."
+}

@@ -1,0 +1,29 @@
+{
+    "type": "origins:action_over_time",
+    "name": "Heat Intolerance",
+    "description": "Takes damage when not near ice or snow.",
+    "interval": 40,
+    "entity_action": {
+        "type": "origins:damage",
+        "amount": 1.0,
+        "damage_type": "minecraft:generic"
+    },
+    "condition": {
+        "type": "origins:block_in_radius",
+        "block_condition": {
+            "type": "origins:or",
+            "conditions": [
+                {"type": "origins:block", "block": "minecraft:ice"},
+                {"type": "origins:block", "block": "minecraft:packed_ice"},
+                {"type": "origins:block", "block": "minecraft:blue_ice"},
+                {"type": "origins:block", "block": "minecraft:snow_block"},
+                {"type": "origins:block", "block": "minecraft:powder_snow"},
+                {"type": "origins:block", "block": "minecraft:snow"}
+            ]
+        },
+        "radius": 4,
+        "shape": "cube",
+        "comparison": "<",
+        "compare_to": 1
+    }
+}

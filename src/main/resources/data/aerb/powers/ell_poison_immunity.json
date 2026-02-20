@@ -1,0 +1,6 @@
+{
+    "type": "origins:effect_immunity",
+    "name": "Temporal Resilience",
+    "description": "Immune to all potion effects, good and bad.",
+    "inverted": true
+}

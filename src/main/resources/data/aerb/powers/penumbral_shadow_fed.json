@@ -1,0 +1,16 @@
+{
+    "type": "origins:action_over_time",
+    "name": "Shadow Fed",
+    "description": "Gains sustenance from darkness.",
+    "interval": 80,
+    "entity_action": {
+        "type": "origins:feed",
+        "nutrition": 1,
+        "saturation": 0.5
+    },
+    "condition": {
+        "type": "origins:brightness",
+        "comparison": "<=",
+        "compare_to": 0.3
+    }
+}

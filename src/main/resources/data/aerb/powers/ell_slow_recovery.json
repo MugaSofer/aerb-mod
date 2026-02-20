@@ -1,0 +1,9 @@
+{
+    "type": "origins:modify_healing",
+    "name": "Slow Recovery",
+    "description": "-75% natural healing rate.",
+    "modifier": {
+        "operation": "apoli:multiply_total_additive",
+        "amount": -0.75
+    }
+}

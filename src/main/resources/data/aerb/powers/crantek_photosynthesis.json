@@ -1,0 +1,14 @@
+{
+    "type": "origins:action_over_time",
+    "name": "Photosynthetic",
+    "description": "Gains sustenance from direct sunlight.",
+    "interval": 100,
+    "entity_action": {
+        "type": "origins:feed",
+        "nutrition": 1,
+        "saturation": 0.5
+    },
+    "condition": {
+        "type": "origins:exposed_to_sun"
+    }
+}

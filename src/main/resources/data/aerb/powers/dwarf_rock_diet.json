@@ -1,5 +1,25 @@
 {
-    "type": "origins:simple",
+    "type": "origins:edible_item",
     "name": "Rock Diet",
-    "description": "Subsists on organisms that eat rocks."
+    "description": "Can eat mushrooms, moss, and mossy stone.",
+    "item_condition": {
+        "type": "origins:or",
+        "conditions": [
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:red_mushroom"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:brown_mushroom"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:red_mushroom_block"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:brown_mushroom_block"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:mushroom_stem"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:moss_block"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:moss_carpet"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:mossy_cobblestone"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:mossy_stone_bricks"}}
+        ]
+    },
+    "food_component": {
+        "nutrition": 2,
+        "saturation": 0.4
+    },
+    "consume_animation": "eat",
+    "consume_sound": "minecraft:entity.generic.eat"
 }

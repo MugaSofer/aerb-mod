@@ -1,0 +1,12 @@
+{
+    "powers": [
+        "aerb:goblin_small_frame",
+        "aerb:goblin_bibliophile",
+        "aerb:goblin_book_affinity"
+    ],
+    "icon": {"id": "minecraft:book"},
+    "order": 12,
+    "impact": 1,
+    "name": "Goblin",
+    "description": "Short, floppy-eared keepers of Aerb's largest libraries."
+}

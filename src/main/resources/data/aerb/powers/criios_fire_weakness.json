@@ -1,0 +1,12 @@
+{
+    "type": "origins:modify_damage_taken",
+    "name": "Fire Vulnerability",
+    "description": "+50% fire and heat damage taken.",
+    "modifier": {
+        "operation": "apoli:multiply_base_additive",
+        "amount": 0.5
+    },
+    "damage_condition": {
+        "type": "origins:fire"
+    }
+}

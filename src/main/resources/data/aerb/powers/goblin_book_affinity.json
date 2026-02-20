@@ -1,0 +1,47 @@
+{
+    "type": "origins:multiple",
+    "name": "Book Affinity",
+    "description": "+10% speed near bookshelves, -10% without.",
+    "near_books": {
+        "type": "origins:conditioned_attribute",
+        "modifier": {
+            "id": "aerb:goblin_book_speed",
+            "attribute": "minecraft:generic.movement_speed",
+            "amount": 0.1,
+            "operation": "add_multiplied_base"
+        },
+        "tick_rate": 20,
+        "condition": {
+            "type": "origins:block_in_radius",
+            "block_condition": {
+                "type": "origins:block",
+                "block": "minecraft:bookshelf"
+            },
+            "radius": 8,
+            "shape": "cube",
+            "comparison": ">=",
+            "compare_to": 1
+        }
+    },
+    "no_books": {
+        "type": "origins:conditioned_attribute",
+        "modifier": {
+            "id": "aerb:goblin_no_book_speed",
+            "attribute": "minecraft:generic.movement_speed",
+            "amount": -0.1,
+            "operation": "add_multiplied_base"
+        },
+        "tick_rate": 20,
+        "condition": {
+            "type": "origins:block_in_radius",
+            "block_condition": {
+                "type": "origins:block",
+                "block": "minecraft:bookshelf"
+            },
+            "radius": 8,
+            "shape": "cube",
+            "comparison": "<",
+            "compare_to": 1
+        }
+    }
+}

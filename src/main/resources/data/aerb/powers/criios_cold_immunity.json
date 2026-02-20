@@ -1,0 +1,13 @@
+{
+    "type": "origins:modify_damage_taken",
+    "name": "Freeze Immunity",
+    "description": "Immune to freezing damage.",
+    "modifier": {
+        "operation": "apoli:set_total",
+        "amount": 0.0
+    },
+    "damage_condition": {
+        "type": "origins:name",
+        "name": "minecraft:freeze"
+    }
+}

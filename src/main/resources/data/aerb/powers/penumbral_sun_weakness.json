@@ -1,0 +1,14 @@
+{
+    "type": "origins:action_over_time",
+    "name": "Sunlight Sickness",
+    "description": "Takes damage in direct sunlight.",
+    "interval": 40,
+    "entity_action": {
+        "type": "origins:damage",
+        "amount": 1.0,
+        "damage_type": "minecraft:generic"
+    },
+    "condition": {
+        "type": "origins:exposed_to_sun"
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "type": "origins:modify_exhaustion",
+    "name": "Slow Metabolism",
+    "description": "-75% hunger drain. Everything is slower.",
+    "modifier": {
+        "operation": "apoli:multiply_total_additive",
+        "amount": -0.75
+    }
+}

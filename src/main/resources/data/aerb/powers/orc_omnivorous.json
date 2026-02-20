@@ -1,5 +1,30 @@
 {
-    "type": "origins:simple",
+    "type": "origins:multiple",
     "name": "Omnivorous",
-    "description": "Can eat a much wider variety of food."
+    "description": "Eats almost anything organic. No hunger debuff.",
+    "edible": {
+        "type": "origins:edible_item",
+        "item_condition": {
+            "type": "origins:or",
+            "conditions": [
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:bone"}},
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:leather"}},
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:feather"}},
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:string"}},
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:egg"}},
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:slime_ball"}},
+                {"type": "origins:ingredient", "ingredient": {"item": "minecraft:rotten_flesh"}}
+            ]
+        },
+        "food_component": {
+            "nutrition": 2,
+            "saturation": 0.3
+        },
+        "consume_animation": "eat",
+        "consume_sound": "minecraft:entity.generic.eat"
+    },
+    "iron_stomach": {
+        "type": "origins:effect_immunity",
+        "effect": "minecraft:hunger"
+    }
 }

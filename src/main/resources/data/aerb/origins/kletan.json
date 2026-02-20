@@ -1,0 +1,12 @@
+{
+    "powers": [
+        "aerb:kletan_tunnel_dweller",
+        "aerb:kletan_digger",
+        "aerb:kletan_agoraphobia"
+    ],
+    "icon": {"id": "minecraft:stone"},
+    "order": 13,
+    "impact": 1,
+    "name": "Kle'tan",
+    "description": "Claustrophilic tunnel-dwellers. Uneasy under open sky."
+}

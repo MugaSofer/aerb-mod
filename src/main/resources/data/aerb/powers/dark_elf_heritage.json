@@ -1,0 +1,19 @@
+{
+    "type": "origins:attribute",
+    "name": "Elven Heritage",
+    "description": "+1 attack, +10% speed from elven physique.",
+    "modifiers": [
+        {
+            "id": "aerb:dark_elf_attack",
+            "attribute": "minecraft:generic.attack_damage",
+            "amount": 1.0,
+            "operation": "add_value"
+        },
+        {
+            "id": "aerb:dark_elf_speed",
+            "attribute": "minecraft:generic.movement_speed",
+            "amount": 0.1,
+            "operation": "add_multiplied_base"
+        }
+    ]
+}

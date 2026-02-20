@@ -1,0 +1,12 @@
+{
+    "powers": [
+        "aerb:criios_heat_damage",
+        "aerb:criios_cold_immunity",
+        "aerb:criios_fire_weakness"
+    ],
+    "icon": {"id": "minecraft:packed_ice"},
+    "order": 8,
+    "impact": 3,
+    "name": "Criios",
+    "description": "Frigid beings who must stay near ice to survive."
+}

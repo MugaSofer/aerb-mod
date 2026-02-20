@@ -1,0 +1,12 @@
+{
+    "powers": [
+        "aerb:penumbral_darkvision",
+        "aerb:penumbral_shadow_fed",
+        "aerb:penumbral_sun_weakness"
+    ],
+    "icon": {"id": "minecraft:black_dye"},
+    "order": 14,
+    "impact": 2,
+    "name": "Penumbral",
+    "description": "Shadow-fed and monochromatic. Burns in direct sunlight."
+}

@@ -1,0 +1,21 @@
+{
+    "type": "origins:edible_item",
+    "name": "Wood Eater",
+    "description": "Can eat wood, sticks, and saplings.",
+    "item_condition": {
+        "type": "origins:or",
+        "conditions": [
+            {"type": "origins:ingredient", "ingredient": {"tag": "minecraft:logs"}},
+            {"type": "origins:ingredient", "ingredient": {"tag": "minecraft:planks"}},
+            {"type": "origins:ingredient", "ingredient": {"tag": "minecraft:saplings"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:stick"}},
+            {"type": "origins:ingredient", "ingredient": {"item": "minecraft:bamboo"}}
+        ]
+    },
+    "food_component": {
+        "nutrition": 3,
+        "saturation": 0.5
+    },
+    "consume_animation": "eat",
+    "consume_sound": "minecraft:entity.generic.eat"
+}

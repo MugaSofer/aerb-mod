@@ -1,0 +1,11 @@
+{
+    "powers": [
+        "aerb:crantek_photosynthesis",
+        "aerb:crantek_cold_weakness"
+    ],
+    "icon": {"id": "minecraft:oak_leaves"},
+    "order": 7,
+    "impact": 1,
+    "name": "Crantek",
+    "description": "Green-skinned photosynthesizers. Sluggish in cold."
+}

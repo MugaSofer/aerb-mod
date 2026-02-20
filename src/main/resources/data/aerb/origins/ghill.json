@@ -1,0 +1,11 @@
+{
+    "powers": [
+        "aerb:ghill_camouflage",
+        "aerb:ghill_burst_speed"
+    ],
+    "icon": {"id": "minecraft:fern"},
+    "order": 11,
+    "impact": 1,
+    "name": "Ghill",
+    "description": "Grass-haired ambushers. Patient stillness, then rapid bursts."
+}

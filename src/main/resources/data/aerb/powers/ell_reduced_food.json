@@ -1,0 +1,13 @@
+{
+    "type": "origins:modify_food",
+    "name": "Dulled Sustenance",
+    "description": "-75% food and saturation from eating.",
+    "food_modifier": {
+        "operation": "apoli:multiply_total_additive",
+        "amount": -0.75
+    },
+    "saturation_modifier": {
+        "operation": "apoli:multiply_total_additive",
+        "amount": -0.75
+    }
+}

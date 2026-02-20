@@ -7,6 +7,15 @@
         "aerb:elf",
         "aerb:orc",
         "aerb:halfling",
-        "aerb:gnome"
+        "aerb:gnome",
+        "aerb:aboria",
+        "aerb:crantek",
+        "aerb:criios",
+        "aerb:dark_elf",
+        "aerb:ell",
+        "aerb:ghill",
+        "aerb:goblin",
+        "aerb:kletan",
+        "aerb:penumbral"
     ]
 }

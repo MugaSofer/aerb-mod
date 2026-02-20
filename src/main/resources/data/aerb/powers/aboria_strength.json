@@ -1,0 +1,11 @@
+{
+    "type": "origins:attribute",
+    "name": "Powerful Build",
+    "description": "+2 attack damage from claws and muscle.",
+    "modifier": {
+        "id": "aerb:aboria_attack",
+        "attribute": "minecraft:generic.attack_damage",
+        "amount": 2.0,
+        "operation": "add_value"
+    }
+}

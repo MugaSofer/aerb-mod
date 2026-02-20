@@ -1,0 +1,13 @@
+{
+    "type": "origins:modify_break_speed",
+    "name": "Expert Digger",
+    "description": "+20% mining speed from tunnel expertise.",
+    "modifier": {
+        "operation": "apoli:multiply_base_additive",
+        "amount": 0.2
+    },
+    "block_condition": {
+        "type": "origins:in_tag",
+        "tag": "minecraft:mineable/pickaxe"
+    }
+}

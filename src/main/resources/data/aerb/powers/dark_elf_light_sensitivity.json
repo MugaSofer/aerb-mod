@@ -1,0 +1,25 @@
+{
+    "type": "origins:conditioned_attribute",
+    "name": "Light Sensitivity",
+    "description": "-2 attack, -15% speed in bright light.",
+    "modifiers": [
+        {
+            "id": "aerb:dark_elf_light_attack",
+            "attribute": "minecraft:generic.attack_damage",
+            "amount": -2.0,
+            "operation": "add_value"
+        },
+        {
+            "id": "aerb:dark_elf_light_speed",
+            "attribute": "minecraft:generic.movement_speed",
+            "amount": -0.15,
+            "operation": "add_multiplied_base"
+        }
+    ],
+    "tick_rate": 20,
+    "condition": {
+        "type": "origins:brightness",
+        "comparison": ">=",
+        "compare_to": 0.7
+    }
+}

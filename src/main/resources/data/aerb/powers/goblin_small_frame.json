@@ -1,0 +1,11 @@
+{
+    "type": "origins:attribute",
+    "name": "Small Frame",
+    "description": "-4 max health from short stature.",
+    "modifier": {
+        "id": "aerb:goblin_health",
+        "attribute": "minecraft:generic.max_health",
+        "amount": -4.0,
+        "operation": "add_value"
+    }
+}

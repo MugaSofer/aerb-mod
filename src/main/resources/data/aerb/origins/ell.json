@@ -1,0 +1,13 @@
+{
+    "powers": [
+        "aerb:ell_slow_metabolism",
+        "aerb:ell_reduced_food",
+        "aerb:ell_poison_immunity",
+        "aerb:ell_slow_recovery"
+    ],
+    "icon": {"id": "minecraft:clock"},
+    "order": 10,
+    "impact": 2,
+    "name": "Ell",
+    "description": "Live 100x slower. Immune to potions, slow to heal and eat."
+}

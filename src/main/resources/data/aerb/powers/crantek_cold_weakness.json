@@ -1,0 +1,30 @@
+{
+    "type": "origins:conditioned_attribute",
+    "name": "Cold Blooded",
+    "description": "-20% speed near ice and snow.",
+    "modifier": {
+        "id": "aerb:crantek_cold_speed",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": -0.2,
+        "operation": "add_multiplied_base"
+    },
+    "tick_rate": 20,
+    "condition": {
+        "type": "origins:block_in_radius",
+        "block_condition": {
+            "type": "origins:or",
+            "conditions": [
+                {"type": "origins:block", "block": "minecraft:ice"},
+                {"type": "origins:block", "block": "minecraft:packed_ice"},
+                {"type": "origins:block", "block": "minecraft:blue_ice"},
+                {"type": "origins:block", "block": "minecraft:snow_block"},
+                {"type": "origins:block", "block": "minecraft:powder_snow"},
+                {"type": "origins:block", "block": "minecraft:snow"}
+            ]
+        },
+        "radius": 4,
+        "shape": "cube",
+        "comparison": ">=",
+        "compare_to": 1
+    }
+}

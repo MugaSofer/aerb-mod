@@ -1,0 +1,15 @@
+{
+    "type": "origins:conditioned_attribute",
+    "name": "Burst Movement",
+    "description": "+30% sprint speed from rapid bursts.",
+    "modifier": {
+        "id": "aerb:ghill_sprint",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": 0.3,
+        "operation": "add_multiplied_base"
+    },
+    "tick_rate": 20,
+    "condition": {
+        "type": "origins:sprinting"
+    }
+}
