@@ -1,0 +1,19 @@
+{
+    "type": "origins:attribute",
+    "name": "Orcish Physique",
+    "description": "+2 attack damage, +5% movement speed.",
+    "modifiers": [
+        {
+            "id": "aerb:orc_attack",
+            "attribute": "minecraft:generic.attack_damage",
+            "amount": 2.0,
+            "operation": "add_value"
+        },
+        {
+            "id": "aerb:orc_speed",
+            "attribute": "minecraft:generic.movement_speed",
+            "amount": 0.05,
+            "operation": "add_multiplied_base"
+        }
+    ]
+}

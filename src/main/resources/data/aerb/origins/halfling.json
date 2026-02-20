@@ -1,0 +1,11 @@
+{
+    "powers": [
+        "aerb:halfling_small_frame",
+        "aerb:halfling_low_caloric"
+    ],
+    "icon": {"id": "minecraft:wheat"},
+    "order": 4,
+    "impact": 0,
+    "name": "Halfling",
+    "description": "Humans scaled down by half. Prefer highlands and communal agrarian lifestyles."
+}

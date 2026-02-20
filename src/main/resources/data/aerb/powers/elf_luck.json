@@ -1,0 +1,9 @@
+{
+    "type": "origins:modify_damage_taken",
+    "name": "Uncanny Luck",
+    "description": "-10% incoming damage from non-magical luck.",
+    "modifier": {
+        "operation": "apoli:multiply_total_additive",
+        "amount": -0.1
+    }
+}

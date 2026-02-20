@@ -1,0 +1,11 @@
+{
+    "type": "origins:attribute",
+    "name": "Small Frame",
+    "description": "-4 max health from diminutive stature.",
+    "modifier": {
+        "id": "aerb:gnome_health",
+        "attribute": "minecraft:generic.max_health",
+        "amount": -4.0,
+        "operation": "add_value"
+    }
+}

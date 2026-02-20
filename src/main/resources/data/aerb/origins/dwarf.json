@@ -1,0 +1,12 @@
+{
+    "powers": [
+        "aerb:dwarf_underground",
+        "aerb:dwarf_miner",
+        "aerb:dwarf_rock_diet"
+    ],
+    "icon": {"id": "minecraft:iron_pickaxe"},
+    "order": 1,
+    "impact": 1,
+    "name": "Dwarf",
+    "description": "Parthenogenetic underground dwellers. Expert miners who farm rock-eating organisms for food."
+}

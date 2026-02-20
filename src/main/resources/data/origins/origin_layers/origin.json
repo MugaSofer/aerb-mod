@@ -1,0 +1,12 @@
+{
+    "replace": true,
+    "loading_priority": 1,
+    "origins": [
+        "aerb:human",
+        "aerb:dwarf",
+        "aerb:elf",
+        "aerb:orc",
+        "aerb:halfling",
+        "aerb:gnome"
+    ]
+}

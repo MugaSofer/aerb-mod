@@ -1,0 +1,19 @@
+{
+    "type": "origins:attribute",
+    "name": "Physically Superior",
+    "description": "+1 attack damage, +10% movement speed.",
+    "modifiers": [
+        {
+            "id": "aerb:elf_attack",
+            "attribute": "minecraft:generic.attack_damage",
+            "amount": 1.0,
+            "operation": "add_value"
+        },
+        {
+            "id": "aerb:elf_speed",
+            "attribute": "minecraft:generic.movement_speed",
+            "amount": 0.1,
+            "operation": "add_multiplied_base"
+        }
+    ]
+}

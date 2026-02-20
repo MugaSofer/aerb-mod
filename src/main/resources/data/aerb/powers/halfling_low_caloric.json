@@ -1,0 +1,9 @@
+{
+    "type": "origins:modify_exhaustion",
+    "name": "Low Caloric Needs",
+    "description": "-25% hunger drain from a smaller body.",
+    "modifier": {
+        "operation": "apoli:multiply_total_additive",
+        "amount": -0.25
+    }
+}

@@ -7,7 +7,7 @@
 ## Build Commands
 Use forward slashes and full path for gradlew on this Windows system:
 ```bash
-C:/Users/IRL/Documents/aerb-template-1.21.11/gradlew.bat build 2>&1
+C:/Users/IRL/Documents/Claude/aerb-template-1.21.11/gradlew.bat build 2>&1
 ```
 
 ## Adding New Items
@@ -74,10 +74,20 @@ Default masks provided for Steve (wide) and Alex (slim). Custom skins need custo
 - **Right Leg**: x=0-16 y=16-32
 - **Left Leg**: x=16-32 y=48-64
 
+## Origins Integration (Soft Dependency)
+Origins mod provides race selection at world creation. AERB adds 6 Aerb species as a pure datapack (no Java code).
+- **Files**: `data/aerb/origins/`, `data/aerb/powers/`, `data/origins/origin_layers/origin.json`
+- **Races**: Human, Dwarf, Elf, Orc, Halfling, Gnome
+- **Wiki reference**: `docs/aerb_mortal_species.md` (local copy of https://wiki.alexanderwales.com/wiki/Mortal_Species)
+- Size scaling (dwarf/halfling/gnome) deferred until Pehkui + Tinkerers' Statures integration
+- Elf carnivore diet uses `origins:prevent_item_use` with `origins:meat` tag - may need syntax testing
+
 ## Next Steps / Ideas
 - Phase 4: XP system for skill progression
 - Link spell availability to skill levels
 - More spells
+- More Origins races (Renacim, Penumbral, Animalia, etc.)
+- Pehkui integration for size-varying races
 
 ## Stat Formulas
 - PHY = min(POW, SPD, END) + 1

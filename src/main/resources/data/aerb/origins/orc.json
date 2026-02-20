@@ -1,0 +1,11 @@
+{
+    "powers": [
+        "aerb:orc_physique",
+        "aerb:orc_omnivorous"
+    ],
+    "icon": {"id": "minecraft:iron_axe"},
+    "order": 3,
+    "impact": 1,
+    "name": "Orc",
+    "description": "Stronger and faster than humans, with a highly varied diet."
+}

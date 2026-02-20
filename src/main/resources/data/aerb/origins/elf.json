@@ -1,0 +1,13 @@
+{
+    "powers": [
+        "aerb:elf_physique",
+        "aerb:elf_carnivore",
+        "aerb:elf_luck",
+        "aerb:elf_rigid"
+    ],
+    "icon": {"id": "minecraft:bow"},
+    "order": 2,
+    "impact": 2,
+    "name": "Elf",
+    "description": "Physically superior obligate carnivores with uncanny luck, but psychologically rigid."
+}

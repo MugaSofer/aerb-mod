@@ -1,0 +1,10 @@
+{
+    "powers": [
+        "aerb:human_adaptable"
+    ],
+    "icon": {"id": "minecraft:player_head"},
+    "order": 0,
+    "impact": 0,
+    "name": "Human",
+    "description": "The most common species on Aerb. Average across most metrics but exceptionally adaptable."
+}

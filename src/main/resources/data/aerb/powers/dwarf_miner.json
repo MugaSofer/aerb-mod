@@ -1,0 +1,13 @@
+{
+    "type": "origins:modify_break_speed",
+    "name": "Expert Miner",
+    "description": "+25% mining speed on stone-type blocks.",
+    "modifier": {
+        "operation": "apoli:multiply_base_additive",
+        "amount": 0.25
+    },
+    "block_condition": {
+        "type": "origins:in_tag",
+        "tag": "minecraft:mineable/pickaxe"
+    }
+}
