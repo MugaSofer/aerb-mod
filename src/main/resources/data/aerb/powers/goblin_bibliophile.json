@@ -1,9 +1,9 @@
 {
     "type": "origins:modify_xp_gain",
     "name": "Bibliophile",
-    "description": "+20% XP gain from voracious learning.",
+    "description": "+15% XP gain from voracious learning.",
     "modifier": {
         "operation": "apoli:multiply_base_additive",
-        "amount": 0.2
+        "amount": 0.15
     }
 }

@@ -1,9 +1,9 @@
 {
     "type": "origins:modify_xp_gain",
     "name": "Innovative Mind",
-    "description": "+15% XP gain from all sources.",
+    "description": "+20% XP gain from all sources.",
     "modifier": {
         "operation": "apoli:multiply_base_additive",
-        "amount": 0.15
+        "amount": 0.2
     }
 }

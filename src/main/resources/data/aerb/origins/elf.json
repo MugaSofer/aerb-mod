@@ -2,8 +2,7 @@
     "powers": [
         "aerb:elf_physique",
         "aerb:elf_carnivore",
-        "aerb:elf_luck",
-        "aerb:elf_rigid"
+        "aerb:elf_luck"
     ],
     "icon": {"id": "minecraft:bow"},
     "order": 2,

@@ -1,7 +1,5 @@
 {
-    "powers": [
-        "aerb:human_adaptable"
-    ],
+    "powers": [],
     "icon": {"id": "minecraft:player_head"},
     "order": 0,
     "impact": 0,

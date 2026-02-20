@@ -1,7 +1,6 @@
 {
     "powers": [
         "aerb:gnome_small_frame",
-        "aerb:gnome_neurodivergent",
         "aerb:gnome_innovative"
     ],
     "icon": {"id": "minecraft:redstone"},

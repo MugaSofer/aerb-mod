@@ -3,8 +3,7 @@
         "aerb:dark_elf_underground",
         "aerb:dark_elf_heritage",
         "aerb:dark_elf_light_sensitivity",
-        "aerb:dark_elf_poison_immunity",
-        "aerb:dark_elf_goodly"
+        "aerb:dark_elf_poison_immunity"
     ],
     "icon": {"id": "minecraft:amethyst_shard"},
     "order": 9,

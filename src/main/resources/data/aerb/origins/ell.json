@@ -1,7 +1,6 @@
 {
     "powers": [
         "aerb:ell_slow_metabolism",
-        "aerb:ell_reduced_food",
         "aerb:ell_poison_immunity",
         "aerb:ell_slow_recovery"
     ],
