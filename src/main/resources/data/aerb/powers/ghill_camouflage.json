@@ -1,5 +1,42 @@
 {
-    "type": "origins:simple",
+    "type": "origins:multiple",
     "name": "Natural Camouflage",
-    "description": "Grass-like hair blends into vegetation."
+    "description": "Invisible while sneaking near vegetation.",
+    "invisibility": {
+        "type": "origins:invisibility",
+        "render_armor": true,
+        "condition": {
+            "type": "origins:and",
+            "conditions": [
+                {
+                    "type": "origins:sneaking"
+                },
+                {
+                    "type": "origins:block_in_radius",
+                    "block_condition": {
+                        "type": "origins:or",
+                        "conditions": [
+                            {"type": "origins:block", "block": "minecraft:short_grass"},
+                            {"type": "origins:block", "block": "minecraft:tall_grass"},
+                            {"type": "origins:block", "block": "minecraft:fern"},
+                            {"type": "origins:block", "block": "minecraft:large_fern"},
+                            {"type": "origins:block", "block": "minecraft:vine"},
+                            {"type": "origins:block", "block": "minecraft:cave_vines"},
+                            {"type": "origins:block", "block": "minecraft:cave_vines_plant"},
+                            {"type": "origins:block", "block": "minecraft:green_wool"},
+                            {"type": "origins:block", "block": "minecraft:moss_block"},
+                            {"type": "origins:block", "block": "minecraft:moss_carpet"},
+                            {"type": "origins:block", "block": "minecraft:azalea_leaves"},
+                            {"type": "origins:block", "block": "minecraft:flowering_azalea_leaves"},
+                            {"type": "origins:in_tag", "tag": "minecraft:leaves"}
+                        ]
+                    },
+                    "radius": 1,
+                    "shape": "cube",
+                    "comparison": ">=",
+                    "compare_to": 1
+                }
+            ]
+        }
+    }
 }
