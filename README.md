@@ -192,6 +192,29 @@ Spells and virtues cannot be dropped - they automatically return to you.
 	- Though once they contain at least 20 corpses, they can't be forced below that size
 - Collapse into a group of undead when they die
 
+### Origins Integration (Optional)
+
+With the [Origins](https://modrinth.com/mod/origins) mod installed, players can choose from 15 species of Aerb at world creation. Each species has unique abilities based on Worth the Candle lore.
+
+**Note:** Origins currently only supports Minecraft 1.21.1. The datapack files are included in the mod and will work automatically once Origins updates to 1.21.11. Without Origins installed, this feature is simply ignored.
+
+**Available Species:**
+- **Human** - Baseline. Culturally adaptable.
+- **Dwarf** - Night vision, faster mining, can eat mushrooms and moss
+- **Elf** - Stronger and faster, but obligate carnivore. Uncanny luck reduces damage taken.
+- **Orc** - Powerful fighters who can eat almost anything organic
+- **Halfling** - Small frame, less hunger drain
+- **Gnome** - Small frame, faster XP gain
+- **Aboria** - Large and strong, can eat wood
+- **Crantek** - Photosynthetic (fed by sunlight), slowed by cold
+- **Criios** - Must stay near ice to survive. Immune to freezing, vulnerable to fire.
+- **Dark Elf** - Underground elf variant. Strong in darkness, weakened by light. Poison immune.
+- **Ell** - Live 100x slower. Reduced hunger/healing/food, immune to all potion effects.
+- **Ghill** - Fast sprinters, invisible when sneaking in vegetation
+- **Goblin** - Small but quick learners, energized by nearby bookshelves
+- **Kle'tan** - Tunnel-dwelling miners, uncomfortable under open sky
+- **Penumbral** - Fed by shadows, damaged by sunlight
+
 ### Skin Magic / Tattoos (WIP)
 
 Tattoos appear directly on your character's skin. They only show on exposed skin areas - not through clothing.
